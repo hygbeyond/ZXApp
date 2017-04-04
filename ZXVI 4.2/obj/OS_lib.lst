@@ -1,0 +1,1907 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 4
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"OS_lib.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.OSTableWait,"ax",%progbits
+  20              		.align	1
+  21              		.global	OSTableWait
+  22              		.code	16
+  23              		.thumb_func
+  25              	OSTableWait:
+  26              	.LFB59:
+  27              		.file 1 "../mylib_t/OS_lib.c"
+   1:../mylib_t/OS_lib.c **** /*
+   2:../mylib_t/OS_lib.c ****  ********************************************************************************
+   3:../mylib_t/OS_lib.c ****  **				                   MicroOS(AVR)
+   4:../mylib_t/OS_lib.c ****  **                      The Real-Time Kernel(For WinAVR)
+   5:../mylib_t/OS_lib.c ****  **
+   6:../mylib_t/OS_lib.c ****  **                     (c) Copyright 2006-2010, hygbeyond
+   7:../mylib_t/OS_lib.c ****  **                             All Rights Reserved
+   8:../mylib_t/OS_lib.c ****  **
+   9:../mylib_t/OS_lib.c ****  **                                    V0.9
+  10:../mylib_t/OS_lib.c ****  **                      
+  11:../mylib_t/OS_lib.c ****  ********************************************************************************
+  12:../mylib_t/OS_lib.c ****  **创 建 人：胡勇刚
+  13:../mylib_t/OS_lib.c ****  **文 件 名：OS_lib.c
+  14:../mylib_t/OS_lib.c ****  **创建日期：2012-6-21
+  15:../mylib_t/OS_lib.c ****  **版 本 号：1.0
+  16:../mylib_t/OS_lib.c ****  **描    述: 所有变量都存储到本文件中声明，增强可移植性
+  17:../mylib_t/OS_lib.c ****  ********************************************************************************
+  18:../mylib_t/OS_lib.c ****  **创 建 人：胡勇刚
+  19:../mylib_t/OS_lib.c ****  **文 件 名：OS_lib.c
+  20:../mylib_t/OS_lib.c ****  **修改日期：2014-12-19
+  21:../mylib_t/OS_lib.c ****  **版 本 号：1.0
+  22:../mylib_t/OS_lib.c ****  **描    述: 修改了事件切换算法，统一了计算优先级线程算法，修正了事件在超过8个线程时算法错误
+  23:../mylib_t/OS_lib.c ****  **          引起线程挂起的问题
+  24:../mylib_t/OS_lib.c ****  ********************************************************************************
+  25:../mylib_t/OS_lib.c ****  */
+  26:../mylib_t/OS_lib.c **** 
+  27:../mylib_t/OS_lib.c **** 
+  28:../mylib_t/OS_lib.c **** #include "MicroOs.h"
+  29:../mylib_t/OS_lib.c **** 
+  30:../mylib_t/OS_lib.c **** #include "os_cpu.h"
+  31:../mylib_t/OS_lib.c **** #include "os_cfg.h"
+  32:../mylib_t/OS_lib.c **** #include "printk.h"
+  33:../mylib_t/OS_lib.c **** #include "bsp.h"
+  34:../mylib_t/OS_lib.c **** 
+  35:../mylib_t/OS_lib.c **** 
+  36:../mylib_t/OS_lib.c **** uint8 OSIntNesting;   //系统中断嵌套计数器
+  37:../mylib_t/OS_lib.c **** uint8 OSRunning;      //系统运行标志位
+  38:../mylib_t/OS_lib.c **** int32 OSTimeCnt;     //系统计数器
+  39:../mylib_t/OS_lib.c **** uint32 OSCtxSwCtr;    //系统调度次数统计
+  40:../mylib_t/OS_lib.c **** 
+  41:../mylib_t/OS_lib.c **** TTable    OSRdyTbl __UDATA__;  //系统就绪表
+  42:../mylib_t/OS_lib.c **** TTable    OSCreateTbl;
+  43:../mylib_t/OS_lib.c **** TTable    OSReturnTbl;
+  44:../mylib_t/OS_lib.c **** OS_TCB   *OS_TCBCur;           //当前运行进程数据指针
+  45:../mylib_t/OS_lib.c **** OS_TCB   *OS_TCBHighRdy;       //下一个运行最高优先级数据指针
+  46:../mylib_t/OS_lib.c **** OS_TCB    OS_TCBTbl[OS_TASKS+1];   //进程数据缓存数组
+  47:../mylib_t/OS_lib.c **** 
+  48:../mylib_t/OS_lib.c **** 
+  49:../mylib_t/OS_lib.c **** /*
+  50:../mylib_t/OS_lib.c ****  * 挂起就绪表中的ID进程
+  51:../mylib_t/OS_lib.c ****  */
+  52:../mylib_t/OS_lib.c **** void OSTableWait( TTable *table, TOSID id )
+  53:../mylib_t/OS_lib.c **** {
+  28              		.loc 1 53 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              		@ link register save eliminated.
+  33              	.LVL0:
+  54:../mylib_t/OS_lib.c ****     if( id >= OS_TASKS ) return;
+  34              		.loc 1 54 0
+  35 0000 0729     		cmp	r1, #7
+  36 0002 04D8     		bhi	.L1
+  37              	.LVL1:
+  38              	.LBB4:
+  39              	.LBB5:
+  55:../mylib_t/OS_lib.c **** #if OS_TASKS > 32
+  56:../mylib_t/OS_lib.c **** 
+  57:../mylib_t/OS_lib.c ****     int i,j;
+  58:../mylib_t/OS_lib.c ****     i = id / 8;
+  59:../mylib_t/OS_lib.c ****     j = id % 8;
+  60:../mylib_t/OS_lib.c ****     CBI( table->tb[i], j );
+  61:../mylib_t/OS_lib.c **** #else
+  62:../mylib_t/OS_lib.c ****     CBI( table->Table, id );
+  40              		.loc 1 62 0
+  41 0004 0123     		movs	r3, #1
+  42 0006 8B40     		lsls	r3, r3, r1
+  43 0008 0268     		ldr	r2, [r0]
+  44 000a 9A43     		bics	r2, r3
+  45 000c 0260     		str	r2, [r0]
+  46              	.LVL2:
+  47              	.L1:
+  48              	.LBE5:
+  49              	.LBE4:
+  63:../mylib_t/OS_lib.c **** #endif
+  64:../mylib_t/OS_lib.c **** }
+  50              		.loc 1 64 0
+  51              		@ sp needed
+  52 000e 7047     		bx	lr
+  53              		.cfi_endproc
+  54              	.LFE59:
+  56              		.section	.text.OSTableRdy,"ax",%progbits
+  57              		.align	1
+  58              		.global	OSTableRdy
+  59              		.code	16
+  60              		.thumb_func
+  62              	OSTableRdy:
+  63              	.LFB60:
+  65:../mylib_t/OS_lib.c **** 
+  66:../mylib_t/OS_lib.c **** /*
+  67:../mylib_t/OS_lib.c ****  * 重置就绪表中的ID进程
+  68:../mylib_t/OS_lib.c ****  */
+  69:../mylib_t/OS_lib.c **** void OSTableRdy( TTable *table, TOSID id )
+  70:../mylib_t/OS_lib.c **** {
+  64              		.loc 1 70 0
+  65              		.cfi_startproc
+  66              		@ args = 0, pretend = 0, frame = 0
+  67              		@ frame_needed = 0, uses_anonymous_args = 0
+  68              		@ link register save eliminated.
+  69              	.LVL3:
+  71:../mylib_t/OS_lib.c ****     if( id >= OS_TASKS ) return;
+  70              		.loc 1 71 0
+  71 0000 0729     		cmp	r1, #7
+  72 0002 04D8     		bhi	.L4
+  72:../mylib_t/OS_lib.c **** #if OS_TASKS > 32
+  73:../mylib_t/OS_lib.c ****     int i,j;
+  74:../mylib_t/OS_lib.c ****     i = id / 8;
+  75:../mylib_t/OS_lib.c ****     j = id % 8;
+  76:../mylib_t/OS_lib.c ****     SBI( table->tb[i], j );
+  77:../mylib_t/OS_lib.c **** #else
+  78:../mylib_t/OS_lib.c ****     SBI( table->Table, id );
+  73              		.loc 1 78 0
+  74 0004 0123     		movs	r3, #1
+  75 0006 8B40     		lsls	r3, r3, r1
+  76 0008 0268     		ldr	r2, [r0]
+  77 000a 1343     		orrs	r3, r2
+  78 000c 0360     		str	r3, [r0]
+  79              	.L4:
+  79:../mylib_t/OS_lib.c **** #endif
+  80:../mylib_t/OS_lib.c **** }
+  80              		.loc 1 80 0
+  81              		@ sp needed
+  82 000e 7047     		bx	lr
+  83              		.cfi_endproc
+  84              	.LFE60:
+  86              		.section	.text.OSRdyTblRdy,"ax",%progbits
+  87              		.align	1
+  88              		.global	OSRdyTblRdy
+  89              		.code	16
+  90              		.thumb_func
+  92              	OSRdyTblRdy:
+  93              	.LFB61:
+  81:../mylib_t/OS_lib.c **** 
+  82:../mylib_t/OS_lib.c **** /*
+  83:../mylib_t/OS_lib.c ****  * 重置主就绪表中的ID进程
+  84:../mylib_t/OS_lib.c ****  */
+  85:../mylib_t/OS_lib.c **** void OSRdyTblRdy( TOSID id )
+  86:../mylib_t/OS_lib.c **** {
+  94              		.loc 1 86 0
+  95              		.cfi_startproc
+  96              		@ args = 0, pretend = 0, frame = 0
+  97              		@ frame_needed = 0, uses_anonymous_args = 0
+  98              	.LVL4:
+  99 0000 10B5     		push	{r4, lr}
+ 100              	.LCFI0:
+ 101              		.cfi_def_cfa_offset 8
+ 102              		.cfi_offset 4, -8
+ 103              		.cfi_offset 14, -4
+ 104              		.loc 1 86 0
+ 105 0002 0100     		movs	r1, r0
+  87:../mylib_t/OS_lib.c **** #if defined( BITBAND_V )
+  88:../mylib_t/OS_lib.c ****     BITBAND_V( OSRdyTbl, id ) = 1;
+  89:../mylib_t/OS_lib.c **** #else
+  90:../mylib_t/OS_lib.c ****     OSTableRdy( &OSRdyTbl, id );
+ 106              		.loc 1 90 0
+ 107 0004 0148     		ldr	r0, .L7
+ 108              	.LVL5:
+ 109 0006 FFF7FEFF 		bl	OSTableRdy
+ 110              	.LVL6:
+  91:../mylib_t/OS_lib.c **** #endif
+  92:../mylib_t/OS_lib.c **** }
+ 111              		.loc 1 92 0
+ 112              		@ sp needed
+ 113 000a 10BD     		pop	{r4, pc}
+ 114              	.L8:
+ 115              		.align	2
+ 116              	.L7:
+ 117 000c 00000000 		.word	.LANCHOR0
+ 118              		.cfi_endproc
+ 119              	.LFE61:
+ 121              		.section	.text.OSRdyTblWait,"ax",%progbits
+ 122              		.align	1
+ 123              		.global	OSRdyTblWait
+ 124              		.code	16
+ 125              		.thumb_func
+ 127              	OSRdyTblWait:
+ 128              	.LFB62:
+  93:../mylib_t/OS_lib.c **** 
+  94:../mylib_t/OS_lib.c **** /*
+  95:../mylib_t/OS_lib.c ****  * 挂起主就绪表中的ID进程
+  96:../mylib_t/OS_lib.c ****  */
+  97:../mylib_t/OS_lib.c **** void OSRdyTblWait( TOSID id )
+  98:../mylib_t/OS_lib.c **** {
+ 129              		.loc 1 98 0
+ 130              		.cfi_startproc
+ 131              		@ args = 0, pretend = 0, frame = 0
+ 132              		@ frame_needed = 0, uses_anonymous_args = 0
+ 133              	.LVL7:
+ 134 0000 10B5     		push	{r4, lr}
+ 135              	.LCFI1:
+ 136              		.cfi_def_cfa_offset 8
+ 137              		.cfi_offset 4, -8
+ 138              		.cfi_offset 14, -4
+ 139              		.loc 1 98 0
+ 140 0002 0100     		movs	r1, r0
+  99:../mylib_t/OS_lib.c **** #if defined( BITBAND_V )
+ 100:../mylib_t/OS_lib.c ****     BITBAND_V( OSRdyTbl, id ) = 0;
+ 101:../mylib_t/OS_lib.c **** #else
+ 102:../mylib_t/OS_lib.c ****     OSTableWait( &OSRdyTbl, id );
+ 141              		.loc 1 102 0
+ 142 0004 0148     		ldr	r0, .L10
+ 143              	.LVL8:
+ 144 0006 FFF7FEFF 		bl	OSTableWait
+ 145              	.LVL9:
+ 103:../mylib_t/OS_lib.c **** #endif
+ 104:../mylib_t/OS_lib.c **** }
+ 146              		.loc 1 104 0
+ 147              		@ sp needed
+ 148 000a 10BD     		pop	{r4, pc}
+ 149              	.L11:
+ 150              		.align	2
+ 151              	.L10:
+ 152 000c 00000000 		.word	.LANCHOR0
+ 153              		.cfi_endproc
+ 154              	.LFE62:
+ 156              		.section	.text.OSTableGetRdy,"ax",%progbits
+ 157              		.align	1
+ 158              		.global	OSTableGetRdy
+ 159              		.code	16
+ 160              		.thumb_func
+ 162              	OSTableGetRdy:
+ 163              	.LFB64:
+ 105:../mylib_t/OS_lib.c **** 
+ 106:../mylib_t/OS_lib.c **** /*
+ 107:../mylib_t/OS_lib.c ****  * 清空就绪表
+ 108:../mylib_t/OS_lib.c ****  */
+ 109:../mylib_t/OS_lib.c **** void OSTableClean( TTable *table )
+ 110:../mylib_t/OS_lib.c **** {
+ 111:../mylib_t/OS_lib.c ****     OSDataClean( table, sizeof( TTable) );
+ 112:../mylib_t/OS_lib.c **** }
+ 113:../mylib_t/OS_lib.c **** 
+ 114:../mylib_t/OS_lib.c **** /*
+ 115:../mylib_t/OS_lib.c ****  * 查询就绪表中是否有就绪进程
+ 116:../mylib_t/OS_lib.c ****  */
+ 117:../mylib_t/OS_lib.c **** int OSTableGetRdy( TTable *table )
+ 118:../mylib_t/OS_lib.c **** {
+ 164              		.loc 1 118 0
+ 165              		.cfi_startproc
+ 166              		@ args = 0, pretend = 0, frame = 0
+ 167              		@ frame_needed = 0, uses_anonymous_args = 0
+ 168              		@ link register save eliminated.
+ 169              	.LVL10:
+ 119:../mylib_t/OS_lib.c ****     return table->Table? TRUE: FALSE;
+ 170              		.loc 1 119 0
+ 171 0000 0068     		ldr	r0, [r0]
+ 172              	.LVL11:
+ 120:../mylib_t/OS_lib.c **** }
+ 173              		.loc 1 120 0
+ 174              		@ sp needed
+ 119:../mylib_t/OS_lib.c ****     return table->Table? TRUE: FALSE;
+ 175              		.loc 1 119 0
+ 176 0002 431E     		subs	r3, r0, #1
+ 177 0004 9841     		sbcs	r0, r0, r3
+ 178              		.loc 1 120 0
+ 179 0006 7047     		bx	lr
+ 180              		.cfi_endproc
+ 181              	.LFE64:
+ 183              		.section	.text.OSDataClean,"ax",%progbits
+ 184              		.align	1
+ 185              		.global	OSDataClean
+ 186              		.code	16
+ 187              		.thumb_func
+ 189              	OSDataClean:
+ 190              	.LFB65:
+ 121:../mylib_t/OS_lib.c **** 
+ 122:../mylib_t/OS_lib.c **** /*
+ 123:../mylib_t/OS_lib.c ****  *******************************************************************************
+ 124:../mylib_t/OS_lib.c ****  ** 函数名称: OSDataClean
+ 125:../mylib_t/OS_lib.c ****  ** 功能描述: 清空数据
+ 126:../mylib_t/OS_lib.c ****  ** 输　入: pbuff:   被清空数据的首地址指针
+ 127:../mylib_t/OS_lib.c ****  **         size:    被清空数据的大小 以uint8为单
+ 128:../mylib_t/OS_lib.c ****  ** 输　出: 无
+ 129:../mylib_t/OS_lib.c ****  ** 全局变量: 无
+ 130:../mylib_t/OS_lib.c ****  ** 调用模块: 无
+ 131:../mylib_t/OS_lib.c ****  ********************************************************************************
+ 132:../mylib_t/OS_lib.c ****  */
+ 133:../mylib_t/OS_lib.c **** void OSDataClean(void *pbuff, uint16 size)
+ 134:../mylib_t/OS_lib.c **** {
+ 191              		.loc 1 134 0
+ 192              		.cfi_startproc
+ 193              		@ args = 0, pretend = 0, frame = 0
+ 194              		@ frame_needed = 0, uses_anonymous_args = 0
+ 195              		@ link register save eliminated.
+ 196              	.LVL12:
+ 135:../mylib_t/OS_lib.c ****     unsigned int *pd = (unsigned int*)pbuff;
+ 136:../mylib_t/OS_lib.c **** 
+ 137:../mylib_t/OS_lib.c ****     size = ( size + sizeof(unsigned int) - 1)/ sizeof( unsigned int );
+ 138:../mylib_t/OS_lib.c ****     while(size--)
+ 139:../mylib_t/OS_lib.c ****     {
+ 140:../mylib_t/OS_lib.c ****         *pd++ = 0x00;
+ 197              		.loc 1 140 0
+ 198 0000 0022     		movs	r2, #0
+ 137:../mylib_t/OS_lib.c ****     while(size--)
+ 199              		.loc 1 137 0
+ 200 0002 0331     		adds	r1, r1, #3
+ 201              	.LVL13:
+ 202 0004 8908     		lsrs	r1, r1, #2
+ 138:../mylib_t/OS_lib.c ****     {
+ 203              		.loc 1 138 0
+ 204 0006 044B     		ldr	r3, .L17
+ 137:../mylib_t/OS_lib.c ****     while(size--)
+ 205              		.loc 1 137 0
+ 206 0008 89B2     		uxth	r1, r1
+ 207              	.LVL14:
+ 208              	.L14:
+ 138:../mylib_t/OS_lib.c ****     {
+ 209              		.loc 1 138 0
+ 210 000a 0139     		subs	r1, r1, #1
+ 211              	.LVL15:
+ 212 000c 89B2     		uxth	r1, r1
+ 213              	.LVL16:
+ 214 000e 9942     		cmp	r1, r3
+ 215 0010 01D0     		beq	.L16
+ 216              	.LVL17:
+ 217              		.loc 1 140 0
+ 218 0012 04C0     		stmia	r0!, {r2}
+ 219              	.LVL18:
+ 220 0014 F9E7     		b	.L14
+ 221              	.L16:
+ 141:../mylib_t/OS_lib.c ****     }
+ 142:../mylib_t/OS_lib.c **** }
+ 222              		.loc 1 142 0
+ 223              		@ sp needed
+ 224 0016 7047     		bx	lr
+ 225              	.L18:
+ 226              		.align	2
+ 227              	.L17:
+ 228 0018 FFFF0000 		.word	65535
+ 229              		.cfi_endproc
+ 230              	.LFE65:
+ 232              		.section	.text.OSTableClean,"ax",%progbits
+ 233              		.align	1
+ 234              		.global	OSTableClean
+ 235              		.code	16
+ 236              		.thumb_func
+ 238              	OSTableClean:
+ 239              	.LFB63:
+ 110:../mylib_t/OS_lib.c ****     OSDataClean( table, sizeof( TTable) );
+ 240              		.loc 1 110 0
+ 241              		.cfi_startproc
+ 242              		@ args = 0, pretend = 0, frame = 0
+ 243              		@ frame_needed = 0, uses_anonymous_args = 0
+ 244              	.LVL19:
+ 245 0000 10B5     		push	{r4, lr}
+ 246              	.LCFI2:
+ 247              		.cfi_def_cfa_offset 8
+ 248              		.cfi_offset 4, -8
+ 249              		.cfi_offset 14, -4
+ 111:../mylib_t/OS_lib.c **** }
+ 250              		.loc 1 111 0
+ 251 0002 0421     		movs	r1, #4
+ 252 0004 FFF7FEFF 		bl	OSDataClean
+ 253              	.LVL20:
+ 112:../mylib_t/OS_lib.c **** 
+ 254              		.loc 1 112 0
+ 255              		@ sp needed
+ 256 0008 10BD     		pop	{r4, pc}
+ 257              		.cfi_endproc
+ 258              	.LFE63:
+ 260              		.section	.text.OSGetTabePro8,"ax",%progbits
+ 261              		.align	1
+ 262              		.global	OSGetTabePro8
+ 263              		.code	16
+ 264              		.thumb_func
+ 266              	OSGetTabePro8:
+ 267              	.LFB67:
+ 143:../mylib_t/OS_lib.c **** 
+ 144:../mylib_t/OS_lib.c **** 
+ 145:../mylib_t/OS_lib.c **** 
+ 146:../mylib_t/OS_lib.c **** #if (OS_SEM_EN > 0) || (OS_MBOX_EN > 0) || (OS_Q_EN > 0)
+ 147:../mylib_t/OS_lib.c **** OS_EVENT *OS_EventFreeList;                       //事件结构缓存指针
+ 148:../mylib_t/OS_lib.c **** OS_EVENT  OS_EventTbl[OS_EVENT_SIZE] __UDATA__;   //事件结构缓存数组
+ 149:../mylib_t/OS_lib.c **** 
+ 150:../mylib_t/OS_lib.c **** /*
+ 151:../mylib_t/OS_lib.c ****  *******************************************************************************
+ 152:../mylib_t/OS_lib.c ****  ** 函数名称: OSEventInit
+ 153:../mylib_t/OS_lib.c ****  ** 功能描述: 初始化事件结构 并把所有的结构做成一个结构链
+ 154:../mylib_t/OS_lib.c ****  ** 输　入: 无
+ 155:../mylib_t/OS_lib.c ****  ** 输　出: 无
+ 156:../mylib_t/OS_lib.c ****  ** 全局变量: OS_EventFreeList： 当前空闲的事件结构
+ 157:../mylib_t/OS_lib.c ****  **           OS_EventTbl:       事件结构的数组
+ 158:../mylib_t/OS_lib.c ****  ** 调用模块: OSDataClean
+ 159:../mylib_t/OS_lib.c ****  ********************************************************************************
+ 160:../mylib_t/OS_lib.c ****  */
+ 161:../mylib_t/OS_lib.c **** static void OSEventInit(void){
+ 162:../mylib_t/OS_lib.c ****     uint8 i;
+ 163:../mylib_t/OS_lib.c ****     OSDataClean( (uint8*)OS_EventTbl, sizeof( OS_EventTbl ));
+ 164:../mylib_t/OS_lib.c ****     OS_EventFreeList = &OS_EventTbl[0];
+ 165:../mylib_t/OS_lib.c ****     for(i=1; i<OS_EVENT_SIZE; i++){
+ 166:../mylib_t/OS_lib.c ****         OS_EventTbl[i-1].event_ptr = &OS_EventTbl[i];
+ 167:../mylib_t/OS_lib.c ****     }
+ 168:../mylib_t/OS_lib.c **** }
+ 169:../mylib_t/OS_lib.c **** #endif
+ 170:../mylib_t/OS_lib.c **** 
+ 171:../mylib_t/OS_lib.c **** #if (OS_MEM_EN > 0) && (OS_MAX_MEM_PART > 0)
+ 172:../mylib_t/OS_lib.c **** OS_MEM           *OSMemFreeList;            /* Pointer to free list of memory partitions       */
+ 173:../mylib_t/OS_lib.c **** OS_MEM            OSMemTbl[OS_MAX_MEM_PART];/* Storage for memory partition manager            */
+ 174:../mylib_t/OS_lib.c **** 
+ 175:../mylib_t/OS_lib.c **** /*
+ 176:../mylib_t/OS_lib.c ****  *******************************************************************************
+ 177:../mylib_t/OS_lib.c ****  ** 函数名称:     OS_MemInit
+ 178:../mylib_t/OS_lib.c ****  ** 功能描述:     初始化内存控制块
+ 179:../mylib_t/OS_lib.c ****  ** 输　入: 无
+ 180:../mylib_t/OS_lib.c ****  ** 输　出: 无
+ 181:../mylib_t/OS_lib.c ****  ** 全局变量: 
+ 182:../mylib_t/OS_lib.c ****  ** 调用模块: 
+ 183:../mylib_t/OS_lib.c ****  ********************************************************************************
+ 184:../mylib_t/OS_lib.c ****  */
+ 185:../mylib_t/OS_lib.c **** static void  OS_MemInit (void)
+ 186:../mylib_t/OS_lib.c **** {
+ 187:../mylib_t/OS_lib.c ****     OS_MEM  *pmem;
+ 188:../mylib_t/OS_lib.c ****     uint16   i;
+ 189:../mylib_t/OS_lib.c ****     if( OS_MAX_MEM_PART > 1 )
+ 190:../mylib_t/OS_lib.c ****     {
+ 191:../mylib_t/OS_lib.c ****         OSDataClean((uint8 *)&OSMemTbl[0], sizeof(OSMemTbl)); /* Clear the memory partition table  
+ 192:../mylib_t/OS_lib.c ****         pmem = (OS_MEM *)&OSMemTbl[0];                      /* Point to memory control block (MCB) 
+ 193:../mylib_t/OS_lib.c ****         for (i = 0; i < (OS_MAX_MEM_PART - 1); i++) {       /* Init. list of free memory partitions
+ 194:../mylib_t/OS_lib.c ****             pmem->OSMemFreeList = (void *)&OSMemTbl[i+1];   /* Chain list of free partitions       
+ 195:../mylib_t/OS_lib.c ****             pmem++;
+ 196:../mylib_t/OS_lib.c ****         }
+ 197:../mylib_t/OS_lib.c ****         pmem->OSMemFreeList = (void *)0;                    /* Initialize last node                
+ 198:../mylib_t/OS_lib.c ****     }
+ 199:../mylib_t/OS_lib.c **** 
+ 200:../mylib_t/OS_lib.c ****     OSMemFreeList       = (OS_MEM *)&OSMemTbl[0];       /* Point to beginning of free list         
+ 201:../mylib_t/OS_lib.c **** }
+ 202:../mylib_t/OS_lib.c **** #endif
+ 203:../mylib_t/OS_lib.c **** 
+ 204:../mylib_t/OS_lib.c **** 
+ 205:../mylib_t/OS_lib.c **** #if 0 //defined( MEM_BITBAND )
+ 206:../mylib_t/OS_lib.c **** 
+ 207:../mylib_t/OS_lib.c **** uint8 OSGetTablePro( TTable *table )
+ 208:../mylib_t/OS_lib.c **** {
+ 209:../mylib_t/OS_lib.c ****     int id; 
+ 210:../mylib_t/OS_lib.c ****     uint32_t *t = AliasAddr((uint32) table);
+ 211:../mylib_t/OS_lib.c ****     for(id=0; id<OS_TASKS; id++)
+ 212:../mylib_t/OS_lib.c ****     {
+ 213:../mylib_t/OS_lib.c ****         if( t[id] )
+ 214:../mylib_t/OS_lib.c ****             return id;
+ 215:../mylib_t/OS_lib.c ****     }
+ 216:../mylib_t/OS_lib.c ****     return OS_TASKS;
+ 217:../mylib_t/OS_lib.c **** }
+ 218:../mylib_t/OS_lib.c **** #else
+ 219:../mylib_t/OS_lib.c **** 
+ 220:../mylib_t/OS_lib.c **** /*
+ 221:../mylib_t/OS_lib.c ****  * 2010－10－7 通过查表的方式来计算就绪表中的最高线程。
+ 222:../mylib_t/OS_lib.c ****  */
+ 223:../mylib_t/OS_lib.c **** const uint8  OSMapTbl_L[16] = {
+ 224:../mylib_t/OS_lib.c ****     OS_TASKS, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,       /* 0x00 to 0x0F                   
+ 225:../mylib_t/OS_lib.c **** };
+ 226:../mylib_t/OS_lib.c **** 
+ 227:../mylib_t/OS_lib.c **** const uint8  OSMapTbl_H[16] = {
+ 228:../mylib_t/OS_lib.c ****     OS_TASKS, 4, 5, 4, 6, 4, 5, 4, 7, 4, 5, 4, 6, 4, 5, 4,       /* 0x00 to 0x0F                   
+ 229:../mylib_t/OS_lib.c **** };
+ 230:../mylib_t/OS_lib.c **** 
+ 231:../mylib_t/OS_lib.c **** /*
+ 232:../mylib_t/OS_lib.c ****  * 通过查表得方式查询就绪最高优先级线程ID号
+ 233:../mylib_t/OS_lib.c ****  */
+ 234:../mylib_t/OS_lib.c **** uint8 OSGetTabePro8( uint8 dat )
+ 235:../mylib_t/OS_lib.c **** {
+ 268              		.loc 1 235 0
+ 269              		.cfi_startproc
+ 270              		@ args = 0, pretend = 0, frame = 0
+ 271              		@ frame_needed = 0, uses_anonymous_args = 0
+ 272              		@ link register save eliminated.
+ 273              	.LVL21:
+ 236:../mylib_t/OS_lib.c ****     uint8 tmp;
+ 237:../mylib_t/OS_lib.c ****     uint8 nextID;
+ 238:../mylib_t/OS_lib.c ****     tmp = dat & 0x0F;
+ 274              		.loc 1 238 0
+ 275 0000 0F23     		movs	r3, #15
+ 276 0002 044A     		ldr	r2, .L23
+ 277 0004 0340     		ands	r3, r0
+ 278              	.LVL22:
+ 239:../mylib_t/OS_lib.c ****     if(tmp)
+ 279              		.loc 1 239 0
+ 280 0006 01D0     		beq	.L21
+ 240:../mylib_t/OS_lib.c ****     {
+ 241:../mylib_t/OS_lib.c ****         nextID = pgm_read_Tbl(&OSMapTbl_L[tmp]);
+ 281              		.loc 1 241 0
+ 282 0008 D05C     		ldrb	r0, [r2, r3]
+ 283              	.LVL23:
+ 284 000a 02E0     		b	.L22
+ 285              	.LVL24:
+ 286              	.L21:
+ 242:../mylib_t/OS_lib.c ****     }else
+ 243:../mylib_t/OS_lib.c ****     {
+ 244:../mylib_t/OS_lib.c ****         tmp    = dat>>4;
+ 245:../mylib_t/OS_lib.c ****         nextID = pgm_read_Tbl(&OSMapTbl_H[tmp]);
+ 287              		.loc 1 245 0
+ 288 000c 0009     		lsrs	r0, r0, #4
+ 289              	.LVL25:
+ 290 000e 1018     		adds	r0, r2, r0
+ 291 0010 007C     		ldrb	r0, [r0, #16]
+ 292              	.LVL26:
+ 293              	.L22:
+ 246:../mylib_t/OS_lib.c ****     }
+ 247:../mylib_t/OS_lib.c ****     return nextID;
+ 248:../mylib_t/OS_lib.c **** }
+ 294              		.loc 1 248 0
+ 295              		@ sp needed
+ 296 0012 7047     		bx	lr
+ 297              	.L24:
+ 298              		.align	2
+ 299              	.L23:
+ 300 0014 00000000 		.word	.LANCHOR1
+ 301              		.cfi_endproc
+ 302              	.LFE67:
+ 304              		.section	.text.OSGetTablePro,"ax",%progbits
+ 305              		.align	1
+ 306              		.global	OSGetTablePro
+ 307              		.code	16
+ 308              		.thumb_func
+ 310              	OSGetTablePro:
+ 311              	.LFB68:
+ 249:../mylib_t/OS_lib.c **** 
+ 250:../mylib_t/OS_lib.c **** #if OS_TASKS > 16
+ 251:../mylib_t/OS_lib.c **** /*
+ 252:../mylib_t/OS_lib.c ****  * 查询32位就绪表中的最高优先级ID号
+ 253:../mylib_t/OS_lib.c ****  */
+ 254:../mylib_t/OS_lib.c **** uint8 OSGetTablePro( TTable *table )
+ 255:../mylib_t/OS_lib.c **** {
+ 256:../mylib_t/OS_lib.c ****     if( table->tb[0] )
+ 257:../mylib_t/OS_lib.c ****         return OSGetTabePro8( table->tb[0] );
+ 258:../mylib_t/OS_lib.c ****     if( table->tb[1] )
+ 259:../mylib_t/OS_lib.c ****         return OSGetTabePro8( table->tb[1] ) + 8;
+ 260:../mylib_t/OS_lib.c ****     if( table->tb[2] )
+ 261:../mylib_t/OS_lib.c ****         return OSGetTabePro8( table->tb[2] ) + 16;
+ 262:../mylib_t/OS_lib.c ****     if( table->tb[3] )
+ 263:../mylib_t/OS_lib.c ****         return OSGetTabePro8( table->tb[3] ) + 24;    
+ 264:../mylib_t/OS_lib.c ****     return OS_TASKS;
+ 265:../mylib_t/OS_lib.c **** }
+ 266:../mylib_t/OS_lib.c **** 
+ 267:../mylib_t/OS_lib.c **** #else
+ 268:../mylib_t/OS_lib.c **** 
+ 269:../mylib_t/OS_lib.c **** /*
+ 270:../mylib_t/OS_lib.c ****  * 获取最高优先级线程ID
+ 271:../mylib_t/OS_lib.c ****  */
+ 272:../mylib_t/OS_lib.c **** uint8 OSGetTablePro( TTable *table )
+ 273:../mylib_t/OS_lib.c **** {
+ 312              		.loc 1 273 0
+ 313              		.cfi_startproc
+ 314              		@ args = 0, pretend = 0, frame = 0
+ 315              		@ frame_needed = 0, uses_anonymous_args = 0
+ 316              	.LVL27:
+ 317 0000 10B5     		push	{r4, lr}
+ 318              	.LCFI3:
+ 319              		.cfi_def_cfa_offset 8
+ 320              		.cfi_offset 4, -8
+ 321              		.cfi_offset 14, -4
+ 322              		.loc 1 273 0
+ 323 0002 0300     		movs	r3, r0
+ 274:../mylib_t/OS_lib.c ****     if( table->tb[0] )
+ 324              		.loc 1 274 0
+ 325 0004 0078     		ldrb	r0, [r0]
+ 326              	.LVL28:
+ 327 0006 0028     		cmp	r0, #0
+ 328 0008 02D0     		beq	.L26
+ 275:../mylib_t/OS_lib.c ****         return OSGetTabePro8( table->tb[0] );
+ 329              		.loc 1 275 0
+ 330 000a FFF7FEFF 		bl	OSGetTabePro8
+ 331              	.LVL29:
+ 332 000e 08E0     		b	.L27
+ 333              	.LVL30:
+ 334              	.L26:
+ 335              	.LBB8:
+ 336              	.LBB9:
+ 276:../mylib_t/OS_lib.c ****     if( table->tb[1] )
+ 337              		.loc 1 276 0
+ 338 0010 5B78     		ldrb	r3, [r3, #1]
+ 339              	.LVL31:
+ 277:../mylib_t/OS_lib.c ****         return OSGetTabePro8( table->tb[1] ) + 8;  
+ 278:../mylib_t/OS_lib.c ****     return OS_TASKS;
+ 340              		.loc 1 278 0
+ 341 0012 0820     		movs	r0, #8
+ 276:../mylib_t/OS_lib.c ****     if( table->tb[1] )
+ 342              		.loc 1 276 0
+ 343 0014 002B     		cmp	r3, #0
+ 344 0016 04D0     		beq	.L27
+ 277:../mylib_t/OS_lib.c ****         return OSGetTabePro8( table->tb[1] ) + 8;  
+ 345              		.loc 1 277 0
+ 346 0018 1800     		movs	r0, r3
+ 347 001a FFF7FEFF 		bl	OSGetTabePro8
+ 348              	.LVL32:
+ 349 001e 0830     		adds	r0, r0, #8
+ 350 0020 C0B2     		uxtb	r0, r0
+ 351              	.LVL33:
+ 352              	.L27:
+ 353              	.LBE9:
+ 354              	.LBE8:
+ 279:../mylib_t/OS_lib.c **** }
+ 355              		.loc 1 279 0
+ 356              		@ sp needed
+ 357 0022 10BD     		pop	{r4, pc}
+ 358              		.cfi_endproc
+ 359              	.LFE68:
+ 361              		.section	.text.OSEventTaskTo,"ax",%progbits
+ 362              		.align	1
+ 363              		.global	OSEventTaskTo
+ 364              		.code	16
+ 365              		.thumb_func
+ 367              	OSEventTaskTo:
+ 368              	.LFB69:
+ 280:../mylib_t/OS_lib.c **** #endif
+ 281:../mylib_t/OS_lib.c **** #endif 
+ 282:../mylib_t/OS_lib.c **** 
+ 283:../mylib_t/OS_lib.c **** /*
+ 284:../mylib_t/OS_lib.c ****  *******************************************************************************
+ 285:../mylib_t/OS_lib.c ****  ** 函数名称: OSEventTaskTo
+ 286:../mylib_t/OS_lib.c ****  ** 功能描述: 从输入的等待事件中删除运行的任务 如果有等待则返回真
+ 287:../mylib_t/OS_lib.c ****  ** 输　入: pevent:   事件指针
+ 288:../mylib_t/OS_lib.c ****  ** 输　出: 无
+ 289:../mylib_t/OS_lib.c ****  ** 全局变量: OSMapTbl：查找位表 优化算法
+ 290:../mylib_t/OS_lib.c ****  **         OSTaskRunningPrio：当前运行任务的优先级
+ 291:../mylib_t/OS_lib.c ****  ** 调用模块: 无
+ 292:../mylib_t/OS_lib.c ****  ********************************************************************************
+ 293:../mylib_t/OS_lib.c ****  */
+ 294:../mylib_t/OS_lib.c **** uint8 OSEventTaskTo(OS_EVENT *pevent)
+ 295:../mylib_t/OS_lib.c **** {
+ 369              		.loc 1 295 0
+ 370              		.cfi_startproc
+ 371              		@ args = 0, pretend = 0, frame = 0
+ 372              		@ frame_needed = 0, uses_anonymous_args = 0
+ 373              	.LVL34:
+ 374 0000 10B5     		push	{r4, lr}
+ 375              	.LCFI4:
+ 376              		.cfi_def_cfa_offset 8
+ 377              		.cfi_offset 4, -8
+ 378              		.cfi_offset 14, -4
+ 296:../mylib_t/OS_lib.c **** 
+ 297:../mylib_t/OS_lib.c **** #if defined( BITBAND_V )
+ 298:../mylib_t/OS_lib.c ****     if( BITBAND_V( pevent->event_table, OS_TCBCur->ID )  )
+ 299:../mylib_t/OS_lib.c ****     {
+ 300:../mylib_t/OS_lib.c ****         BITBAND_V( pevent->event_table, OS_TCBCur->ID ) = 0;
+ 301:../mylib_t/OS_lib.c ****         return(FALSE);
+ 302:../mylib_t/OS_lib.c ****     }
+ 303:../mylib_t/OS_lib.c **** #else
+ 304:../mylib_t/OS_lib.c ****     if( PBI( pevent->event_table.Table, OS_TCBCur->ID) )
+ 379              		.loc 1 304 0
+ 380 0002 074B     		ldr	r3, .L34
+ 295:../mylib_t/OS_lib.c **** 
+ 381              		.loc 1 295 0
+ 382 0004 0100     		movs	r1, r0
+ 383              		.loc 1 304 0
+ 384 0006 1B68     		ldr	r3, [r3]
+ 385 0008 4268     		ldr	r2, [r0, #4]
+ 386 000a 987B     		ldrb	r0, [r3, #14]
+ 387              	.LVL35:
+ 388 000c 0123     		movs	r3, #1
+ 389 000e 1C00     		movs	r4, r3
+ 390 0010 8440     		lsls	r4, r4, r0
+ 305:../mylib_t/OS_lib.c ****     {
+ 306:../mylib_t/OS_lib.c ****         CBI( pevent->event_table.Table, OS_TCBCur->ID );
+ 307:../mylib_t/OS_lib.c ****         return(FALSE);
+ 308:../mylib_t/OS_lib.c ****     }
+ 309:../mylib_t/OS_lib.c **** #endif
+ 310:../mylib_t/OS_lib.c ****     return(TRUE);
+ 391              		.loc 1 310 0
+ 392 0012 1800     		movs	r0, r3
+ 304:../mylib_t/OS_lib.c ****     {
+ 393              		.loc 1 304 0
+ 394 0014 2242     		tst	r2, r4
+ 395 0016 02D0     		beq	.L31
+ 307:../mylib_t/OS_lib.c ****     }
+ 396              		.loc 1 307 0
+ 397 0018 0020     		movs	r0, #0
+ 306:../mylib_t/OS_lib.c ****         return(FALSE);
+ 398              		.loc 1 306 0
+ 399 001a A243     		bics	r2, r4
+ 400 001c 4A60     		str	r2, [r1, #4]
+ 401              	.L31:
+ 311:../mylib_t/OS_lib.c **** }
+ 402              		.loc 1 311 0
+ 403              		@ sp needed
+ 404 001e 10BD     		pop	{r4, pc}
+ 405              	.L35:
+ 406              		.align	2
+ 407              	.L34:
+ 408 0020 00000000 		.word	OS_TCBCur
+ 409              		.cfi_endproc
+ 410              	.LFE69:
+ 412              		.section	.text.OSTaskFindIdleID,"ax",%progbits
+ 413              		.align	1
+ 414              		.global	OSTaskFindIdleID
+ 415              		.code	16
+ 416              		.thumb_func
+ 418              	OSTaskFindIdleID:
+ 419              	.LFB70:
+ 312:../mylib_t/OS_lib.c **** 
+ 313:../mylib_t/OS_lib.c **** /*
+ 314:../mylib_t/OS_lib.c ****  * 查询空闲的线程ID号
+ 315:../mylib_t/OS_lib.c ****  */
+ 316:../mylib_t/OS_lib.c **** int OSTaskFindIdleID( void )
+ 317:../mylib_t/OS_lib.c **** {
+ 420              		.loc 1 317 0
+ 421              		.cfi_startproc
+ 422              		@ args = 0, pretend = 0, frame = 0
+ 423              		@ frame_needed = 0, uses_anonymous_args = 0
+ 424              		@ link register save eliminated.
+ 425              	.LVL36:
+ 426              	.LBB10:
+ 318:../mylib_t/OS_lib.c ****     for(int i=OS_TASKS-1; i>=0; i-- )
+ 427              		.loc 1 318 0
+ 428 0000 0720     		movs	r0, #7
+ 319:../mylib_t/OS_lib.c ****     {
+ 320:../mylib_t/OS_lib.c ****         if( OS_TCBTbl[i].TCBCreate == 0 )
+ 429              		.loc 1 320 0
+ 430 0002 1C21     		movs	r1, #28
+ 431 0004 044A     		ldr	r2, .L42
+ 432              	.LVL37:
+ 433              	.L38:
+ 434 0006 0B00     		movs	r3, r1
+ 435 0008 4343     		muls	r3, r0
+ 436 000a D318     		adds	r3, r2, r3
+ 437 000c DB7B     		ldrb	r3, [r3, #15]
+ 438 000e DB07     		lsls	r3, r3, #31
+ 439 0010 01D5     		bpl	.L37
+ 440              	.LVL38:
+ 318:../mylib_t/OS_lib.c ****     for(int i=OS_TASKS-1; i>=0; i-- )
+ 441              		.loc 1 318 0 discriminator 2
+ 442 0012 0138     		subs	r0, r0, #1
+ 443 0014 F7D2     		bcs	.L38
+ 444              	.LVL39:
+ 445              	.L37:
+ 446              	.LBE10:
+ 321:../mylib_t/OS_lib.c ****             return i;
+ 322:../mylib_t/OS_lib.c ****     }
+ 323:../mylib_t/OS_lib.c ****     return -1;
+ 324:../mylib_t/OS_lib.c **** }
+ 447              		.loc 1 324 0
+ 448              		@ sp needed
+ 449 0016 7047     		bx	lr
+ 450              	.L43:
+ 451              		.align	2
+ 452              	.L42:
+ 453 0018 00000000 		.word	OS_TCBTbl
+ 454              		.cfi_endproc
+ 455              	.LFE70:
+ 457              		.section	.text.OSGetPID,"ax",%progbits
+ 458              		.align	1
+ 459              		.global	OSGetPID
+ 460              		.code	16
+ 461              		.thumb_func
+ 463              	OSGetPID:
+ 464              	.LFB71:
+ 325:../mylib_t/OS_lib.c **** 
+ 326:../mylib_t/OS_lib.c **** /*
+ 327:../mylib_t/OS_lib.c ****  * 获取当前运行进程的ID号
+ 328:../mylib_t/OS_lib.c ****  */
+ 329:../mylib_t/OS_lib.c **** int OSGetPID( void )
+ 330:../mylib_t/OS_lib.c **** {
+ 465              		.loc 1 330 0
+ 466              		.cfi_startproc
+ 467              		@ args = 0, pretend = 0, frame = 0
+ 468              		@ frame_needed = 0, uses_anonymous_args = 0
+ 469              		@ link register save eliminated.
+ 331:../mylib_t/OS_lib.c ****     return OS_TCBCur->ID;
+ 470              		.loc 1 331 0
+ 471 0000 014B     		ldr	r3, .L45
+ 332:../mylib_t/OS_lib.c **** }
+ 472              		.loc 1 332 0
+ 473              		@ sp needed
+ 331:../mylib_t/OS_lib.c ****     return OS_TCBCur->ID;
+ 474              		.loc 1 331 0
+ 475 0002 1B68     		ldr	r3, [r3]
+ 476 0004 987B     		ldrb	r0, [r3, #14]
+ 477              		.loc 1 332 0
+ 478 0006 7047     		bx	lr
+ 479              	.L46:
+ 480              		.align	2
+ 481              	.L45:
+ 482 0008 00000000 		.word	OS_TCBCur
+ 483              		.cfi_endproc
+ 484              	.LFE71:
+ 486              		.section	.text.OSEventTaskWait,"ax",%progbits
+ 487              		.align	1
+ 488              		.global	OSEventTaskWait
+ 489              		.code	16
+ 490              		.thumb_func
+ 492              	OSEventTaskWait:
+ 493              	.LFB72:
+ 333:../mylib_t/OS_lib.c **** 
+ 334:../mylib_t/OS_lib.c **** /*
+ 335:../mylib_t/OS_lib.c ****  *******************************************************************************
+ 336:../mylib_t/OS_lib.c ****  ** 函数名称: OSEventTaskWait
+ 337:../mylib_t/OS_lib.c ****  ** 功能描述: 在输入事件中把当前任务置为等待状态
+ 338:../mylib_t/OS_lib.c ****  ** 输　入: pevent:   事件指针
+ 339:../mylib_t/OS_lib.c ****  ** 输　出: 无
+ 340:../mylib_t/OS_lib.c ****  ** 全局变量: OSMapTbl：查找位表 优化算法
+ 341:../mylib_t/OS_lib.c ****  **         OSTaskRunningPrio：当前运行任务的优先级
+ 342:../mylib_t/OS_lib.c ****  ** 调用模块: 无
+ 343:../mylib_t/OS_lib.c ****  ********************************************************************************
+ 344:../mylib_t/OS_lib.c ****  */
+ 345:../mylib_t/OS_lib.c **** void OSEventTaskWait(OS_EVENT *pevent, uint16 timeout)
+ 346:../mylib_t/OS_lib.c **** {
+ 494              		.loc 1 346 0
+ 495              		.cfi_startproc
+ 496              		@ args = 0, pretend = 0, frame = 0
+ 497              		@ frame_needed = 0, uses_anonymous_args = 0
+ 498              	.LVL40:
+ 499 0000 F8B5     		push	{r3, r4, r5, r6, r7, lr}
+ 500              	.LCFI5:
+ 501              		.cfi_def_cfa_offset 24
+ 502              		.cfi_offset 3, -24
+ 503              		.cfi_offset 4, -20
+ 504              		.cfi_offset 5, -16
+ 505              		.cfi_offset 6, -12
+ 506              		.cfi_offset 7, -8
+ 507              		.cfi_offset 14, -4
+ 347:../mylib_t/OS_lib.c ****     if (OS_TCBTbl->ID < OS_TASKS) {
+ 508              		.loc 1 347 0
+ 509 0002 0B4E     		ldr	r6, .L49
+ 346:../mylib_t/OS_lib.c ****     if (OS_TCBTbl->ID < OS_TASKS) {
+ 510              		.loc 1 346 0
+ 511 0004 0400     		movs	r4, r0
+ 512              		.loc 1 347 0
+ 513 0006 B37B     		ldrb	r3, [r6, #14]
+ 346:../mylib_t/OS_lib.c ****     if (OS_TCBTbl->ID < OS_TASKS) {
+ 514              		.loc 1 346 0
+ 515 0008 0D00     		movs	r5, r1
+ 516              		.loc 1 347 0
+ 517 000a 072B     		cmp	r3, #7
+ 518 000c 0ED8     		bhi	.L47
+ 348:../mylib_t/OS_lib.c **** #if defined( BITBAND_V )
+ 349:../mylib_t/OS_lib.c ****         BITBAND_V( OSRdyTbl, OS_TCBCur->ID ) = 0;
+ 350:../mylib_t/OS_lib.c ****         OS_TCBTbl[OS_TCBCur->ID].OSWaitTick = timeout;
+ 351:../mylib_t/OS_lib.c ****         BITBAND_V( pevent->event_table, OS_TCBCur->ID ) = 1;
+ 352:../mylib_t/OS_lib.c **** #else
+ 353:../mylib_t/OS_lib.c ****         OSTableWait( &OSRdyTbl, OS_TCBCur->ID );
+ 519              		.loc 1 353 0
+ 520 000e 094F     		ldr	r7, .L49+4
+ 521 0010 0948     		ldr	r0, .L49+8
+ 522              	.LVL41:
+ 523 0012 3B68     		ldr	r3, [r7]
+ 524 0014 997B     		ldrb	r1, [r3, #14]
+ 525              	.LVL42:
+ 526 0016 FFF7FEFF 		bl	OSTableWait
+ 527              	.LVL43:
+ 354:../mylib_t/OS_lib.c ****         OS_TCBTbl[OS_TCBCur->ID].OSWaitTick = timeout;
+ 528              		.loc 1 354 0
+ 529 001a 3B68     		ldr	r3, [r7]
+ 355:../mylib_t/OS_lib.c ****         OSTableRdy( &pevent->event_table, OS_TCBCur->ID );
+ 530              		.loc 1 355 0
+ 531 001c 201D     		adds	r0, r4, #4
+ 354:../mylib_t/OS_lib.c ****         OS_TCBTbl[OS_TCBCur->ID].OSWaitTick = timeout;
+ 532              		.loc 1 354 0
+ 533 001e 997B     		ldrb	r1, [r3, #14]
+ 534 0020 1C23     		movs	r3, #28
+ 535 0022 4B43     		muls	r3, r1
+ 536 0024 F318     		adds	r3, r6, r3
+ 537 0026 5D81     		strh	r5, [r3, #10]
+ 538              		.loc 1 355 0
+ 539 0028 FFF7FEFF 		bl	OSTableRdy
+ 540              	.LVL44:
+ 541              	.L47:
+ 356:../mylib_t/OS_lib.c **** #endif
+ 357:../mylib_t/OS_lib.c ****     }
+ 358:../mylib_t/OS_lib.c **** }
+ 542              		.loc 1 358 0
+ 543              		@ sp needed
+ 544              	.LVL45:
+ 545 002c F8BD     		pop	{r3, r4, r5, r6, r7, pc}
+ 546              	.L50:
+ 547 002e C046     		.align	2
+ 548              	.L49:
+ 549 0030 00000000 		.word	OS_TCBTbl
+ 550 0034 00000000 		.word	OS_TCBCur
+ 551 0038 00000000 		.word	.LANCHOR0
+ 552              		.cfi_endproc
+ 553              	.LFE72:
+ 555              		.section	.text.OSEventTaskRdy,"ax",%progbits
+ 556              		.align	1
+ 557              		.global	OSEventTaskRdy
+ 558              		.code	16
+ 559              		.thumb_func
+ 561              	OSEventTaskRdy:
+ 562              	.LFB73:
+ 359:../mylib_t/OS_lib.c **** 
+ 360:../mylib_t/OS_lib.c **** 
+ 361:../mylib_t/OS_lib.c **** 
+ 362:../mylib_t/OS_lib.c **** /*
+ 363:../mylib_t/OS_lib.c ****  *******************************************************************************
+ 364:../mylib_t/OS_lib.c ****  ** 函数名称: OSEventTaskRdy
+ 365:../mylib_t/OS_lib.c ****  ** 功能描述: 把当前事件中优先级最高的任务置为就绪状态
+ 366:../mylib_t/OS_lib.c ****  ** 输　入: pevent:  事件指针
+ 367:../mylib_t/OS_lib.c ****  **         msg:     消息指针
+ 368:../mylib_t/OS_lib.c ****  ** 输　出: prio:   置为就绪状态的任务优先级
+ 369:../mylib_t/OS_lib.c ****  ** 全局变量: OSUnMapTbl：表 查询当前中优先级最高的任务
+ 370:../mylib_t/OS_lib.c ****  **           OSMapTbl:   表 把当前任务从事件中删除
+ 371:../mylib_t/OS_lib.c ****  **           OS_TCBTbl:  任务控制块表 把就绪任务的等待时间清零
+ 372:../mylib_t/OS_lib.c ****  **           OSRdyTbl:   系统任务就绪表 
+ 373:../mylib_t/OS_lib.c ****  ** 调用模块: OSGetTablePro
+ 374:../mylib_t/OS_lib.c ****  ********************************************************************************
+ 375:../mylib_t/OS_lib.c ****  */
+ 376:../mylib_t/OS_lib.c **** uint8 OSEventTaskRdy(OS_EVENT *pevent, void *msg)
+ 377:../mylib_t/OS_lib.c **** {
+ 563              		.loc 1 377 0
+ 564              		.cfi_startproc
+ 565              		@ args = 0, pretend = 0, frame = 0
+ 566              		@ frame_needed = 0, uses_anonymous_args = 0
+ 567              	.LVL46:
+ 568 0000 F8B5     		push	{r3, r4, r5, r6, r7, lr}
+ 569              	.LCFI6:
+ 570              		.cfi_def_cfa_offset 24
+ 571              		.cfi_offset 3, -24
+ 572              		.cfi_offset 4, -20
+ 573              		.cfi_offset 5, -16
+ 574              		.cfi_offset 6, -12
+ 575              		.cfi_offset 7, -8
+ 576              		.cfi_offset 14, -4
+ 378:../mylib_t/OS_lib.c ****     uint8 prio = OSGetTablePro( &pevent->event_table );   
+ 577              		.loc 1 378 0
+ 578 0002 061D     		adds	r6, r0, #4
+ 377:../mylib_t/OS_lib.c ****     uint8 prio = OSGetTablePro( &pevent->event_table );   
+ 579              		.loc 1 377 0
+ 580 0004 0500     		movs	r5, r0
+ 581              		.loc 1 378 0
+ 582 0006 3000     		movs	r0, r6
+ 583              	.LVL47:
+ 377:../mylib_t/OS_lib.c ****     uint8 prio = OSGetTablePro( &pevent->event_table );   
+ 584              		.loc 1 377 0
+ 585 0008 0F00     		movs	r7, r1
+ 586              		.loc 1 378 0
+ 587 000a FFF7FEFF 		bl	OSGetTablePro
+ 588              	.LVL48:
+ 589 000e 0400     		movs	r4, r0
+ 590              	.LVL49:
+ 379:../mylib_t/OS_lib.c **** #if defined( BITBAND_V )
+ 380:../mylib_t/OS_lib.c ****     BITBAND_V( pevent->event_table, prio ) = 0;
+ 381:../mylib_t/OS_lib.c **** #else
+ 382:../mylib_t/OS_lib.c ****     OSTableWait( &pevent->event_table, prio ); 
+ 591              		.loc 1 382 0
+ 592 0010 0100     		movs	r1, r0
+ 593 0012 3000     		movs	r0, r6
+ 594              	.LVL50:
+ 595 0014 FFF7FEFF 		bl	OSTableWait
+ 596              	.LVL51:
+ 383:../mylib_t/OS_lib.c **** #endif
+ 384:../mylib_t/OS_lib.c ****     pevent->event_ptr = msg;
+ 385:../mylib_t/OS_lib.c ****     if( OS_TCBTbl[prio].TCBCreate )
+ 597              		.loc 1 385 0
+ 598 0018 1C23     		movs	r3, #28
+ 599 001a 6343     		muls	r3, r4
+ 600 001c 064A     		ldr	r2, .L56
+ 384:../mylib_t/OS_lib.c ****     if( OS_TCBTbl[prio].TCBCreate )
+ 601              		.loc 1 384 0
+ 602 001e AF60     		str	r7, [r5, #8]
+ 603              		.loc 1 385 0
+ 604 0020 D318     		adds	r3, r2, r3
+ 605 0022 DA7B     		ldrb	r2, [r3, #15]
+ 606 0024 D207     		lsls	r2, r2, #31
+ 607 0026 05D5     		bpl	.L52
+ 386:../mylib_t/OS_lib.c ****     {
+ 387:../mylib_t/OS_lib.c ****         OS_TCBTbl[prio].OSWaitTick = 0; 
+ 608              		.loc 1 387 0
+ 609 0028 0022     		movs	r2, #0
+ 388:../mylib_t/OS_lib.c **** 
+ 389:../mylib_t/OS_lib.c **** #if defined( BITBAND_V )
+ 390:../mylib_t/OS_lib.c ****         BITBAND_V( OSRdyTbl, prio ) = 1;
+ 391:../mylib_t/OS_lib.c **** #else
+ 392:../mylib_t/OS_lib.c ****         OSTableRdy( &OSRdyTbl, prio );
+ 610              		.loc 1 392 0
+ 611 002a 2100     		movs	r1, r4
+ 387:../mylib_t/OS_lib.c **** 
+ 612              		.loc 1 387 0
+ 613 002c 5A81     		strh	r2, [r3, #10]
+ 614              		.loc 1 392 0
+ 615 002e 0348     		ldr	r0, .L56+4
+ 616 0030 FFF7FEFF 		bl	OSTableRdy
+ 617              	.LVL52:
+ 618              	.L52:
+ 393:../mylib_t/OS_lib.c **** #endif
+ 394:../mylib_t/OS_lib.c ****     }
+ 395:../mylib_t/OS_lib.c **** 
+ 396:../mylib_t/OS_lib.c ****     return(prio);
+ 397:../mylib_t/OS_lib.c **** }
+ 619              		.loc 1 397 0
+ 620 0034 2000     		movs	r0, r4
+ 621              		@ sp needed
+ 622              	.LVL53:
+ 623              	.LVL54:
+ 624              	.LVL55:
+ 625 0036 F8BD     		pop	{r3, r4, r5, r6, r7, pc}
+ 626              	.L57:
+ 627              		.align	2
+ 628              	.L56:
+ 629 0038 00000000 		.word	OS_TCBTbl
+ 630 003c 00000000 		.word	.LANCHOR0
+ 631              		.cfi_endproc
+ 632              	.LFE73:
+ 634              		.section	.text.OS_SchedNew,"ax",%progbits
+ 635              		.align	1
+ 636              		.global	OS_SchedNew
+ 637              		.code	16
+ 638              		.thumb_func
+ 640              	OS_SchedNew:
+ 641              	.LFB74:
+ 398:../mylib_t/OS_lib.c **** 
+ 399:../mylib_t/OS_lib.c **** /*
+ 400:../mylib_t/OS_lib.c ****  * 2010-11-10 任务就绪查询列为一个新的函数
+ 401:../mylib_t/OS_lib.c ****  */
+ 402:../mylib_t/OS_lib.c **** void OS_SchedNew(void )
+ 403:../mylib_t/OS_lib.c **** {
+ 642              		.loc 1 403 0
+ 643              		.cfi_startproc
+ 644              		@ args = 0, pretend = 0, frame = 0
+ 645              		@ frame_needed = 0, uses_anonymous_args = 0
+ 646 0000 10B5     		push	{r4, lr}
+ 647              	.LCFI7:
+ 648              		.cfi_def_cfa_offset 8
+ 649              		.cfi_offset 4, -8
+ 650              		.cfi_offset 14, -4
+ 404:../mylib_t/OS_lib.c ****     uint8 nextID = OSGetTablePro( &OSRdyTbl );
+ 651              		.loc 1 404 0
+ 652 0002 0548     		ldr	r0, .L59
+ 653 0004 FFF7FEFF 		bl	OSGetTablePro
+ 654              	.LVL56:
+ 405:../mylib_t/OS_lib.c ****     OS_TCBHighRdy = &OS_TCBTbl[nextID];
+ 655              		.loc 1 405 0
+ 656 0008 1C23     		movs	r3, #28
+ 657 000a 5843     		muls	r0, r3
+ 658              	.LVL57:
+ 659 000c 034B     		ldr	r3, .L59+4
+ 406:../mylib_t/OS_lib.c **** }
+ 660              		.loc 1 406 0
+ 661              		@ sp needed
+ 405:../mylib_t/OS_lib.c ****     OS_TCBHighRdy = &OS_TCBTbl[nextID];
+ 662              		.loc 1 405 0
+ 663 000e C018     		adds	r0, r0, r3
+ 664 0010 034B     		ldr	r3, .L59+8
+ 665 0012 1860     		str	r0, [r3]
+ 666              		.loc 1 406 0
+ 667 0014 10BD     		pop	{r4, pc}
+ 668              	.L60:
+ 669 0016 C046     		.align	2
+ 670              	.L59:
+ 671 0018 00000000 		.word	.LANCHOR0
+ 672 001c 00000000 		.word	OS_TCBTbl
+ 673 0020 00000000 		.word	OS_TCBHighRdy
+ 674              		.cfi_endproc
+ 675              	.LFE74:
+ 677              		.section	.text.OSGetTime,"ax",%progbits
+ 678              		.align	1
+ 679              		.global	OSGetTime
+ 680              		.code	16
+ 681              		.thumb_func
+ 683              	OSGetTime:
+ 684              	.LFB75:
+ 407:../mylib_t/OS_lib.c **** 
+ 408:../mylib_t/OS_lib.c **** /*
+ 409:../mylib_t/OS_lib.c ****  * 读取系统时间
+ 410:../mylib_t/OS_lib.c ****  */
+ 411:../mylib_t/OS_lib.c **** uint32 OSGetTime()
+ 412:../mylib_t/OS_lib.c **** {
+ 685              		.loc 1 412 0
+ 686              		.cfi_startproc
+ 687              		@ args = 0, pretend = 0, frame = 0
+ 688              		@ frame_needed = 0, uses_anonymous_args = 0
+ 689 0000 10B5     		push	{r4, lr}
+ 690              	.LCFI8:
+ 691              		.cfi_def_cfa_offset 8
+ 692              		.cfi_offset 4, -8
+ 693              		.cfi_offset 14, -4
+ 413:../mylib_t/OS_lib.c **** 	uint32 ret;
+ 414:../mylib_t/OS_lib.c ****     OS_SREG_VAR;
+ 415:../mylib_t/OS_lib.c **** 
+ 416:../mylib_t/OS_lib.c ****     OS_ENTER_CRITICAL();
+ 694              		.loc 1 416 0
+ 695 0002 FFF7FEFF 		bl	OS_CPU_SR_Save
+ 696              	.LVL58:
+ 417:../mylib_t/OS_lib.c ****     ret = OSTimeCnt;
+ 697              		.loc 1 417 0
+ 698 0006 034B     		ldr	r3, .L62
+ 418:../mylib_t/OS_lib.c ****     OS_EXIT_CRITICAL();
+ 419:../mylib_t/OS_lib.c **** 	return ret;
+ 420:../mylib_t/OS_lib.c **** }
+ 699              		.loc 1 420 0
+ 700              		@ sp needed
+ 417:../mylib_t/OS_lib.c ****     ret = OSTimeCnt;
+ 701              		.loc 1 417 0
+ 702 0008 1C68     		ldr	r4, [r3]
+ 703              	.LVL59:
+ 418:../mylib_t/OS_lib.c ****     OS_EXIT_CRITICAL();
+ 704              		.loc 1 418 0
+ 705 000a FFF7FEFF 		bl	OS_CPU_SR_Restore
+ 706              	.LVL60:
+ 707              		.loc 1 420 0
+ 708 000e 2000     		movs	r0, r4
+ 709              	.LVL61:
+ 710 0010 10BD     		pop	{r4, pc}
+ 711              	.L63:
+ 712 0012 C046     		.align	2
+ 713              	.L62:
+ 714 0014 00000000 		.word	OSTimeCnt
+ 715              		.cfi_endproc
+ 716              	.LFE75:
+ 718              		.section	.text.OSSetTime,"ax",%progbits
+ 719              		.align	1
+ 720              		.global	OSSetTime
+ 721              		.code	16
+ 722              		.thumb_func
+ 724              	OSSetTime:
+ 725              	.LFB76:
+ 421:../mylib_t/OS_lib.c **** 
+ 422:../mylib_t/OS_lib.c **** /*
+ 423:../mylib_t/OS_lib.c ****  * 设置系统时间
+ 424:../mylib_t/OS_lib.c ****  */
+ 425:../mylib_t/OS_lib.c **** uint32 OSSetTime(uint32 t )
+ 426:../mylib_t/OS_lib.c **** {
+ 726              		.loc 1 426 0
+ 727              		.cfi_startproc
+ 728              		@ args = 0, pretend = 0, frame = 0
+ 729              		@ frame_needed = 0, uses_anonymous_args = 0
+ 730              	.LVL62:
+ 731 0000 70B5     		push	{r4, r5, r6, lr}
+ 732              	.LCFI9:
+ 733              		.cfi_def_cfa_offset 16
+ 734              		.cfi_offset 4, -16
+ 735              		.cfi_offset 5, -12
+ 736              		.cfi_offset 6, -8
+ 737              		.cfi_offset 14, -4
+ 738              		.loc 1 426 0
+ 739 0002 0500     		movs	r5, r0
+ 427:../mylib_t/OS_lib.c ****     OS_SREG_VAR;
+ 428:../mylib_t/OS_lib.c ****     OS_ENTER_CRITICAL();
+ 740              		.loc 1 428 0
+ 741 0004 FFF7FEFF 		bl	OS_CPU_SR_Save
+ 742              	.LVL63:
+ 429:../mylib_t/OS_lib.c ****     OSTimeCnt = t;
+ 743              		.loc 1 429 0
+ 744 0008 024C     		ldr	r4, .L65
+ 430:../mylib_t/OS_lib.c ****     OS_EXIT_CRITICAL();
+ 431:../mylib_t/OS_lib.c ****     return OSTimeCnt;
+ 432:../mylib_t/OS_lib.c **** }
+ 745              		.loc 1 432 0
+ 746              		@ sp needed
+ 429:../mylib_t/OS_lib.c ****     OSTimeCnt = t;
+ 747              		.loc 1 429 0
+ 748 000a 2560     		str	r5, [r4]
+ 430:../mylib_t/OS_lib.c ****     OS_EXIT_CRITICAL();
+ 749              		.loc 1 430 0
+ 750 000c FFF7FEFF 		bl	OS_CPU_SR_Restore
+ 751              	.LVL64:
+ 431:../mylib_t/OS_lib.c **** }
+ 752              		.loc 1 431 0
+ 753 0010 2068     		ldr	r0, [r4]
+ 754              	.LVL65:
+ 755              		.loc 1 432 0
+ 756 0012 70BD     		pop	{r4, r5, r6, pc}
+ 757              	.L66:
+ 758              		.align	2
+ 759              	.L65:
+ 760 0014 00000000 		.word	OSTimeCnt
+ 761              		.cfi_endproc
+ 762              	.LFE76:
+ 764              		.section	.text.OSTimeTick,"ax",%progbits
+ 765              		.align	1
+ 766              		.global	OSTimeTick
+ 767              		.code	16
+ 768              		.thumb_func
+ 770              	OSTimeTick:
+ 771              	.LFB77:
+ 433:../mylib_t/OS_lib.c **** 
+ 434:../mylib_t/OS_lib.c **** /*
+ 435:../mylib_t/OS_lib.c ****  * 查询系统就绪进程，设置为就绪
+ 436:../mylib_t/OS_lib.c ****  */
+ 437:../mylib_t/OS_lib.c **** void OSTimeTick(void)
+ 438:../mylib_t/OS_lib.c **** {
+ 772              		.loc 1 438 0
+ 773              		.cfi_startproc
+ 774              		@ args = 0, pretend = 0, frame = 0
+ 775              		@ frame_needed = 0, uses_anonymous_args = 0
+ 776 0000 70B5     		push	{r4, r5, r6, lr}
+ 777              	.LCFI10:
+ 778              		.cfi_def_cfa_offset 16
+ 779              		.cfi_offset 4, -16
+ 780              		.cfi_offset 5, -12
+ 781              		.cfi_offset 6, -8
+ 782              		.cfi_offset 14, -4
+ 439:../mylib_t/OS_lib.c ****     uint8 i;
+ 440:../mylib_t/OS_lib.c ****     OSTimeCnt++;
+ 441:../mylib_t/OS_lib.c ****     for(i=0; i<OS_TASKS; i++)
+ 783              		.loc 1 441 0
+ 784 0002 0024     		movs	r4, #0
+ 440:../mylib_t/OS_lib.c ****     for(i=0; i<OS_TASKS; i++)
+ 785              		.loc 1 440 0
+ 786 0004 0B4A     		ldr	r2, .L73
+ 787 0006 0C4D     		ldr	r5, .L73+4
+ 788 0008 1368     		ldr	r3, [r2]
+ 789 000a 0133     		adds	r3, r3, #1
+ 790 000c 1360     		str	r3, [r2]
+ 791              	.LVL66:
+ 792              	.L71:
+ 442:../mylib_t/OS_lib.c ****     {
+ 443:../mylib_t/OS_lib.c ****         if(OS_TCBTbl[i].OSWaitTick)
+ 793              		.loc 1 443 0
+ 794 000e 2B88     		ldrh	r3, [r5]
+ 795 0010 002B     		cmp	r3, #0
+ 796 0012 08D0     		beq	.L69
+ 444:../mylib_t/OS_lib.c ****         {
+ 445:../mylib_t/OS_lib.c ****             OS_TCBTbl[i].OSWaitTick--;
+ 797              		.loc 1 445 0
+ 798 0014 013B     		subs	r3, r3, #1
+ 799 0016 9BB2     		uxth	r3, r3
+ 800 0018 2B80     		strh	r3, [r5]
+ 446:../mylib_t/OS_lib.c ****             if(OS_TCBTbl[i].OSWaitTick == 0)     //当任务时钟到时,必须是由定时器减时的才行
+ 801              		.loc 1 446 0
+ 802 001a 002B     		cmp	r3, #0
+ 803 001c 03D1     		bne	.L69
+ 447:../mylib_t/OS_lib.c ****             {      //使任务在就绪表中置位
+ 448:../mylib_t/OS_lib.c **** #if defined( BITBAND_V )
+ 449:../mylib_t/OS_lib.c ****                 BITBAND_V( OSRdyTbl, i ) = 1;
+ 450:../mylib_t/OS_lib.c **** #else
+ 451:../mylib_t/OS_lib.c ****                 OSTableRdy( &OSRdyTbl, i ); 
+ 804              		.loc 1 451 0
+ 805 001e 2100     		movs	r1, r4
+ 806 0020 0648     		ldr	r0, .L73+8
+ 807 0022 FFF7FEFF 		bl	OSTableRdy
+ 808              	.LVL67:
+ 809              	.L69:
+ 441:../mylib_t/OS_lib.c ****     {
+ 810              		.loc 1 441 0 discriminator 2
+ 811 0026 0134     		adds	r4, r4, #1
+ 812              	.LVL68:
+ 813 0028 E4B2     		uxtb	r4, r4
+ 814              	.LVL69:
+ 815 002a 1C35     		adds	r5, r5, #28
+ 816 002c 082C     		cmp	r4, #8
+ 817 002e EED1     		bne	.L71
+ 452:../mylib_t/OS_lib.c **** #endif 
+ 453:../mylib_t/OS_lib.c ****             }
+ 454:../mylib_t/OS_lib.c ****         }
+ 455:../mylib_t/OS_lib.c ****     }
+ 456:../mylib_t/OS_lib.c **** }
+ 818              		.loc 1 456 0
+ 819              		@ sp needed
+ 820              	.LVL70:
+ 821 0030 70BD     		pop	{r4, r5, r6, pc}
+ 822              	.L74:
+ 823 0032 C046     		.align	2
+ 824              	.L73:
+ 825 0034 00000000 		.word	OSTimeCnt
+ 826 0038 0A000000 		.word	OS_TCBTbl+10
+ 827 003c 00000000 		.word	.LANCHOR0
+ 828              		.cfi_endproc
+ 829              	.LFE77:
+ 831              		.section	.text.OSInit,"ax",%progbits
+ 832              		.align	1
+ 833              		.global	OSInit
+ 834              		.code	16
+ 835              		.thumb_func
+ 837              	OSInit:
+ 838              	.LFB79:
+ 457:../mylib_t/OS_lib.c **** 
+ 458:../mylib_t/OS_lib.c **** 
+ 459:../mylib_t/OS_lib.c **** #if OS_TASK_IDLE_EN > 0
+ 460:../mylib_t/OS_lib.c **** 
+ 461:../mylib_t/OS_lib.c **** OSTASK_STK( OSIdle,   OS_TASK_IDLE_STK_SIZE );
+ 462:../mylib_t/OS_lib.c **** volatile uint32 OSIdleCtr;
+ 463:../mylib_t/OS_lib.c **** /*
+ 464:../mylib_t/OS_lib.c ****  * 空闲进程
+ 465:../mylib_t/OS_lib.c ****  */
+ 466:../mylib_t/OS_lib.c **** __OSTASK(OSIdle)
+ 467:../mylib_t/OS_lib.c **** {
+ 468:../mylib_t/OS_lib.c ****     OS_SREG_VAR;
+ 469:../mylib_t/OS_lib.c ****     while(1)
+ 470:../mylib_t/OS_lib.c ****     {
+ 471:../mylib_t/OS_lib.c **** #if OS_TASK_HOOK_EN > 0
+ 472:../mylib_t/OS_lib.c ****         OS_TaskIdle_Hook();  //空闲任务钩子函数
+ 473:../mylib_t/OS_lib.c **** #endif 
+ 474:../mylib_t/OS_lib.c ****         OSTaskDelHook();     //删除进程钩子函数
+ 475:../mylib_t/OS_lib.c **** 
+ 476:../mylib_t/OS_lib.c ****         OS_ENTER_CRITICAL();
+ 477:../mylib_t/OS_lib.c ****         OSIdleCtr++;
+ 478:../mylib_t/OS_lib.c ****         OS_EXIT_CRITICAL();
+ 479:../mylib_t/OS_lib.c ****     }
+ 480:../mylib_t/OS_lib.c **** }
+ 481:../mylib_t/OS_lib.c **** 
+ 482:../mylib_t/OS_lib.c **** #if OS_STAT_EN > 0
+ 483:../mylib_t/OS_lib.c **** /*
+ 484:../mylib_t/OS_lib.c ****  * 初始化CPU统计任务数据初始化
+ 485:../mylib_t/OS_lib.c ****  */
+ 486:../mylib_t/OS_lib.c **** void OSStatInit(void) {
+ 487:../mylib_t/OS_lib.c **** 	OS_SREG_VAR;
+ 488:../mylib_t/OS_lib.c **** 	OSTimeDly(2);
+ 489:../mylib_t/OS_lib.c **** 	OS_ENTER_CRITICAL();
+ 490:../mylib_t/OS_lib.c **** 	OSIdleCtr = 0L;
+ 491:../mylib_t/OS_lib.c **** 	OS_EXIT_CRITICAL();
+ 492:../mylib_t/OS_lib.c **** 	OSTimeDly(OS_TICKS_PER_SEC);
+ 493:../mylib_t/OS_lib.c **** 	OS_ENTER_CRITICAL();
+ 494:../mylib_t/OS_lib.c **** 	OSIdleCtrMax = OSIdleCtr;
+ 495:../mylib_t/OS_lib.c **** 	OSStatRdy = TRUE;
+ 496:../mylib_t/OS_lib.c **** 	OS_EXIT_CRITICAL();
+ 497:../mylib_t/OS_lib.c **** }
+ 498:../mylib_t/OS_lib.c **** 
+ 499:../mylib_t/OS_lib.c **** uint8  OSCPUUsage;     //CPU运行百分比
+ 500:../mylib_t/OS_lib.c **** uint8  OSStatRdy;      //记录空闲1S统计是否成功
+ 501:../mylib_t/OS_lib.c **** uint32 OSIdleCtrRun;   //CPU运行过程中空闲计数器
+ 502:../mylib_t/OS_lib.c **** uint32 OSIdleCtrMax;   //空闲1S计数器最大数值
+ 503:../mylib_t/OS_lib.c **** OSTASK_STK( OSStat,   OS_STAT_STK_SIZE );
+ 504:../mylib_t/OS_lib.c **** /*
+ 505:../mylib_t/OS_lib.c ****  * CPU统计任务
+ 506:../mylib_t/OS_lib.c ****  */
+ 507:../mylib_t/OS_lib.c **** __OSTASK( OSStat )
+ 508:../mylib_t/OS_lib.c **** {
+ 509:../mylib_t/OS_lib.c **** 	OS_SREG_VAR;
+ 510:../mylib_t/OS_lib.c **** 	INT32U run;
+ 511:../mylib_t/OS_lib.c **** 	INT8S usage;
+ 512:../mylib_t/OS_lib.c **** 	while (OSStatRdy == FALSE) {
+ 513:../mylib_t/OS_lib.c **** 		OSTimeDly(2 * OS_TICKS_PER_SEC);
+ 514:../mylib_t/OS_lib.c **** 	}
+ 515:../mylib_t/OS_lib.c **** 
+ 516:../mylib_t/OS_lib.c **** 	for (;;) {
+ 517:../mylib_t/OS_lib.c **** 		OS_ENTER_CRITICAL();
+ 518:../mylib_t/OS_lib.c **** 		OSIdleCtrRun = OSIdleCtr;
+ 519:../mylib_t/OS_lib.c **** 		run = OSIdleCtr;
+ 520:../mylib_t/OS_lib.c **** 		OSIdleCtr = 0L;
+ 521:../mylib_t/OS_lib.c **** 		OS_EXIT_CRITICAL();
+ 522:../mylib_t/OS_lib.c **** 		if (OSIdleCtrMax > 0L) {
+ 523:../mylib_t/OS_lib.c **** 			usage = (INT8S) (100L - 100L * run / OSIdleCtrMax);
+ 524:../mylib_t/OS_lib.c **** 			if (usage > 100) {
+ 525:../mylib_t/OS_lib.c **** 				OSCPUUsage = 100;
+ 526:../mylib_t/OS_lib.c **** 			} else if (usage < 0) {
+ 527:../mylib_t/OS_lib.c **** 				OSCPUUsage = 0;
+ 528:../mylib_t/OS_lib.c **** 			} else {
+ 529:../mylib_t/OS_lib.c **** 				OSCPUUsage = usage;
+ 530:../mylib_t/OS_lib.c **** 			}
+ 531:../mylib_t/OS_lib.c **** 		} else {
+ 532:../mylib_t/OS_lib.c **** 			OSCPUUsage = 0;
+ 533:../mylib_t/OS_lib.c **** 		}
+ 534:../mylib_t/OS_lib.c **** 		OSTaskStatHook();    //统计任务钩子函数
+ 535:../mylib_t/OS_lib.c **** 		OSTimeDly(OS_TICKS_PER_SEC);
+ 536:../mylib_t/OS_lib.c **** 	}
+ 537:../mylib_t/OS_lib.c **** }
+ 538:../mylib_t/OS_lib.c **** #endif
+ 539:../mylib_t/OS_lib.c **** #endif
+ 540:../mylib_t/OS_lib.c **** 
+ 541:../mylib_t/OS_lib.c **** /*
+ 542:../mylib_t/OS_lib.c ****  * 系统初始化
+ 543:../mylib_t/OS_lib.c ****  */
+ 544:../mylib_t/OS_lib.c **** void OSInit(void)
+ 545:../mylib_t/OS_lib.c **** {
+ 839              		.loc 1 545 0
+ 840              		.cfi_startproc
+ 841              		@ args = 0, pretend = 0, frame = 0
+ 842              		@ frame_needed = 0, uses_anonymous_args = 0
+ 843 0000 73B5     		push	{r0, r1, r4, r5, r6, lr}
+ 844              	.LCFI11:
+ 845              		.cfi_def_cfa_offset 24
+ 846              		.cfi_offset 0, -24
+ 847              		.cfi_offset 1, -20
+ 848              		.cfi_offset 4, -16
+ 849              		.cfi_offset 5, -12
+ 850              		.cfi_offset 6, -8
+ 851              		.cfi_offset 14, -4
+ 546:../mylib_t/OS_lib.c ****     OSRunning         = FALSE;
+ 852              		.loc 1 546 0
+ 853 0002 0025     		movs	r5, #0
+ 854 0004 1D4B     		ldr	r3, .L80
+ 547:../mylib_t/OS_lib.c ****     OSIntNesting      = 0x00;
+ 548:../mylib_t/OS_lib.c ****     OSTimeCnt         = 0x00;
+ 549:../mylib_t/OS_lib.c ****     OSDataClean( &OSRdyTbl, sizeof( OSRdyTbl) );
+ 855              		.loc 1 549 0
+ 856 0006 1E4C     		ldr	r4, .L80+4
+ 546:../mylib_t/OS_lib.c ****     OSRunning         = FALSE;
+ 857              		.loc 1 546 0
+ 858 0008 1D70     		strb	r5, [r3]
+ 547:../mylib_t/OS_lib.c ****     OSIntNesting      = 0x00;
+ 859              		.loc 1 547 0
+ 860 000a 1E4B     		ldr	r3, .L80+8
+ 861              		.loc 1 549 0
+ 862 000c 0421     		movs	r1, #4
+ 547:../mylib_t/OS_lib.c ****     OSIntNesting      = 0x00;
+ 863              		.loc 1 547 0
+ 864 000e 1D70     		strb	r5, [r3]
+ 548:../mylib_t/OS_lib.c ****     OSDataClean( &OSRdyTbl, sizeof( OSRdyTbl) );
+ 865              		.loc 1 548 0
+ 866 0010 1D4B     		ldr	r3, .L80+12
+ 867              		.loc 1 549 0
+ 868 0012 2000     		movs	r0, r4
+ 548:../mylib_t/OS_lib.c ****     OSDataClean( &OSRdyTbl, sizeof( OSRdyTbl) );
+ 869              		.loc 1 548 0
+ 870 0014 1D60     		str	r5, [r3]
+ 871              	.LBB13:
+ 872              	.LBB14:
+ 163:../mylib_t/OS_lib.c ****     OS_EventFreeList = &OS_EventTbl[0];
+ 873              		.loc 1 163 0
+ 874 0016 261D     		adds	r6, r4, #4
+ 875              	.LBE14:
+ 876              	.LBE13:
+ 877              		.loc 1 549 0
+ 878 0018 FFF7FEFF 		bl	OSDataClean
+ 879              	.LVL71:
+ 550:../mylib_t/OS_lib.c ****     OSDataClean( OS_TCBTbl, sizeof( OS_TCBTbl ) );
+ 880              		.loc 1 550 0
+ 881 001c FC21     		movs	r1, #252
+ 882 001e 1B48     		ldr	r0, .L80+16
+ 883 0020 FFF7FEFF 		bl	OSDataClean
+ 884              	.LVL72:
+ 885              	.LBB17:
+ 886              	.LBB15:
+ 163:../mylib_t/OS_lib.c ****     OS_EventFreeList = &OS_EventTbl[0];
+ 887              		.loc 1 163 0
+ 888 0024 6021     		movs	r1, #96
+ 889 0026 3000     		movs	r0, r6
+ 890 0028 FFF7FEFF 		bl	OSDataClean
+ 891              	.LVL73:
+ 164:../mylib_t/OS_lib.c ****     for(i=1; i<OS_EVENT_SIZE; i++){
+ 892              		.loc 1 164 0
+ 893 002c 184B     		ldr	r3, .L80+20
+ 894              	.LBE15:
+ 895              	.LBE17:
+ 551:../mylib_t/OS_lib.c **** 
+ 552:../mylib_t/OS_lib.c **** #if (OS_SEM_EN > 0) || (OS_MBOX_EN > 0) || (OS_Q_EN > 0)
+ 553:../mylib_t/OS_lib.c ****     OSEventInit();
+ 554:../mylib_t/OS_lib.c **** #endif
+ 555:../mylib_t/OS_lib.c **** 
+ 556:../mylib_t/OS_lib.c **** 
+ 557:../mylib_t/OS_lib.c **** #if (OS_MEM_EN > 0) && (OS_MAX_MEM_PART > 0)
+ 558:../mylib_t/OS_lib.c ****     OS_MemInit();
+ 559:../mylib_t/OS_lib.c **** #endif
+ 560:../mylib_t/OS_lib.c **** 
+ 561:../mylib_t/OS_lib.c ****     int ret = OSTASK_CREATE(OSIdle, OS_TASKS );
+ 896              		.loc 1 561 0
+ 897 002e 2A00     		movs	r2, r5
+ 898              	.LBB18:
+ 899              	.LBB16:
+ 164:../mylib_t/OS_lib.c ****     for(i=1; i<OS_EVENT_SIZE; i++){
+ 900              		.loc 1 164 0
+ 901 0030 1E60     		str	r6, [r3]
+ 902              	.LVL74:
+ 166:../mylib_t/OS_lib.c ****     }
+ 903              		.loc 1 166 0
+ 904 0032 2300     		movs	r3, r4
+ 905 0034 1033     		adds	r3, r3, #16
+ 906 0036 E360     		str	r3, [r4, #12]
+ 907              	.LVL75:
+ 908 0038 2300     		movs	r3, r4
+ 909 003a 1C33     		adds	r3, r3, #28
+ 910 003c A361     		str	r3, [r4, #24]
+ 911              	.LVL76:
+ 912 003e 2300     		movs	r3, r4
+ 913 0040 2833     		adds	r3, r3, #40
+ 914 0042 6362     		str	r3, [r4, #36]
+ 915              	.LVL77:
+ 916 0044 2300     		movs	r3, r4
+ 917 0046 3433     		adds	r3, r3, #52
+ 918 0048 2363     		str	r3, [r4, #48]
+ 919              	.LVL78:
+ 920 004a 2300     		movs	r3, r4
+ 921 004c 4033     		adds	r3, r3, #64
+ 922 004e E363     		str	r3, [r4, #60]
+ 923              	.LVL79:
+ 924 0050 2300     		movs	r3, r4
+ 925 0052 4C33     		adds	r3, r3, #76
+ 926 0054 A364     		str	r3, [r4, #72]
+ 927              	.LVL80:
+ 928 0056 2300     		movs	r3, r4
+ 929 0058 5833     		adds	r3, r3, #88
+ 930 005a 6365     		str	r3, [r4, #84]
+ 931              	.LVL81:
+ 932              	.LBE16:
+ 933              	.LBE18:
+ 934              		.loc 1 561 0
+ 935 005c 0823     		movs	r3, #8
+ 936 005e 0193     		str	r3, [sp, #4]
+ 937 0060 0C4B     		ldr	r3, .L80+24
+ 938 0062 0D49     		ldr	r1, .L80+28
+ 939 0064 0093     		str	r3, [sp]
+ 940 0066 0D48     		ldr	r0, .L80+32
+ 941 0068 0D4B     		ldr	r3, .L80+36
+ 942 006a FFF7FEFF 		bl	OSTaskCreateExt
+ 943              	.LVL82:
+ 562:../mylib_t/OS_lib.c ****     ASSERT( ret == OS_NO_ERR );
+ 944              		.loc 1 562 0
+ 945 006e A842     		cmp	r0, r5
+ 946 0070 03D0     		beq	.L75
+ 947              		.loc 1 562 0 is_stmt 0 discriminator 1
+ 948 0072 0C49     		ldr	r1, .L80+40
+ 949 0074 0C48     		ldr	r0, .L80+44
+ 950              	.LVL83:
+ 951 0076 FFF7FEFF 		bl	__error
+ 952              	.LVL84:
+ 953              	.L75:
+ 563:../mylib_t/OS_lib.c **** 
+ 564:../mylib_t/OS_lib.c **** #if OS_STAT_EN > 0
+ 565:../mylib_t/OS_lib.c ****     ret = OSTASK_CREATE(OSStat, OS_STAT_PRO );
+ 566:../mylib_t/OS_lib.c ****     ASSERT( ret == OS_NO_ERR );
+ 567:../mylib_t/OS_lib.c **** #endif
+ 568:../mylib_t/OS_lib.c **** }
+ 954              		.loc 1 568 0 is_stmt 1
+ 955              		@ sp needed
+ 956 007a 73BD     		pop	{r0, r1, r4, r5, r6, pc}
+ 957              	.L81:
+ 958              		.align	2
+ 959              	.L80:
+ 960 007c 00000000 		.word	OSRunning
+ 961 0080 00000000 		.word	.LANCHOR0
+ 962 0084 00000000 		.word	OSIntNesting
+ 963 0088 00000000 		.word	OSTimeCnt
+ 964 008c 00000000 		.word	OS_TCBTbl
+ 965 0090 00000000 		.word	OS_EventFreeList
+ 966 0094 00000000 		.word	OSIdle_TaskStk
+ 967 0098 00000000 		.word	OSIdle_Task
+ 968 009c 00000000 		.word	.LC31
+ 969 00a0 7C000000 		.word	OSIdle_TaskStk+124
+ 970 00a4 32020000 		.word	562
+ 971 00a8 07000000 		.word	.LC34
+ 972              		.cfi_endproc
+ 973              	.LFE79:
+ 975              		.section	.text.OSStart,"ax",%progbits
+ 976              		.align	1
+ 977              		.global	OSStart
+ 978              		.code	16
+ 979              		.thumb_func
+ 981              	OSStart:
+ 982              	.LFB80:
+ 569:../mylib_t/OS_lib.c **** 
+ 570:../mylib_t/OS_lib.c **** /*
+ 571:../mylib_t/OS_lib.c ****  * 系统开始运行
+ 572:../mylib_t/OS_lib.c ****  */
+ 573:../mylib_t/OS_lib.c **** void OSStart(void)
+ 574:../mylib_t/OS_lib.c **** {
+ 983              		.loc 1 574 0
+ 984              		.cfi_startproc
+ 985              		@ args = 0, pretend = 0, frame = 0
+ 986              		@ frame_needed = 0, uses_anonymous_args = 0
+ 987 0000 10B5     		push	{r4, lr}
+ 988              	.LCFI12:
+ 989              		.cfi_def_cfa_offset 8
+ 990              		.cfi_offset 4, -8
+ 991              		.cfi_offset 14, -4
+ 575:../mylib_t/OS_lib.c ****     OS_SchedNew();
+ 992              		.loc 1 575 0
+ 993 0002 FFF7FEFF 		bl	OS_SchedNew
+ 994              	.LVL85:
+ 576:../mylib_t/OS_lib.c ****     OS_TCBCur = OS_TCBHighRdy;
+ 995              		.loc 1 576 0
+ 996 0006 034B     		ldr	r3, .L83
+ 577:../mylib_t/OS_lib.c ****     OSStartHighRdy();
+ 578:../mylib_t/OS_lib.c **** }
+ 997              		.loc 1 578 0
+ 998              		@ sp needed
+ 576:../mylib_t/OS_lib.c ****     OS_TCBCur = OS_TCBHighRdy;
+ 999              		.loc 1 576 0
+ 1000 0008 1A68     		ldr	r2, [r3]
+ 1001 000a 034B     		ldr	r3, .L83+4
+ 1002 000c 1A60     		str	r2, [r3]
+ 577:../mylib_t/OS_lib.c ****     OSStartHighRdy();
+ 1003              		.loc 1 577 0
+ 1004 000e FFF7FEFF 		bl	OSStartHighRdy
+ 1005              	.LVL86:
+ 1006              		.loc 1 578 0
+ 1007 0012 10BD     		pop	{r4, pc}
+ 1008              	.L84:
+ 1009              		.align	2
+ 1010              	.L83:
+ 1011 0014 00000000 		.word	OS_TCBHighRdy
+ 1012 0018 00000000 		.word	OS_TCBCur
+ 1013              		.cfi_endproc
+ 1014              	.LFE80:
+ 1016              		.section	.text.OSTaskSwHook,"ax",%progbits
+ 1017              		.align	1
+ 1018              		.weak	OSTaskSwHook
+ 1019              		.code	16
+ 1020              		.thumb_func
+ 1022              	OSTaskSwHook:
+ 1023              	.LFB81:
+ 579:../mylib_t/OS_lib.c **** 
+ 580:../mylib_t/OS_lib.c **** 
+ 581:../mylib_t/OS_lib.c ****     __WEAK__
+ 582:../mylib_t/OS_lib.c **** void OSTaskSwHook(void)
+ 583:../mylib_t/OS_lib.c **** {
+ 1024              		.loc 1 583 0
+ 1025              		.cfi_startproc
+ 1026              		@ args = 0, pretend = 0, frame = 0
+ 1027              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1028              		@ link register save eliminated.
+ 584:../mylib_t/OS_lib.c **** 	OS_TCBCur->TaskSchedCnt++;   //任务切换计数器
+ 1029              		.loc 1 584 0
+ 1030 0000 044B     		ldr	r3, .L86
+ 585:../mylib_t/OS_lib.c **** 	OSCtxSwCtr++;                //系统切换计数器
+ 586:../mylib_t/OS_lib.c **** }
+ 1031              		.loc 1 586 0
+ 1032              		@ sp needed
+ 584:../mylib_t/OS_lib.c **** 	OS_TCBCur->TaskSchedCnt++;   //任务切换计数器
+ 1033              		.loc 1 584 0
+ 1034 0002 1A68     		ldr	r2, [r3]
+ 1035 0004 9389     		ldrh	r3, [r2, #12]
+ 1036 0006 0133     		adds	r3, r3, #1
+ 1037 0008 9381     		strh	r3, [r2, #12]
+ 585:../mylib_t/OS_lib.c **** 	OSCtxSwCtr++;                //系统切换计数器
+ 1038              		.loc 1 585 0
+ 1039 000a 034A     		ldr	r2, .L86+4
+ 1040 000c 1368     		ldr	r3, [r2]
+ 1041 000e 0133     		adds	r3, r3, #1
+ 1042 0010 1360     		str	r3, [r2]
+ 1043              		.loc 1 586 0
+ 1044 0012 7047     		bx	lr
+ 1045              	.L87:
+ 1046              		.align	2
+ 1047              	.L86:
+ 1048 0014 00000000 		.word	OS_TCBCur
+ 1049 0018 00000000 		.word	OSCtxSwCtr
+ 1050              		.cfi_endproc
+ 1051              	.LFE81:
+ 1053              		.section	.text.OSTaskDelHook,"ax",%progbits
+ 1054              		.align	1
+ 1055              		.weak	OSTaskDelHook
+ 1056              		.code	16
+ 1057              		.thumb_func
+ 1059              	OSTaskDelHook:
+ 1060              	.LFB87:
+ 1061              		.cfi_startproc
+ 1062              		@ args = 0, pretend = 0, frame = 0
+ 1063              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1064              		@ link register save eliminated.
+ 1065              		@ sp needed
+ 1066 0000 7047     		bx	lr
+ 1067              		.cfi_endproc
+ 1068              	.LFE87:
+ 1070              		.section	.text.OSIdle_Task,"ax",%progbits
+ 1071              		.align	1
+ 1072              		.global	OSIdle_Task
+ 1073              		.code	16
+ 1074              		.thumb_func
+ 1076              	OSIdle_Task:
+ 1077              	.LFB78:
+ 467:../mylib_t/OS_lib.c ****     OS_SREG_VAR;
+ 1078              		.loc 1 467 0
+ 1079              		.cfi_startproc
+ 1080              		@ args = 0, pretend = 0, frame = 0
+ 1081              		@ frame_needed = 0, uses_anonymous_args = 0
+ 467:../mylib_t/OS_lib.c ****     OS_SREG_VAR;
+ 1082              		.loc 1 467 0
+ 1083 0000 10B5     		push	{r4, lr}
+ 1084              	.LCFI13:
+ 1085              		.cfi_def_cfa_offset 8
+ 1086              		.cfi_offset 4, -8
+ 1087              		.cfi_offset 14, -4
+ 1088              	.L90:
+ 472:../mylib_t/OS_lib.c **** #endif 
+ 1089              		.loc 1 472 0 discriminator 1
+ 1090 0002 FFF7FEFF 		bl	OS_TaskIdle_Hook
+ 1091              	.LVL87:
+ 474:../mylib_t/OS_lib.c **** 
+ 1092              		.loc 1 474 0 discriminator 1
+ 1093 0006 FFF7FEFF 		bl	OSTaskDelHook
+ 1094              	.LVL88:
+ 476:../mylib_t/OS_lib.c ****         OSIdleCtr++;
+ 1095              		.loc 1 476 0 discriminator 1
+ 1096 000a FFF7FEFF 		bl	OS_CPU_SR_Save
+ 1097              	.LVL89:
+ 477:../mylib_t/OS_lib.c ****         OS_EXIT_CRITICAL();
+ 1098              		.loc 1 477 0 discriminator 1
+ 1099 000e 034A     		ldr	r2, .L91
+ 1100 0010 1368     		ldr	r3, [r2]
+ 1101 0012 0133     		adds	r3, r3, #1
+ 1102 0014 1360     		str	r3, [r2]
+ 478:../mylib_t/OS_lib.c ****     }
+ 1103              		.loc 1 478 0 discriminator 1
+ 1104 0016 FFF7FEFF 		bl	OS_CPU_SR_Restore
+ 1105              	.LVL90:
+ 1106 001a F2E7     		b	.L90
+ 1107              	.L92:
+ 1108              		.align	2
+ 1109              	.L91:
+ 1110 001c 00000000 		.word	OSIdleCtr
+ 1111              		.cfi_endproc
+ 1112              	.LFE78:
+ 1114              		.section	.text.OSTaskStatHook,"ax",%progbits
+ 1115              		.align	1
+ 1116              		.weak	OSTaskStatHook
+ 1117              		.code	16
+ 1118              		.thumb_func
+ 1120              	OSTaskStatHook:
+ 1121              	.LFB83:
+ 587:../mylib_t/OS_lib.c **** 
+ 588:../mylib_t/OS_lib.c ****     __WEAK__
+ 589:../mylib_t/OS_lib.c **** void OSTaskDelHook(void)
+ 590:../mylib_t/OS_lib.c **** {
+ 591:../mylib_t/OS_lib.c **** }
+ 592:../mylib_t/OS_lib.c **** 
+ 593:../mylib_t/OS_lib.c ****     __WEAK__
+ 594:../mylib_t/OS_lib.c **** void OSTaskStatHook(void)
+ 595:../mylib_t/OS_lib.c **** {
+ 1122              		.loc 1 595 0
+ 1123              		.cfi_startproc
+ 1124              		@ args = 0, pretend = 0, frame = 0
+ 1125              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1126              		@ link register save eliminated.
+ 596:../mylib_t/OS_lib.c **** }
+ 1127              		.loc 1 596 0
+ 1128              		@ sp needed
+ 1129 0000 7047     		bx	lr
+ 1130              		.cfi_endproc
+ 1131              	.LFE83:
+ 1133              		.comm	OSIdleCtr,4,4
+ 1134              		.comm	OSIdle_TaskStk,128,4
+ 1135              		.global	OSMapTbl_H
+ 1136              		.global	OSMapTbl_L
+ 1137              		.global	OS_EventTbl
+ 1138              		.comm	OS_EventFreeList,4,4
+ 1139              		.comm	OS_TCBTbl,252,4
+ 1140              		.comm	OS_TCBHighRdy,4,4
+ 1141              		.comm	OS_TCBCur,4,4
+ 1142              		.comm	OSReturnTbl,4,4
+ 1143              		.comm	OSCreateTbl,4,4
+ 1144              		.global	OSRdyTbl
+ 1145              		.comm	OSCtxSwCtr,4,4
+ 1146              		.comm	OSTimeCnt,4,4
+ 1147              		.comm	OSRunning,1,1
+ 1148              		.comm	OSIntNesting,1,1
+ 1149              		.section	.rodata
+ 1150              		.set	.LANCHOR1,. + 0
+ 1153              	OSMapTbl_L:
+ 1154 0000 08       		.byte	8
+ 1155 0001 00       		.byte	0
+ 1156 0002 01       		.byte	1
+ 1157 0003 00       		.byte	0
+ 1158 0004 02       		.byte	2
+ 1159 0005 00       		.byte	0
+ 1160 0006 01       		.byte	1
+ 1161 0007 00       		.byte	0
+ 1162 0008 03       		.byte	3
+ 1163 0009 00       		.byte	0
+ 1164 000a 01       		.byte	1
+ 1165 000b 00       		.byte	0
+ 1166 000c 02       		.byte	2
+ 1167 000d 00       		.byte	0
+ 1168 000e 01       		.byte	1
+ 1169 000f 00       		.byte	0
+ 1172              	OSMapTbl_H:
+ 1173 0010 08       		.byte	8
+ 1174 0011 04       		.byte	4
+ 1175 0012 05       		.byte	5
+ 1176 0013 04       		.byte	4
+ 1177 0014 06       		.byte	6
+ 1178 0015 04       		.byte	4
+ 1179 0016 05       		.byte	5
+ 1180 0017 04       		.byte	4
+ 1181 0018 07       		.byte	7
+ 1182 0019 04       		.byte	4
+ 1183 001a 05       		.byte	5
+ 1184 001b 04       		.byte	4
+ 1185 001c 06       		.byte	6
+ 1186 001d 04       		.byte	4
+ 1187 001e 05       		.byte	5
+ 1188 001f 04       		.byte	4
+ 1189              		.section	.udata,"aw",%progbits
+ 1190              		.align	2
+ 1191              		.set	.LANCHOR0,. + 0
+ 1194              	OSRdyTbl:
+ 1195 0000 00000000 		.space	4
+ 1198              	OS_EventTbl:
+ 1199 0004 00000000 		.space	96
+ 1199      00000000 
+ 1199      00000000 
+ 1199      00000000 
+ 1199      00000000 
+ 1200              		.section	.rodata.str1.1,"aMS",%progbits,1
+ 1201              	.LC31:
+ 1202 0000 4F534964 		.ascii	"OSIdle\000"
+ 1202      6C6500
+ 1203              	.LC34:
+ 1204 0007 2E2E2F6D 		.ascii	"../mylib_t/OS_lib.c\000"
+ 1204      796C6962 
+ 1204      5F742F4F 
+ 1204      535F6C69 
+ 1204      622E6300 
+ 1205              		.text
+ 1206              	.Letext0:
+ 1207              		.file 2 "d:\\wingcc\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 1208              		.file 3 "d:\\wingcc\\arm-none-eabi\\include\\sys\\_stdint.h"
+ 1209              		.file 4 "./bsp/mytype.h"
+ 1210              		.file 5 "../mylib_t/os_cpu.h"
+ 1211              		.file 6 "../mylib_t/MicroOs.h"
+ 1212              		.file 7 "./bsp/system_NUC131.h"
+ 1213              		.file 8 "../mylib_t/printk.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 OS_lib.c
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:20     .text.OSTableWait:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:25     .text.OSTableWait:00000000 OSTableWait
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:57     .text.OSTableRdy:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:62     .text.OSTableRdy:00000000 OSTableRdy
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:87     .text.OSRdyTblRdy:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:92     .text.OSRdyTblRdy:00000000 OSRdyTblRdy
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:117    .text.OSRdyTblRdy:0000000c $d
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:122    .text.OSRdyTblWait:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:127    .text.OSRdyTblWait:00000000 OSRdyTblWait
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:152    .text.OSRdyTblWait:0000000c $d
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:157    .text.OSTableGetRdy:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:162    .text.OSTableGetRdy:00000000 OSTableGetRdy
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:184    .text.OSDataClean:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:189    .text.OSDataClean:00000000 OSDataClean
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:228    .text.OSDataClean:00000018 $d
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:233    .text.OSTableClean:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:238    .text.OSTableClean:00000000 OSTableClean
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:261    .text.OSGetTabePro8:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:266    .text.OSGetTabePro8:00000000 OSGetTabePro8
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:300    .text.OSGetTabePro8:00000014 $d
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:305    .text.OSGetTablePro:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:310    .text.OSGetTablePro:00000000 OSGetTablePro
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:362    .text.OSEventTaskTo:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:367    .text.OSEventTaskTo:00000000 OSEventTaskTo
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:408    .text.OSEventTaskTo:00000020 $d
+                            *COM*:00000004 OS_TCBCur
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:413    .text.OSTaskFindIdleID:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:418    .text.OSTaskFindIdleID:00000000 OSTaskFindIdleID
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:453    .text.OSTaskFindIdleID:00000018 $d
+                            *COM*:000000fc OS_TCBTbl
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:458    .text.OSGetPID:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:463    .text.OSGetPID:00000000 OSGetPID
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:482    .text.OSGetPID:00000008 $d
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:487    .text.OSEventTaskWait:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:492    .text.OSEventTaskWait:00000000 OSEventTaskWait
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:549    .text.OSEventTaskWait:00000030 $d
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:556    .text.OSEventTaskRdy:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:561    .text.OSEventTaskRdy:00000000 OSEventTaskRdy
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:629    .text.OSEventTaskRdy:00000038 $d
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:635    .text.OS_SchedNew:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:640    .text.OS_SchedNew:00000000 OS_SchedNew
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:671    .text.OS_SchedNew:00000018 $d
+                            *COM*:00000004 OS_TCBHighRdy
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:678    .text.OSGetTime:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:683    .text.OSGetTime:00000000 OSGetTime
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:714    .text.OSGetTime:00000014 $d
+                            *COM*:00000004 OSTimeCnt
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:719    .text.OSSetTime:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:724    .text.OSSetTime:00000000 OSSetTime
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:760    .text.OSSetTime:00000014 $d
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:765    .text.OSTimeTick:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:770    .text.OSTimeTick:00000000 OSTimeTick
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:825    .text.OSTimeTick:00000034 $d
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:832    .text.OSInit:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:837    .text.OSInit:00000000 OSInit
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:960    .text.OSInit:0000007c $d
+                            *COM*:00000001 OSRunning
+                            *COM*:00000001 OSIntNesting
+                            *COM*:00000004 OS_EventFreeList
+                            *COM*:00000080 OSIdle_TaskStk
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:1076   .text.OSIdle_Task:00000000 OSIdle_Task
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:976    .text.OSStart:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:981    .text.OSStart:00000000 OSStart
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:1011   .text.OSStart:00000014 $d
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:1017   .text.OSTaskSwHook:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:1022   .text.OSTaskSwHook:00000000 OSTaskSwHook
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:1048   .text.OSTaskSwHook:00000014 $d
+                            *COM*:00000004 OSCtxSwCtr
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:1054   .text.OSTaskDelHook:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:1059   .text.OSTaskDelHook:00000000 OSTaskDelHook
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:1071   .text.OSIdle_Task:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:1110   .text.OSIdle_Task:0000001c $d
+                            *COM*:00000004 OSIdleCtr
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:1115   .text.OSTaskStatHook:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:1120   .text.OSTaskStatHook:00000000 OSTaskStatHook
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:1172   .rodata:00000010 OSMapTbl_H
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:1153   .rodata:00000000 OSMapTbl_L
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:1198   .udata:00000004 OS_EventTbl
+                            *COM*:00000004 OSReturnTbl
+                            *COM*:00000004 OSCreateTbl
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:1194   .udata:00000000 OSRdyTbl
+C:\Users\beyond\AppData\Local\Temp\ccTc8VQJ.s:1190   .udata:00000000 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+OS_CPU_SR_Save
+OS_CPU_SR_Restore
+OSTaskCreateExt
+__error
+OSStartHighRdy
+OS_TaskIdle_Hook

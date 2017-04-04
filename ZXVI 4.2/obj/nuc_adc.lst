@@ -1,0 +1,2041 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 4
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"nuc_adc.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.ADCInit,"ax",%progbits
+  20              		.align	1
+  21              		.global	ADCInit
+  22              		.code	16
+  23              		.thumb_func
+  25              	ADCInit:
+  26              	.LFB59:
+  27              		.file 1 "./drive/nuc_adc.c"
+   1:./drive/nuc_adc.c **** 
+   2:./drive/nuc_adc.c **** 
+   3:./drive/nuc_adc.c **** 
+   4:./drive/nuc_adc.c **** #include "hardware.h"
+   5:./drive/nuc_adc.c **** #include "nuc_adc.h"
+   6:./drive/nuc_adc.c **** #include "OSstring.h"
+   7:./drive/nuc_adc.c **** 
+   8:./drive/nuc_adc.c **** 
+   9:./drive/nuc_adc.c **** 
+  10:./drive/nuc_adc.c **** 
+  11:./drive/nuc_adc.c **** uint32_t  ulADCBuf;
+  12:./drive/nuc_adc.c **** int     ADCsize;
+  13:./drive/nuc_adc.c **** int     ADCFlag;
+  14:./drive/nuc_adc.c **** int     ADCchannel;
+  15:./drive/nuc_adc.c **** 
+  16:./drive/nuc_adc.c **** 
+  17:./drive/nuc_adc.c **** uint32_t lADCBuff[8];
+  18:./drive/nuc_adc.c **** 
+  19:./drive/nuc_adc.c **** #define  ADC_TIMER32               12000000
+  20:./drive/nuc_adc.c **** #define  ACHZ_TIMER                ( ADC_TIMER32 / 50 )       /* 20mS */
+  21:./drive/nuc_adc.c **** #define  ACHZ_CNT                  64
+  22:./drive/nuc_adc.c **** #define  ACHZ_GETCNT               ( ACHZ_CNT * 1 )
+  23:./drive/nuc_adc.c **** 
+  24:./drive/nuc_adc.c **** #define  ACHZ_MR0                  ((ACHZ_TIMER ) / (ACHZ_CNT))
+  25:./drive/nuc_adc.c **** 
+  26:./drive/nuc_adc.c **** /**************************************************************************************************
+  27:./drive/nuc_adc.c ****  ** Function name:       ADCInit
+  28:./drive/nuc_adc.c ****  ** Descriptions:        ADC初始化
+  29:./drive/nuc_adc.c ****  ** input parameters:    无
+  30:./drive/nuc_adc.c ****  ** output parameters:   无
+  31:./drive/nuc_adc.c ****  ** Returned value:      无
+  32:./drive/nuc_adc.c ****  **************************************************************************************************
+  33:./drive/nuc_adc.c **** void ADCInit( void )
+  34:./drive/nuc_adc.c **** {
+  28              		.loc 1 34 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              		@ link register save eliminated.
+  35:./drive/nuc_adc.c ****     ADC->ADCR = (ADC_ADCR_ADMD_SINGLE_CYCLE 
+  33              		.loc 1 35 0
+  34 0000 0922     		movs	r2, #9
+  35 0002 024B     		ldr	r3, .L2
+  36:./drive/nuc_adc.c ****             | ADC_ADCR_DIFFEN_SINGLE_END 
+  37:./drive/nuc_adc.c ****             | ADC_ADCR_ADEN_CONVERTER_ENABLE  /*使能AD*/
+  38:./drive/nuc_adc.c ****             );
+  39:./drive/nuc_adc.c **** 
+  40:./drive/nuc_adc.c ****     ADC->ADCHER =  ADC_ADCHER_PRESEL_INT_BANDGAP;
+  41:./drive/nuc_adc.c **** 
+  42:./drive/nuc_adc.c ****     //NVIC_EnableIRQ(ADC_IRQn); 
+  43:./drive/nuc_adc.c ****     //NVIC_SetPriority(ADC_IRQn, 2);
+  44:./drive/nuc_adc.c **** }
+  36              		.loc 1 44 0
+  37              		@ sp needed
+  35:./drive/nuc_adc.c ****     ADC->ADCR = (ADC_ADCR_ADMD_SINGLE_CYCLE 
+  38              		.loc 1 35 0
+  39 0004 1A62     		str	r2, [r3, #32]
+  40:./drive/nuc_adc.c **** 
+  40              		.loc 1 40 0
+  41 0006 F732     		adds	r2, r2, #247
+  42 0008 5A62     		str	r2, [r3, #36]
+  43              		.loc 1 44 0
+  44 000a 7047     		bx	lr
+  45              	.L3:
+  46              		.align	2
+  47              	.L2:
+  48 000c 00000E40 		.word	1074659328
+  49              		.cfi_endproc
+  50              	.LFE59:
+  52              		.section	.after_vectors,"ax",%progbits
+  53              		.align	1
+  54              		.global	TMR0_IRQHandler
+  55              		.code	16
+  56              		.thumb_func
+  58              	TMR0_IRQHandler:
+  59              	.LFB61:
+  45:./drive/nuc_adc.c **** 
+  46:./drive/nuc_adc.c **** 
+  47:./drive/nuc_adc.c **** 
+  48:./drive/nuc_adc.c **** /**************************************************************************************************
+  49:./drive/nuc_adc.c ****  * Function Name:        ADC_IRQHandler
+  50:./drive/nuc_adc.c ****  * Description:          ADC中断处理函数
+  51:./drive/nuc_adc.c ****  * Input:                无
+  52:./drive/nuc_adc.c ****  * Output:               无
+  53:./drive/nuc_adc.c ****  * Return:               无
+  54:./drive/nuc_adc.c ****  **************************************************************************************************
+  55:./drive/nuc_adc.c **** __AFTER__ void ADC_IRQHandler(void);
+  56:./drive/nuc_adc.c **** void ADC_IRQHandler(void)
+  57:./drive/nuc_adc.c **** {
+  58:./drive/nuc_adc.c ****     for(int i=0; i<8; i++)
+  59:./drive/nuc_adc.c ****     {
+  60:./drive/nuc_adc.c ****         uint32 tmp = (ADC->ADDR[i] & ADC_ADDR_RSLT_Msk) >> ADC_ADDR_RSLT_Pos;        
+  61:./drive/nuc_adc.c **** //        tmp >>= 2;
+  62:./drive/nuc_adc.c ****         lADCBuff[i] += tmp * tmp;
+  63:./drive/nuc_adc.c ****     }
+  64:./drive/nuc_adc.c ****     ADCsize--;
+  65:./drive/nuc_adc.c ****     if( ADCsize == 0 )
+  66:./drive/nuc_adc.c ****     {
+  67:./drive/nuc_adc.c ****         ADC_Disable();
+  68:./drive/nuc_adc.c ****     }
+  69:./drive/nuc_adc.c **** 
+  70:./drive/nuc_adc.c ****     ADC->ADSR = ADC_ADSR_ADF_Msk;      /* clear the A/D conversion flag */
+  71:./drive/nuc_adc.c ****     //NBI_P( B, 5 );
+  72:./drive/nuc_adc.c **** }
+  73:./drive/nuc_adc.c **** 
+  74:./drive/nuc_adc.c **** 
+  75:./drive/nuc_adc.c **** __AFTER__ void TMR0_IRQHandler(void);
+  76:./drive/nuc_adc.c **** void TMR0_IRQHandler(void)
+  77:./drive/nuc_adc.c **** {
+  60              		.loc 1 77 0
+  61              		.cfi_startproc
+  62              		@ args = 0, pretend = 0, frame = 0
+  63              		@ frame_needed = 0, uses_anonymous_args = 0
+  64              		@ link register save eliminated.
+  65              	.LVL0:
+  66              	.LBB18:
+  67              	.LBB19:
+  68              		.file 2 "./bsp/inc/TIMER.h"
+   1:./bsp/inc/TIMER.h **** /**************************************************************************//**
+   2:./bsp/inc/TIMER.h ****  * @file     timer.h
+   3:./bsp/inc/TIMER.h ****  * @version  V3.00
+   4:./bsp/inc/TIMER.h ****  * $Revision: 3 $
+   5:./bsp/inc/TIMER.h ****  * $Date: 14/07/22 5:47p $
+   6:./bsp/inc/TIMER.h ****  * @brief    NUC131 series Timer driver header file
+   7:./bsp/inc/TIMER.h ****  *
+   8:./bsp/inc/TIMER.h ****  * @note
+   9:./bsp/inc/TIMER.h ****  * Copyright (C) 2013 Nuvoton Technology Corp. All rights reserved.
+  10:./bsp/inc/TIMER.h ****  *****************************************************************************/
+  11:./bsp/inc/TIMER.h **** #ifndef __TIMER_H__
+  12:./bsp/inc/TIMER.h **** #define __TIMER_H__
+  13:./bsp/inc/TIMER.h **** 
+  14:./bsp/inc/TIMER.h **** #ifdef __cplusplus
+  15:./bsp/inc/TIMER.h **** extern "C"
+  16:./bsp/inc/TIMER.h **** {
+  17:./bsp/inc/TIMER.h **** #endif
+  18:./bsp/inc/TIMER.h **** 
+  19:./bsp/inc/TIMER.h **** 
+  20:./bsp/inc/TIMER.h **** /** @addtogroup NUC131_Device_Driver NUC131 Device Driver
+  21:./bsp/inc/TIMER.h ****   @{
+  22:./bsp/inc/TIMER.h **** */
+  23:./bsp/inc/TIMER.h **** 
+  24:./bsp/inc/TIMER.h **** /** @addtogroup NUC131_TIMER_Driver TIMER Driver
+  25:./bsp/inc/TIMER.h ****   @{
+  26:./bsp/inc/TIMER.h **** */
+  27:./bsp/inc/TIMER.h **** 
+  28:./bsp/inc/TIMER.h **** /** @addtogroup NUC131_TIMER_EXPORTED_CONSTANTS TIMER Exported Constants
+  29:./bsp/inc/TIMER.h ****   @{
+  30:./bsp/inc/TIMER.h **** */
+  31:./bsp/inc/TIMER.h **** /*-------------------------------------------------------------------------------------------------
+  32:./bsp/inc/TIMER.h **** /*  TIMER Operation Mode, External Counter and Capture Mode Constant Definitions                   
+  33:./bsp/inc/TIMER.h **** /*-------------------------------------------------------------------------------------------------
+  34:./bsp/inc/TIMER.h **** #define TIMER_ONESHOT_MODE                      (0UL << TIMER_TCSR_MODE_Pos)        /*!< Timer work
+  35:./bsp/inc/TIMER.h **** #define TIMER_PERIODIC_MODE                     (1UL << TIMER_TCSR_MODE_Pos)        /*!< Timer work
+  36:./bsp/inc/TIMER.h **** #define TIMER_TOGGLE_MODE                       (2UL << TIMER_TCSR_MODE_Pos)        /*!< Timer work
+  37:./bsp/inc/TIMER.h **** #define TIMER_CONTINUOUS_MODE                   (3UL << TIMER_TCSR_MODE_Pos)        /*!< Timer work
+  38:./bsp/inc/TIMER.h **** #define TIMER_CAPTURE_FREE_COUNTING_MODE        (0UL << TIMER_TEXCON_RSTCAPSEL_Pos) /*!< Timer capt
+  39:./bsp/inc/TIMER.h **** #define TIMER_CAPTURE_COUNTER_RESET_MODE        (1UL << TIMER_TEXCON_RSTCAPSEL_Pos) /*!< Timer capt
+  40:./bsp/inc/TIMER.h **** #define TIMER_CAPTURE_FALLING_EDGE              (0UL << TIMER_TEXCON_TEX_EDGE_Pos)  /*!< Falling ed
+  41:./bsp/inc/TIMER.h **** #define TIMER_CAPTURE_RISING_EDGE               (1UL << TIMER_TEXCON_TEX_EDGE_Pos)  /*!< Rising edg
+  42:./bsp/inc/TIMER.h **** #define TIMER_CAPTURE_FALLING_AND_RISING_EDGE   (2UL << TIMER_TEXCON_TEX_EDGE_Pos)  /*!< Both falli
+  43:./bsp/inc/TIMER.h **** #define TIMER_COUNTER_FALLING_EDGE              (0UL << TIMER_TEXCON_TX_PHASE_Pos)  /*!< Counter in
+  44:./bsp/inc/TIMER.h **** #define TIMER_COUNTER_RISING_EDGE               (1UL << TIMER_TEXCON_TX_PHASE_Pos)  /*!< Counter in
+  45:./bsp/inc/TIMER.h **** 
+  46:./bsp/inc/TIMER.h **** /*@}*/ /* end of group NUC131_TIMER_EXPORTED_CONSTANTS */
+  47:./bsp/inc/TIMER.h **** 
+  48:./bsp/inc/TIMER.h **** 
+  49:./bsp/inc/TIMER.h **** /** @addtogroup NUC131_TIMER_EXPORTED_FUNCTIONS TIMER Exported Functions
+  50:./bsp/inc/TIMER.h ****   @{
+  51:./bsp/inc/TIMER.h **** */
+  52:./bsp/inc/TIMER.h **** 
+  53:./bsp/inc/TIMER.h **** /**
+  54:./bsp/inc/TIMER.h ****   * @brief      Set Timer Compared Value
+  55:./bsp/inc/TIMER.h ****   *
+  56:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+  57:./bsp/inc/TIMER.h ****   * @param[in]  u32Value    Timer compare value. Valid values are between 2 to 0xFFFFFF.
+  58:./bsp/inc/TIMER.h ****   *
+  59:./bsp/inc/TIMER.h ****   * @return     None
+  60:./bsp/inc/TIMER.h ****   *
+  61:./bsp/inc/TIMER.h ****   * @details    This macro is used to set timer compared value to adjust timer time-out interval.
+  62:./bsp/inc/TIMER.h ****   * @note       1. Never write 0x0 or 0x1 in this field, or the core will run into unknown state. \
+  63:./bsp/inc/TIMER.h ****   *             2. If update timer compared value in continuous counting mode, timer counter value 
+  64:./bsp/inc/TIMER.h ****   *                But if timer is operating at other modes, the timer up counter will restart coun
+  65:./bsp/inc/TIMER.h ****   */
+  66:./bsp/inc/TIMER.h **** #define TIMER_SET_CMP_VALUE(timer, u32Value)        ((timer)->TCMPR = (u32Value))
+  67:./bsp/inc/TIMER.h **** 
+  68:./bsp/inc/TIMER.h **** /**
+  69:./bsp/inc/TIMER.h ****   * @brief      Set Timer Prescale Value
+  70:./bsp/inc/TIMER.h ****   *
+  71:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+  72:./bsp/inc/TIMER.h ****   * @param[in]  u32Value    Timer prescale value. Valid values are between 0 to 0xFF.
+  73:./bsp/inc/TIMER.h ****   *
+  74:./bsp/inc/TIMER.h ****   * @return     None
+  75:./bsp/inc/TIMER.h ****   *
+  76:./bsp/inc/TIMER.h ****   * @details    This macro is used to set timer prescale value and timer source clock will be divid
+  77:./bsp/inc/TIMER.h ****   *             before it is fed into timer.
+  78:./bsp/inc/TIMER.h ****   */
+  79:./bsp/inc/TIMER.h **** #define TIMER_SET_PRESCALE_VALUE(timer, u32Value)   ((timer)->TCSR = ((timer)->TCSR & ~TIMER_TCSR_P
+  80:./bsp/inc/TIMER.h **** 
+  81:./bsp/inc/TIMER.h **** /**
+  82:./bsp/inc/TIMER.h ****   * @brief      Check specify Timer Status
+  83:./bsp/inc/TIMER.h ****   *
+  84:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+  85:./bsp/inc/TIMER.h ****   *
+  86:./bsp/inc/TIMER.h ****   * @retval     0   Timer 24-bit up counter is inactive
+  87:./bsp/inc/TIMER.h ****   * @retval     1   Timer 24-bit up counter is active
+  88:./bsp/inc/TIMER.h ****   *
+  89:./bsp/inc/TIMER.h ****   * @details    This macro is used to check if specify Timer counter is inactive or active.
+  90:./bsp/inc/TIMER.h ****   */
+  91:./bsp/inc/TIMER.h **** #define TIMER_IS_ACTIVE(timer)                      (((timer)->TCSR & TIMER_TCSR_CACT_Msk) ? 1 : 0)
+  92:./bsp/inc/TIMER.h **** 
+  93:./bsp/inc/TIMER.h **** /**
+  94:./bsp/inc/TIMER.h ****   * @brief      Start Timer Counting
+  95:./bsp/inc/TIMER.h ****   *
+  96:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+  97:./bsp/inc/TIMER.h ****   *
+  98:./bsp/inc/TIMER.h ****   * @return     None
+  99:./bsp/inc/TIMER.h ****   *
+ 100:./bsp/inc/TIMER.h ****   * @details    This function is used to start Timer counting.
+ 101:./bsp/inc/TIMER.h ****   */
+ 102:./bsp/inc/TIMER.h **** static __INLINE void TIMER_Start(TIMER_T *timer)
+ 103:./bsp/inc/TIMER.h **** {
+ 104:./bsp/inc/TIMER.h ****     timer->TCSR |= TIMER_TCSR_CEN_Msk;
+ 105:./bsp/inc/TIMER.h **** }
+ 106:./bsp/inc/TIMER.h **** 
+ 107:./bsp/inc/TIMER.h **** /**
+ 108:./bsp/inc/TIMER.h ****   * @brief      Stop Timer Counting
+ 109:./bsp/inc/TIMER.h ****   *
+ 110:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+ 111:./bsp/inc/TIMER.h ****   *
+ 112:./bsp/inc/TIMER.h ****   * @return     None
+ 113:./bsp/inc/TIMER.h ****   *
+ 114:./bsp/inc/TIMER.h ****   * @details    This function is used to stop/suspend Timer counting.
+ 115:./bsp/inc/TIMER.h ****   */
+ 116:./bsp/inc/TIMER.h **** static __INLINE void TIMER_Stop(TIMER_T *timer)
+ 117:./bsp/inc/TIMER.h **** {
+ 118:./bsp/inc/TIMER.h ****     timer->TCSR &= ~TIMER_TCSR_CEN_Msk;
+ 119:./bsp/inc/TIMER.h **** }
+ 120:./bsp/inc/TIMER.h **** 
+ 121:./bsp/inc/TIMER.h **** /**
+ 122:./bsp/inc/TIMER.h ****   * @brief      Enable Timer Interrupt Wake-up Function
+ 123:./bsp/inc/TIMER.h ****   *
+ 124:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+ 125:./bsp/inc/TIMER.h ****   *
+ 126:./bsp/inc/TIMER.h ****   * @return     None
+ 127:./bsp/inc/TIMER.h ****   *
+ 128:./bsp/inc/TIMER.h ****   * @details    This function is used to enable the timer interrupt wake-up function and interrupt 
+ 129:./bsp/inc/TIMER.h ****   *             counter event interrupt or capture trigger interrupt.
+ 130:./bsp/inc/TIMER.h ****   * @note       To wake the system from Power-down mode, timer clock source must be LIRC.
+ 131:./bsp/inc/TIMER.h ****   */
+ 132:./bsp/inc/TIMER.h **** static __INLINE void TIMER_EnableWakeup(TIMER_T *timer)
+ 133:./bsp/inc/TIMER.h **** {
+ 134:./bsp/inc/TIMER.h ****     timer->TCSR |= TIMER_TCSR_WAKE_EN_Msk;
+ 135:./bsp/inc/TIMER.h **** }
+ 136:./bsp/inc/TIMER.h **** 
+ 137:./bsp/inc/TIMER.h **** /**
+ 138:./bsp/inc/TIMER.h ****   * @brief      Disable Timer Wake-up Function
+ 139:./bsp/inc/TIMER.h ****   *
+ 140:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+ 141:./bsp/inc/TIMER.h ****   *
+ 142:./bsp/inc/TIMER.h ****   * @return     None
+ 143:./bsp/inc/TIMER.h ****   *
+ 144:./bsp/inc/TIMER.h ****   * @details    This function is used to disable the timer interrupt wake-up function.
+ 145:./bsp/inc/TIMER.h ****   */
+ 146:./bsp/inc/TIMER.h **** static __INLINE void TIMER_DisableWakeup(TIMER_T *timer)
+ 147:./bsp/inc/TIMER.h **** {
+ 148:./bsp/inc/TIMER.h ****     timer->TCSR &= ~TIMER_TCSR_WAKE_EN_Msk;
+ 149:./bsp/inc/TIMER.h **** }
+ 150:./bsp/inc/TIMER.h **** 
+ 151:./bsp/inc/TIMER.h **** /**
+ 152:./bsp/inc/TIMER.h ****   * @brief      Enable Capture Pin De-bounce
+ 153:./bsp/inc/TIMER.h ****   *
+ 154:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+ 155:./bsp/inc/TIMER.h ****   *
+ 156:./bsp/inc/TIMER.h ****   * @return     None
+ 157:./bsp/inc/TIMER.h ****   *
+ 158:./bsp/inc/TIMER.h ****   * @details    This function is used to enable the detect de-bounce function of capture pin.
+ 159:./bsp/inc/TIMER.h ****   */
+ 160:./bsp/inc/TIMER.h **** static __INLINE void TIMER_EnableCaptureDebounce(TIMER_T *timer)
+ 161:./bsp/inc/TIMER.h **** {
+ 162:./bsp/inc/TIMER.h ****     timer->TEXCON |= TIMER_TEXCON_TEXDB_Msk;
+ 163:./bsp/inc/TIMER.h **** }
+ 164:./bsp/inc/TIMER.h **** 
+ 165:./bsp/inc/TIMER.h **** /**
+ 166:./bsp/inc/TIMER.h ****   * @brief      Disable Capture Pin De-bounce
+ 167:./bsp/inc/TIMER.h ****   *
+ 168:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+ 169:./bsp/inc/TIMER.h ****   *
+ 170:./bsp/inc/TIMER.h ****   * @return     None
+ 171:./bsp/inc/TIMER.h ****   *
+ 172:./bsp/inc/TIMER.h ****   * @details    This function is used to disable the detect de-bounce function of capture pin.
+ 173:./bsp/inc/TIMER.h ****   */
+ 174:./bsp/inc/TIMER.h **** static __INLINE void TIMER_DisableCaptureDebounce(TIMER_T *timer)
+ 175:./bsp/inc/TIMER.h **** {
+ 176:./bsp/inc/TIMER.h ****     timer->TEXCON &= ~TIMER_TEXCON_TEXDB_Msk;
+ 177:./bsp/inc/TIMER.h **** }
+ 178:./bsp/inc/TIMER.h **** 
+ 179:./bsp/inc/TIMER.h **** /**
+ 180:./bsp/inc/TIMER.h ****   * @brief      Enable Counter Pin De-bounce
+ 181:./bsp/inc/TIMER.h ****   *
+ 182:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+ 183:./bsp/inc/TIMER.h ****   *
+ 184:./bsp/inc/TIMER.h ****   * @return     None
+ 185:./bsp/inc/TIMER.h ****   *
+ 186:./bsp/inc/TIMER.h ****   * @details    This function is used to enable the detect de-bounce function of counter pin.
+ 187:./bsp/inc/TIMER.h ****   */
+ 188:./bsp/inc/TIMER.h **** static __INLINE void TIMER_EnableEventCounterDebounce(TIMER_T *timer)
+ 189:./bsp/inc/TIMER.h **** {
+ 190:./bsp/inc/TIMER.h ****     timer->TEXCON |= TIMER_TEXCON_TCDB_Msk;
+ 191:./bsp/inc/TIMER.h **** }
+ 192:./bsp/inc/TIMER.h **** 
+ 193:./bsp/inc/TIMER.h **** /**
+ 194:./bsp/inc/TIMER.h ****   * @brief      Disable Counter Pin De-bounce
+ 195:./bsp/inc/TIMER.h ****   *
+ 196:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+ 197:./bsp/inc/TIMER.h ****   *
+ 198:./bsp/inc/TIMER.h ****   * @return     None
+ 199:./bsp/inc/TIMER.h ****   *
+ 200:./bsp/inc/TIMER.h ****   * @details    This function is used to disable the detect de-bounce function of counter pin.
+ 201:./bsp/inc/TIMER.h ****   */
+ 202:./bsp/inc/TIMER.h **** static __INLINE void TIMER_DisableEventCounterDebounce(TIMER_T *timer)
+ 203:./bsp/inc/TIMER.h **** {
+ 204:./bsp/inc/TIMER.h ****     timer->TEXCON &= ~TIMER_TEXCON_TCDB_Msk;
+ 205:./bsp/inc/TIMER.h **** }
+ 206:./bsp/inc/TIMER.h **** 
+ 207:./bsp/inc/TIMER.h **** /**
+ 208:./bsp/inc/TIMER.h ****   * @brief      Enable Timer Time-out Interrupt
+ 209:./bsp/inc/TIMER.h ****   *
+ 210:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+ 211:./bsp/inc/TIMER.h ****   *
+ 212:./bsp/inc/TIMER.h ****   * @return     None
+ 213:./bsp/inc/TIMER.h ****   *
+ 214:./bsp/inc/TIMER.h ****   * @details    This function is used to enable the timer time-out interrupt function.
+ 215:./bsp/inc/TIMER.h ****   */
+ 216:./bsp/inc/TIMER.h **** static __INLINE void TIMER_EnableInt(TIMER_T *timer)
+ 217:./bsp/inc/TIMER.h **** {
+ 218:./bsp/inc/TIMER.h ****     timer->TCSR |= TIMER_TCSR_IE_Msk;
+ 219:./bsp/inc/TIMER.h **** }
+ 220:./bsp/inc/TIMER.h **** 
+ 221:./bsp/inc/TIMER.h **** /**
+ 222:./bsp/inc/TIMER.h ****   * @brief      Disable Timer Time-out Interrupt
+ 223:./bsp/inc/TIMER.h ****   *
+ 224:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+ 225:./bsp/inc/TIMER.h ****   *
+ 226:./bsp/inc/TIMER.h ****   * @return     None
+ 227:./bsp/inc/TIMER.h ****   *
+ 228:./bsp/inc/TIMER.h ****   * @details    This function is used to disable the timer time-out interrupt function.
+ 229:./bsp/inc/TIMER.h ****   */
+ 230:./bsp/inc/TIMER.h **** static __INLINE void TIMER_DisableInt(TIMER_T *timer)
+ 231:./bsp/inc/TIMER.h **** {
+ 232:./bsp/inc/TIMER.h ****     timer->TCSR &= ~TIMER_TCSR_IE_Msk;
+ 233:./bsp/inc/TIMER.h **** }
+ 234:./bsp/inc/TIMER.h **** 
+ 235:./bsp/inc/TIMER.h **** /**
+ 236:./bsp/inc/TIMER.h ****   * @brief      Enable Capture Trigger Interrupt
+ 237:./bsp/inc/TIMER.h ****   *
+ 238:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+ 239:./bsp/inc/TIMER.h ****   *
+ 240:./bsp/inc/TIMER.h ****   * @return     None
+ 241:./bsp/inc/TIMER.h ****   *
+ 242:./bsp/inc/TIMER.h ****   * @details    This function is used to enable the timer capture trigger interrupt function.
+ 243:./bsp/inc/TIMER.h ****   */
+ 244:./bsp/inc/TIMER.h **** static __INLINE void TIMER_EnableCaptureInt(TIMER_T *timer)
+ 245:./bsp/inc/TIMER.h **** {
+ 246:./bsp/inc/TIMER.h ****     timer->TEXCON |= TIMER_TEXCON_TEXIEN_Msk;
+ 247:./bsp/inc/TIMER.h **** }
+ 248:./bsp/inc/TIMER.h **** 
+ 249:./bsp/inc/TIMER.h **** /**
+ 250:./bsp/inc/TIMER.h ****   * @brief      Disable Capture Trigger Interrupt
+ 251:./bsp/inc/TIMER.h ****   *
+ 252:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+ 253:./bsp/inc/TIMER.h ****   *
+ 254:./bsp/inc/TIMER.h ****   * @return     None
+ 255:./bsp/inc/TIMER.h ****   *
+ 256:./bsp/inc/TIMER.h ****   * @details    This function is used to disable the timer capture trigger interrupt function.
+ 257:./bsp/inc/TIMER.h ****   */
+ 258:./bsp/inc/TIMER.h **** static __INLINE void TIMER_DisableCaptureInt(TIMER_T *timer)
+ 259:./bsp/inc/TIMER.h **** {
+ 260:./bsp/inc/TIMER.h ****     timer->TEXCON &= ~TIMER_TEXCON_TEXIEN_Msk;
+ 261:./bsp/inc/TIMER.h **** }
+ 262:./bsp/inc/TIMER.h **** 
+ 263:./bsp/inc/TIMER.h **** /**
+ 264:./bsp/inc/TIMER.h ****   * @brief      Get Timer Time-out Interrupt Flag
+ 265:./bsp/inc/TIMER.h ****   *
+ 266:./bsp/inc/TIMER.h ****   * @param[in]  timer   The pointer of the specified Timer module. It could be TIMER0, TIMER1, TIME
+ 267:./bsp/inc/TIMER.h ****   *
+ 268:./bsp/inc/TIMER.h ****   * @retval     0   Timer time-out interrupt did not occur
+ 269:./bsp/inc/TIMER.h ****   * @retval     1   Timer time-out interrupt occurred
+ 270:./bsp/inc/TIMER.h ****   *
+ 271:./bsp/inc/TIMER.h ****   * @details    This function indicates timer time-out interrupt occurred or not.
+ 272:./bsp/inc/TIMER.h ****   */
+ 273:./bsp/inc/TIMER.h **** static __INLINE uint32_t TIMER_GetIntFlag(TIMER_T *timer)
+ 274:./bsp/inc/TIMER.h **** {
+ 275:./bsp/inc/TIMER.h ****     return ((timer->TISR & TIMER_TISR_TIF_Msk) ? 1 : 0);
+ 276:./bsp/inc/TIMER.h **** }
+ 277:./bsp/inc/TIMER.h **** 
+ 278:./bsp/inc/TIMER.h **** /**
+ 279:./bsp/inc/TIMER.h ****   * @brief      Clear Timer Time-out Interrupt Flag
+ 280:./bsp/inc/TIMER.h ****   *
+ 281:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+ 282:./bsp/inc/TIMER.h ****   *
+ 283:./bsp/inc/TIMER.h ****   * @return     None
+ 284:./bsp/inc/TIMER.h ****   *
+ 285:./bsp/inc/TIMER.h ****   * @details    This function clears timer time-out interrupt flag to 0.
+ 286:./bsp/inc/TIMER.h ****   */
+ 287:./bsp/inc/TIMER.h **** static __INLINE void TIMER_ClearIntFlag(TIMER_T *timer)
+ 288:./bsp/inc/TIMER.h **** {
+ 289:./bsp/inc/TIMER.h ****     timer->TISR = TIMER_TISR_TIF_Msk;
+ 290:./bsp/inc/TIMER.h **** }
+ 291:./bsp/inc/TIMER.h **** 
+ 292:./bsp/inc/TIMER.h **** /**
+ 293:./bsp/inc/TIMER.h ****   * @brief      Get Timer Capture Interrupt Flag
+ 294:./bsp/inc/TIMER.h ****   *
+ 295:./bsp/inc/TIMER.h ****   * @param[in]  timer   The pointer of the specified Timer module. It could be TIMER0, TIMER1, TIME
+ 296:./bsp/inc/TIMER.h ****   *
+ 297:./bsp/inc/TIMER.h ****   * @retval     0   Timer capture interrupt did not occur
+ 298:./bsp/inc/TIMER.h ****   * @retval     1   Timer capture interrupt occurred
+ 299:./bsp/inc/TIMER.h ****   *
+ 300:./bsp/inc/TIMER.h ****   * @details    This function indicates timer capture trigger interrupt occurred or not.
+ 301:./bsp/inc/TIMER.h ****   */
+ 302:./bsp/inc/TIMER.h **** static __INLINE uint32_t TIMER_GetCaptureIntFlag(TIMER_T *timer)
+ 303:./bsp/inc/TIMER.h **** {
+ 304:./bsp/inc/TIMER.h ****     return timer->TEXISR;
+  69              		.loc 2 304 0
+  70 0000 084B     		ldr	r3, .L11
+  71 0002 9A69     		ldr	r2, [r3, #24]
+  72              	.LVL1:
+  73              	.LBE19:
+  74              	.LBE18:
+  78:./drive/nuc_adc.c ****     if(TIMER_GetCaptureIntFlag(TIMER0) == 1)
+  75              		.loc 1 78 0
+  76 0004 012A     		cmp	r2, #1
+  77 0006 00D1     		bne	.L5
+  78              	.LVL2:
+  79              	.LBB20:
+  80              	.LBB21:
+ 305:./bsp/inc/TIMER.h **** }
+ 306:./bsp/inc/TIMER.h **** 
+ 307:./bsp/inc/TIMER.h **** /**
+ 308:./bsp/inc/TIMER.h ****   * @brief      Clear Timer Capture Interrupt Flag
+ 309:./bsp/inc/TIMER.h ****   *
+ 310:./bsp/inc/TIMER.h ****   * @param[in]  timer       The pointer of the specified Timer module. It could be TIMER0, TIMER1, 
+ 311:./bsp/inc/TIMER.h ****   *
+ 312:./bsp/inc/TIMER.h ****   * @return     None
+ 313:./bsp/inc/TIMER.h ****   *
+ 314:./bsp/inc/TIMER.h ****   * @details    This function clears timer capture trigger interrupt flag to 0.
+ 315:./bsp/inc/TIMER.h ****   */
+ 316:./bsp/inc/TIMER.h **** static __INLINE void TIMER_ClearCaptureIntFlag(TIMER_T *timer)
+ 317:./bsp/inc/TIMER.h **** {
+ 318:./bsp/inc/TIMER.h ****     timer->TEXISR = TIMER_TEXISR_TEXIF_Msk;
+  81              		.loc 2 318 0
+  82 0008 9A61     		str	r2, [r3, #24]
+  83              	.LVL3:
+  84              	.L5:
+  85              	.LBE21:
+  86              	.LBE20:
+  87              	.LBB22:
+  88              	.LBB23:
+ 275:./bsp/inc/TIMER.h **** }
+  89              		.loc 2 275 0
+  90 000a 9A68     		ldr	r2, [r3, #8]
+  91              	.LVL4:
+  92              	.LBE23:
+  93              	.LBE22:
+  79:./drive/nuc_adc.c ****     {
+  80:./drive/nuc_adc.c ****         TIMER_ClearCaptureIntFlag(TIMER0);
+  81:./drive/nuc_adc.c ****         //NBI_P( B, 5 );
+  82:./drive/nuc_adc.c ****     }
+  83:./drive/nuc_adc.c **** 
+  84:./drive/nuc_adc.c ****     if(TIMER_GetIntFlag(TIMER0) == 1)
+  94              		.loc 1 84 0
+  95 000c 0123     		movs	r3, #1
+  96 000e 1A42     		tst	r2, r3
+  97 0010 07D0     		beq	.L4
+  98              	.LVL5:
+  85:./drive/nuc_adc.c ****     {
+  86:./drive/nuc_adc.c ****         /* Clear Timer0 time-out interrupt flag */
+  87:./drive/nuc_adc.c ****         TIMER_ClearIntFlag(TIMER0);
+  88:./drive/nuc_adc.c **** 
+  89:./drive/nuc_adc.c ****         //NBI_P( B, 4 );
+  90:./drive/nuc_adc.c ****         ADC->ADCR |= ADC_ADCR_ADST_Msk;
+  99              		.loc 1 90 0
+ 100 0012 8021     		movs	r1, #128
+ 101              	.LBB24:
+ 102              	.LBB25:
+ 289:./bsp/inc/TIMER.h **** }
+ 103              		.loc 2 289 0
+ 104 0014 034A     		ldr	r2, .L11
+ 105              	.LBE25:
+ 106              	.LBE24:
+ 107              		.loc 1 90 0
+ 108 0016 0901     		lsls	r1, r1, #4
+ 109              	.LBB27:
+ 110              	.LBB26:
+ 289:./bsp/inc/TIMER.h **** }
+ 111              		.loc 2 289 0
+ 112 0018 9360     		str	r3, [r2, #8]
+ 113              	.LVL6:
+ 114              	.LBE26:
+ 115              	.LBE27:
+ 116              		.loc 1 90 0
+ 117 001a 034A     		ldr	r2, .L11+4
+ 118 001c 136A     		ldr	r3, [r2, #32]
+ 119 001e 0B43     		orrs	r3, r1
+ 120 0020 1362     		str	r3, [r2, #32]
+ 121              	.L4:
+  91:./drive/nuc_adc.c ****     }
+  92:./drive/nuc_adc.c **** }
+ 122              		.loc 1 92 0
+ 123              		@ sp needed
+ 124 0022 7047     		bx	lr
+ 125              	.L12:
+ 126              		.align	2
+ 127              	.L11:
+ 128 0024 00000140 		.word	1073807360
+ 129 0028 00000E40 		.word	1074659328
+ 130              		.cfi_endproc
+ 131              	.LFE61:
+ 133              		.section	.text.ADC_Enable,"ax",%progbits
+ 134              		.align	1
+ 135              		.global	ADC_Enable
+ 136              		.code	16
+ 137              		.thumb_func
+ 139              	ADC_Enable:
+ 140              	.LFB62:
+  93:./drive/nuc_adc.c **** 
+  94:./drive/nuc_adc.c **** /*
+  95:./drive/nuc_adc.c ****  * 采用定时器32B0, 200uS触发一次。50HZ交流信号，每个周期采集100次
+  96:./drive/nuc_adc.c ****  */
+  97:./drive/nuc_adc.c **** void ADC_Enable( uint8 channel )
+  98:./drive/nuc_adc.c **** {
+ 141              		.loc 1 98 0
+ 142              		.cfi_startproc
+ 143              		@ args = 0, pretend = 0, frame = 0
+ 144              		@ frame_needed = 0, uses_anonymous_args = 0
+ 145              	.LVL7:
+  99:./drive/nuc_adc.c ****     ADCsize  = ACHZ_GETCNT;
+ 146              		.loc 1 99 0
+ 147 0000 4022     		movs	r2, #64
+ 100:./drive/nuc_adc.c ****     ADCFlag  = 0;
+ 148              		.loc 1 100 0
+ 149 0002 0021     		movs	r1, #0
+  99:./drive/nuc_adc.c ****     ADCsize  = ACHZ_GETCNT;
+ 150              		.loc 1 99 0
+ 151 0004 144B     		ldr	r3, .L17
+  98:./drive/nuc_adc.c ****     ADCsize  = ACHZ_GETCNT;
+ 152              		.loc 1 98 0
+ 153 0006 10B5     		push	{r4, lr}
+ 154              	.LCFI0:
+ 155              		.cfi_def_cfa_offset 8
+ 156              		.cfi_offset 4, -8
+ 157              		.cfi_offset 14, -4
+  99:./drive/nuc_adc.c ****     ADCsize  = ACHZ_GETCNT;
+ 158              		.loc 1 99 0
+ 159 0008 1A60     		str	r2, [r3]
+ 160              		.loc 1 100 0
+ 161 000a 144B     		ldr	r3, .L17+4
+ 101:./drive/nuc_adc.c ****     ulADCBuf = 0;
+ 102:./drive/nuc_adc.c **** 
+ 103:./drive/nuc_adc.c ****     ADCchannel = channel & 7;
+ 104:./drive/nuc_adc.c ****  
+ 105:./drive/nuc_adc.c ****     memset( lADCBuff, 0, sizeof( lADCBuff ));
+ 162              		.loc 1 105 0
+ 163 000c 203A     		subs	r2, r2, #32
+ 100:./drive/nuc_adc.c ****     ulADCBuf = 0;
+ 164              		.loc 1 100 0
+ 165 000e 1960     		str	r1, [r3]
+ 101:./drive/nuc_adc.c ****     ulADCBuf = 0;
+ 166              		.loc 1 101 0
+ 167 0010 134B     		ldr	r3, .L17+8
+ 168 0012 1960     		str	r1, [r3]
+ 103:./drive/nuc_adc.c ****  
+ 169              		.loc 1 103 0
+ 170 0014 0723     		movs	r3, #7
+ 171 0016 1840     		ands	r0, r3
+ 172              	.LVL8:
+ 173 0018 124B     		ldr	r3, .L17+12
+ 174 001a 1860     		str	r0, [r3]
+ 175              		.loc 1 105 0
+ 176 001c 1248     		ldr	r0, .L17+16
+ 177 001e FFF7FEFF 		bl	OSmemset
+ 178              	.LVL9:
+ 179              	.LBB28:
+ 180              	.LBB29:
+ 181              		.file 3 "./bsp/core_cm0.h"
+   1:./bsp/core_cm0.h **** /**************************************************************************//**
+   2:./bsp/core_cm0.h ****  * @file     core_cm0.h
+   3:./bsp/core_cm0.h ****  * @brief    CMSIS Cortex-M0 Core Peripheral Access Layer Header File
+   4:./bsp/core_cm0.h ****  * @version  V1.30
+   5:./bsp/core_cm0.h ****  * @date     30. October 2009
+   6:./bsp/core_cm0.h ****  *
+   7:./bsp/core_cm0.h ****  * @note
+   8:./bsp/core_cm0.h ****  * Copyright (C) 2009 ARM Limited. All rights reserved.
+   9:./bsp/core_cm0.h ****  *
+  10:./bsp/core_cm0.h ****  * @par
+  11:./bsp/core_cm0.h ****  * ARM Limited (ARM) is supplying this software for use with Cortex-M 
+  12:./bsp/core_cm0.h ****  * processor based microcontrollers.  This file can be freely distributed 
+  13:./bsp/core_cm0.h ****  * within development tools that are supporting such ARM based processors. 
+  14:./bsp/core_cm0.h ****  *
+  15:./bsp/core_cm0.h ****  * @par
+  16:./bsp/core_cm0.h ****  * THIS SOFTWARE IS PROVIDED "AS IS".  NO WARRANTIES, WHETHER EXPRESS, IMPLIED
+  17:./bsp/core_cm0.h ****  * OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, IMPLIED WARRANTIES OF
+  18:./bsp/core_cm0.h ****  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE APPLY TO THIS SOFTWARE.
+  19:./bsp/core_cm0.h ****  * ARM SHALL NOT, IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL, OR
+  20:./bsp/core_cm0.h ****  * CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
+  21:./bsp/core_cm0.h ****  *
+  22:./bsp/core_cm0.h ****  ******************************************************************************/
+  23:./bsp/core_cm0.h **** 
+  24:./bsp/core_cm0.h **** #ifndef __CM0_CORE_H__
+  25:./bsp/core_cm0.h **** #define __CM0_CORE_H__
+  26:./bsp/core_cm0.h **** 
+  27:./bsp/core_cm0.h **** /** @addtogroup CMSIS_CM0_core_LintCinfiguration CMSIS CM0 Core Lint Configuration
+  28:./bsp/core_cm0.h ****  *
+  29:./bsp/core_cm0.h ****  * List of Lint messages which will be suppressed and not shown:
+  30:./bsp/core_cm0.h ****  *   - not yet checked
+  31:./bsp/core_cm0.h ****  * .
+  32:./bsp/core_cm0.h ****  * Note:  To re-enable a Message, insert a space before 'lint' *
+  33:./bsp/core_cm0.h ****  *
+  34:./bsp/core_cm0.h ****  */
+  35:./bsp/core_cm0.h **** 
+  36:./bsp/core_cm0.h **** 
+  37:./bsp/core_cm0.h **** /** @addtogroup CMSIS_CM0_core_definitions CM0 Core Definitions
+  38:./bsp/core_cm0.h ****   This file defines all structures and symbols for CMSIS core:
+  39:./bsp/core_cm0.h ****     - CMSIS version number
+  40:./bsp/core_cm0.h ****     - Cortex-M core registers and bitfields
+  41:./bsp/core_cm0.h ****     - Cortex-M core peripheral base address
+  42:./bsp/core_cm0.h ****   @{
+  43:./bsp/core_cm0.h ****  */
+  44:./bsp/core_cm0.h **** 
+  45:./bsp/core_cm0.h **** #ifdef __cplusplus
+  46:./bsp/core_cm0.h ****  extern "C" {
+  47:./bsp/core_cm0.h **** #endif 
+  48:./bsp/core_cm0.h **** 
+  49:./bsp/core_cm0.h **** #define __CM0_CMSIS_VERSION_MAIN  (0x01)                                                       /*!<
+  50:./bsp/core_cm0.h **** #define __CM0_CMSIS_VERSION_SUB   (0x30)                                                       /*!<
+  51:./bsp/core_cm0.h **** #define __CM0_CMSIS_VERSION       ((__CM0_CMSIS_VERSION_MAIN << 16) | __CM0_CMSIS_VERSION_SUB) /*!<
+  52:./bsp/core_cm0.h **** 
+  53:./bsp/core_cm0.h **** #define __CORTEX_M                (0x00)                                                       /*!<
+  54:./bsp/core_cm0.h **** 
+  55:./bsp/core_cm0.h **** #include <stdint.h>                           /* Include standard types */
+  56:./bsp/core_cm0.h **** 
+  57:./bsp/core_cm0.h **** #if defined (__ICCARM__)
+  58:./bsp/core_cm0.h ****   #include <intrinsics.h>                     /* IAR Intrinsics   */
+  59:./bsp/core_cm0.h **** #endif
+  60:./bsp/core_cm0.h **** 
+  61:./bsp/core_cm0.h **** 
+  62:./bsp/core_cm0.h **** #ifndef __NVIC_PRIO_BITS
+  63:./bsp/core_cm0.h ****   #define __NVIC_PRIO_BITS    2               /*!< standard definition for NVIC Priority Bits */
+  64:./bsp/core_cm0.h **** #endif
+  65:./bsp/core_cm0.h **** 
+  66:./bsp/core_cm0.h **** 
+  67:./bsp/core_cm0.h **** 
+  68:./bsp/core_cm0.h **** 
+  69:./bsp/core_cm0.h **** /**
+  70:./bsp/core_cm0.h ****  * IO definitions
+  71:./bsp/core_cm0.h ****  *
+  72:./bsp/core_cm0.h ****  * define access restrictions to peripheral registers
+  73:./bsp/core_cm0.h ****  */
+  74:./bsp/core_cm0.h **** 
+  75:./bsp/core_cm0.h **** #ifdef __cplusplus
+  76:./bsp/core_cm0.h ****   #define     __I     volatile                /*!< defines 'read only' permissions      */
+  77:./bsp/core_cm0.h **** #else
+  78:./bsp/core_cm0.h ****   #define     __I     volatile const          /*!< defines 'read only' permissions      */
+  79:./bsp/core_cm0.h **** #endif
+  80:./bsp/core_cm0.h **** #define     __O     volatile                  /*!< defines 'write only' permissions     */
+  81:./bsp/core_cm0.h **** #define     __IO    volatile                  /*!< defines 'read / write' permissions   */
+  82:./bsp/core_cm0.h **** 
+  83:./bsp/core_cm0.h **** /*******************************************************************************
+  84:./bsp/core_cm0.h ****  *                 Register Abstraction
+  85:./bsp/core_cm0.h ****  ******************************************************************************/
+  86:./bsp/core_cm0.h **** /** @addtogroup CMSIS_CM0_core_register CMSIS CM0 Core Register
+  87:./bsp/core_cm0.h ****  @{
+  88:./bsp/core_cm0.h **** */
+  89:./bsp/core_cm0.h **** 
+  90:./bsp/core_cm0.h **** 
+  91:./bsp/core_cm0.h **** /** @addtogroup CMSIS_CM0_NVIC CMSIS CM0 NVIC
+  92:./bsp/core_cm0.h ****   memory mapped structure for Nested Vectored Interrupt Controller (NVIC)
+  93:./bsp/core_cm0.h ****   @{
+  94:./bsp/core_cm0.h ****  */
+  95:./bsp/core_cm0.h **** typedef struct
+  96:./bsp/core_cm0.h **** {
+  97:./bsp/core_cm0.h ****   __IO uint32_t ISER[1];                      /*!< (Offset: 0x000) Interrupt Set Enable Register   
+  98:./bsp/core_cm0.h ****        uint32_t RESERVED0[31];
+  99:./bsp/core_cm0.h ****   __IO uint32_t ICER[1];                      /*!< (Offset: 0x080) Interrupt Clear Enable Register 
+ 100:./bsp/core_cm0.h ****        uint32_t RSERVED1[31];
+ 101:./bsp/core_cm0.h ****   __IO uint32_t ISPR[1];                      /*!< (Offset: 0x100) Interrupt Set Pending Register  
+ 102:./bsp/core_cm0.h ****        uint32_t RESERVED2[31];
+ 103:./bsp/core_cm0.h ****   __IO uint32_t ICPR[1];                      /*!< (Offset: 0x180) Interrupt Clear Pending Register
+ 104:./bsp/core_cm0.h ****        uint32_t RESERVED3[31];
+ 105:./bsp/core_cm0.h ****        uint32_t RESERVED4[64];
+ 106:./bsp/core_cm0.h ****   __IO uint32_t IPR[8];                       /*!< (Offset: 0x3EC) Interrupt Priority Register     
+ 107:./bsp/core_cm0.h **** }  NVIC_Type;
+ 108:./bsp/core_cm0.h **** /*@}*/ /* end of group CMSIS_CM0_NVIC */
+ 109:./bsp/core_cm0.h **** 
+ 110:./bsp/core_cm0.h **** 
+ 111:./bsp/core_cm0.h **** /** @addtogroup CMSIS_CM0_SCB CMSIS CM0 SCB
+ 112:./bsp/core_cm0.h ****   memory mapped structure for System Control Block (SCB)
+ 113:./bsp/core_cm0.h ****   @{
+ 114:./bsp/core_cm0.h ****  */
+ 115:./bsp/core_cm0.h **** typedef struct
+ 116:./bsp/core_cm0.h **** {
+ 117:./bsp/core_cm0.h ****   __I  uint32_t CPUID;                        /*!< Offset: 0x00  CPU ID Base Register              
+ 118:./bsp/core_cm0.h ****   __IO uint32_t ICSR;                         /*!< Offset: 0x04  Interrupt Control State Register  
+ 119:./bsp/core_cm0.h ****        uint32_t RESERVED0;                                      
+ 120:./bsp/core_cm0.h ****   __IO uint32_t AIRCR;                        /*!< Offset: 0x0C  Application Interrupt / Reset Cont
+ 121:./bsp/core_cm0.h ****   __IO uint32_t SCR;                          /*!< Offset: 0x10  System Control Register           
+ 122:./bsp/core_cm0.h ****   __IO uint32_t CCR;                          /*!< Offset: 0x14  Configuration Control Register    
+ 123:./bsp/core_cm0.h ****        uint32_t RESERVED1;                                      
+ 124:./bsp/core_cm0.h ****   __IO uint32_t SHP[2];                       /*!< Offset: 0x1C  System Handlers Priority Registers
+ 125:./bsp/core_cm0.h ****   __IO uint32_t SHCSR;                        /*!< Offset: 0x24  System Handler Control and State R
+ 126:./bsp/core_cm0.h ****        uint32_t RESERVED2[2];                                   
+ 127:./bsp/core_cm0.h ****   __IO uint32_t DFSR;                         /*!< Offset: 0x30  Debug Fault Status Register       
+ 128:./bsp/core_cm0.h **** } SCB_Type;                                                
+ 129:./bsp/core_cm0.h **** 
+ 130:./bsp/core_cm0.h **** /* SCB CPUID Register Definitions */
+ 131:./bsp/core_cm0.h **** #define SCB_CPUID_IMPLEMENTER_Pos          24                                             /*!< SCB 
+ 132:./bsp/core_cm0.h **** #define SCB_CPUID_IMPLEMENTER_Msk          (0xFFul << SCB_CPUID_IMPLEMENTER_Pos)          /*!< SCB 
+ 133:./bsp/core_cm0.h **** 
+ 134:./bsp/core_cm0.h **** #define SCB_CPUID_VARIANT_Pos              20                                             /*!< SCB 
+ 135:./bsp/core_cm0.h **** #define SCB_CPUID_VARIANT_Msk              (0xFul << SCB_CPUID_VARIANT_Pos)               /*!< SCB 
+ 136:./bsp/core_cm0.h **** 
+ 137:./bsp/core_cm0.h **** #define SCB_CPUID_ARCHITECTURE_Pos         16                                             /*!< SCB 
+ 138:./bsp/core_cm0.h **** #define SCB_CPUID_ARCHITECTURE_Msk         (0xFul << SCB_CPUID_ARCHITECTURE_Pos)          /*!< SCB 
+ 139:./bsp/core_cm0.h **** 
+ 140:./bsp/core_cm0.h **** #define SCB_CPUID_PARTNO_Pos                4                                             /*!< SCB 
+ 141:./bsp/core_cm0.h **** #define SCB_CPUID_PARTNO_Msk               (0xFFFul << SCB_CPUID_PARTNO_Pos)              /*!< SCB 
+ 142:./bsp/core_cm0.h **** 
+ 143:./bsp/core_cm0.h **** #define SCB_CPUID_REVISION_Pos              0                                             /*!< SCB 
+ 144:./bsp/core_cm0.h **** #define SCB_CPUID_REVISION_Msk             (0xFul << SCB_CPUID_REVISION_Pos)              /*!< SCB 
+ 145:./bsp/core_cm0.h **** 
+ 146:./bsp/core_cm0.h **** /* SCB Interrupt Control State Register Definitions */
+ 147:./bsp/core_cm0.h **** #define SCB_ICSR_NMIPENDSET_Pos            31                                             /*!< SCB 
+ 148:./bsp/core_cm0.h **** #define SCB_ICSR_NMIPENDSET_Msk            (1ul << SCB_ICSR_NMIPENDSET_Pos)               /*!< SCB 
+ 149:./bsp/core_cm0.h **** 
+ 150:./bsp/core_cm0.h **** #define SCB_ICSR_PENDSVSET_Pos             28                                             /*!< SCB 
+ 151:./bsp/core_cm0.h **** #define SCB_ICSR_PENDSVSET_Msk             (1ul << SCB_ICSR_PENDSVSET_Pos)                /*!< SCB 
+ 152:./bsp/core_cm0.h **** 
+ 153:./bsp/core_cm0.h **** #define SCB_ICSR_PENDSVCLR_Pos             27                                             /*!< SCB 
+ 154:./bsp/core_cm0.h **** #define SCB_ICSR_PENDSVCLR_Msk             (1ul << SCB_ICSR_PENDSVCLR_Pos)                /*!< SCB 
+ 155:./bsp/core_cm0.h **** 
+ 156:./bsp/core_cm0.h **** #define SCB_ICSR_PENDSTSET_Pos             26                                             /*!< SCB 
+ 157:./bsp/core_cm0.h **** #define SCB_ICSR_PENDSTSET_Msk             (1ul << SCB_ICSR_PENDSTSET_Pos)                /*!< SCB 
+ 158:./bsp/core_cm0.h **** 
+ 159:./bsp/core_cm0.h **** #define SCB_ICSR_PENDSTCLR_Pos             25                                             /*!< SCB 
+ 160:./bsp/core_cm0.h **** #define SCB_ICSR_PENDSTCLR_Msk             (1ul << SCB_ICSR_PENDSTCLR_Pos)                /*!< SCB 
+ 161:./bsp/core_cm0.h **** 
+ 162:./bsp/core_cm0.h **** #define SCB_ICSR_ISRPREEMPT_Pos            23                                             /*!< SCB 
+ 163:./bsp/core_cm0.h **** #define SCB_ICSR_ISRPREEMPT_Msk            (1ul << SCB_ICSR_ISRPREEMPT_Pos)               /*!< SCB 
+ 164:./bsp/core_cm0.h **** 
+ 165:./bsp/core_cm0.h **** #define SCB_ICSR_ISRPENDING_Pos            22                                             /*!< SCB 
+ 166:./bsp/core_cm0.h **** #define SCB_ICSR_ISRPENDING_Msk            (1ul << SCB_ICSR_ISRPENDING_Pos)               /*!< SCB 
+ 167:./bsp/core_cm0.h **** 
+ 168:./bsp/core_cm0.h **** #define SCB_ICSR_VECTPENDING_Pos           12                                             /*!< SCB 
+ 169:./bsp/core_cm0.h **** #define SCB_ICSR_VECTPENDING_Msk           (0x1FFul << SCB_ICSR_VECTPENDING_Pos)          /*!< SCB 
+ 170:./bsp/core_cm0.h **** 
+ 171:./bsp/core_cm0.h **** #define SCB_ICSR_VECTACTIVE_Pos             0                                             /*!< SCB 
+ 172:./bsp/core_cm0.h **** #define SCB_ICSR_VECTACTIVE_Msk            (0x1FFul << SCB_ICSR_VECTACTIVE_Pos)           /*!< SCB 
+ 173:./bsp/core_cm0.h **** 
+ 174:./bsp/core_cm0.h **** /* SCB Application Interrupt and Reset Control Register Definitions */
+ 175:./bsp/core_cm0.h **** #define SCB_AIRCR_VECTKEY_Pos              16                                             /*!< SCB 
+ 176:./bsp/core_cm0.h **** #define SCB_AIRCR_VECTKEY_Msk              (0xFFFFul << SCB_AIRCR_VECTKEY_Pos)            /*!< SCB 
+ 177:./bsp/core_cm0.h **** 
+ 178:./bsp/core_cm0.h **** #define SCB_AIRCR_VECTKEYSTAT_Pos          16                                             /*!< SCB 
+ 179:./bsp/core_cm0.h **** #define SCB_AIRCR_VECTKEYSTAT_Msk          (0xFFFFul << SCB_AIRCR_VECTKEYSTAT_Pos)        /*!< SCB 
+ 180:./bsp/core_cm0.h **** 
+ 181:./bsp/core_cm0.h **** #define SCB_AIRCR_ENDIANESS_Pos            15                                             /*!< SCB 
+ 182:./bsp/core_cm0.h **** #define SCB_AIRCR_ENDIANESS_Msk            (1ul << SCB_AIRCR_ENDIANESS_Pos)               /*!< SCB 
+ 183:./bsp/core_cm0.h **** 
+ 184:./bsp/core_cm0.h **** #define SCB_AIRCR_SYSRESETREQ_Pos           2                                             /*!< SCB 
+ 185:./bsp/core_cm0.h **** #define SCB_AIRCR_SYSRESETREQ_Msk          (1ul << SCB_AIRCR_SYSRESETREQ_Pos)             /*!< SCB 
+ 186:./bsp/core_cm0.h **** 
+ 187:./bsp/core_cm0.h **** #define SCB_AIRCR_VECTCLRACTIVE_Pos         1                                             /*!< SCB 
+ 188:./bsp/core_cm0.h **** #define SCB_AIRCR_VECTCLRACTIVE_Msk        (1ul << SCB_AIRCR_VECTCLRACTIVE_Pos)           /*!< SCB 
+ 189:./bsp/core_cm0.h **** 
+ 190:./bsp/core_cm0.h **** /* SCB System Control Register Definitions */
+ 191:./bsp/core_cm0.h **** #define SCB_SCR_SEVONPEND_Pos               4                                             /*!< SCB 
+ 192:./bsp/core_cm0.h **** #define SCB_SCR_SEVONPEND_Msk              (1ul << SCB_SCR_SEVONPEND_Pos)                 /*!< SCB 
+ 193:./bsp/core_cm0.h **** 
+ 194:./bsp/core_cm0.h **** #define SCB_SCR_SLEEPDEEP_Pos               2                                             /*!< SCB 
+ 195:./bsp/core_cm0.h **** #define SCB_SCR_SLEEPDEEP_Msk              (1ul << SCB_SCR_SLEEPDEEP_Pos)                 /*!< SCB 
+ 196:./bsp/core_cm0.h **** 
+ 197:./bsp/core_cm0.h **** #define SCB_SCR_SLEEPONEXIT_Pos             1                                             /*!< SCB 
+ 198:./bsp/core_cm0.h **** #define SCB_SCR_SLEEPONEXIT_Msk            (1ul << SCB_SCR_SLEEPONEXIT_Pos)               /*!< SCB 
+ 199:./bsp/core_cm0.h **** 
+ 200:./bsp/core_cm0.h **** /* SCB Configuration Control Register Definitions */
+ 201:./bsp/core_cm0.h **** #define SCB_CCR_STKALIGN_Pos                9                                             /*!< SCB 
+ 202:./bsp/core_cm0.h **** #define SCB_CCR_STKALIGN_Msk               (1ul << SCB_CCR_STKALIGN_Pos)                  /*!< SCB 
+ 203:./bsp/core_cm0.h **** 
+ 204:./bsp/core_cm0.h **** #define SCB_CCR_UNALIGN_TRP_Pos             3                                             /*!< SCB 
+ 205:./bsp/core_cm0.h **** #define SCB_CCR_UNALIGN_TRP_Msk            (1ul << SCB_CCR_UNALIGN_TRP_Pos)               /*!< SCB 
+ 206:./bsp/core_cm0.h **** 
+ 207:./bsp/core_cm0.h **** /* SCB System Handler Control and State Register Definitions */
+ 208:./bsp/core_cm0.h **** #define SCB_SHCSR_SVCALLPENDED_Pos         15                                             /*!< SCB 
+ 209:./bsp/core_cm0.h **** #define SCB_SHCSR_SVCALLPENDED_Msk         (1ul << SCB_SHCSR_SVCALLPENDED_Pos)            /*!< SCB 
+ 210:./bsp/core_cm0.h **** 
+ 211:./bsp/core_cm0.h **** /* SCB Debug Fault Status Register Definitions */
+ 212:./bsp/core_cm0.h **** #define SCB_DFSR_EXTERNAL_Pos               4                                             /*!< SCB 
+ 213:./bsp/core_cm0.h **** #define SCB_DFSR_EXTERNAL_Msk              (1ul << SCB_DFSR_EXTERNAL_Pos)                 /*!< SCB 
+ 214:./bsp/core_cm0.h **** 
+ 215:./bsp/core_cm0.h **** #define SCB_DFSR_VCATCH_Pos                 3                                             /*!< SCB 
+ 216:./bsp/core_cm0.h **** #define SCB_DFSR_VCATCH_Msk                (1ul << SCB_DFSR_VCATCH_Pos)                   /*!< SCB 
+ 217:./bsp/core_cm0.h **** 
+ 218:./bsp/core_cm0.h **** #define SCB_DFSR_DWTTRAP_Pos                2                                             /*!< SCB 
+ 219:./bsp/core_cm0.h **** #define SCB_DFSR_DWTTRAP_Msk               (1ul << SCB_DFSR_DWTTRAP_Pos)                  /*!< SCB 
+ 220:./bsp/core_cm0.h **** 
+ 221:./bsp/core_cm0.h **** #define SCB_DFSR_BKPT_Pos                   1                                             /*!< SCB 
+ 222:./bsp/core_cm0.h **** #define SCB_DFSR_BKPT_Msk                  (1ul << SCB_DFSR_BKPT_Pos)                     /*!< SCB 
+ 223:./bsp/core_cm0.h **** 
+ 224:./bsp/core_cm0.h **** #define SCB_DFSR_HALTED_Pos                 0                                             /*!< SCB 
+ 225:./bsp/core_cm0.h **** #define SCB_DFSR_HALTED_Msk                (1ul << SCB_DFSR_HALTED_Pos)                   /*!< SCB 
+ 226:./bsp/core_cm0.h **** /*@}*/ /* end of group CMSIS_CM0_SCB */
+ 227:./bsp/core_cm0.h **** 
+ 228:./bsp/core_cm0.h **** 
+ 229:./bsp/core_cm0.h **** /** @addtogroup CMSIS_CM0_SysTick CMSIS CM0 SysTick
+ 230:./bsp/core_cm0.h ****   memory mapped structure for SysTick
+ 231:./bsp/core_cm0.h ****   @{
+ 232:./bsp/core_cm0.h ****  */
+ 233:./bsp/core_cm0.h **** typedef struct
+ 234:./bsp/core_cm0.h **** {
+ 235:./bsp/core_cm0.h ****   __IO uint32_t CTRL;                         /*!< Offset: 0x00  SysTick Control and Status Registe
+ 236:./bsp/core_cm0.h ****   __IO uint32_t LOAD;                         /*!< Offset: 0x04  SysTick Reload Value Register     
+ 237:./bsp/core_cm0.h ****   __IO uint32_t VAL;                          /*!< Offset: 0x08  SysTick Current Value Register    
+ 238:./bsp/core_cm0.h ****   __I  uint32_t CALIB;                        /*!< Offset: 0x0C  SysTick Calibration Register      
+ 239:./bsp/core_cm0.h **** } SysTick_Type;
+ 240:./bsp/core_cm0.h **** 
+ 241:./bsp/core_cm0.h **** /* SysTick Control / Status Register Definitions */
+ 242:./bsp/core_cm0.h **** #define SysTick_CTRL_COUNTFLAG_Pos         16                                             /*!< SysT
+ 243:./bsp/core_cm0.h **** #define SysTick_CTRL_COUNTFLAG_Msk         (1ul << SysTick_CTRL_COUNTFLAG_Pos)            /*!< SysT
+ 244:./bsp/core_cm0.h **** 
+ 245:./bsp/core_cm0.h **** #define SysTick_CTRL_CLKSOURCE_Pos          2                                             /*!< SysT
+ 246:./bsp/core_cm0.h **** #define SysTick_CTRL_CLKSOURCE_Msk         (1ul << SysTick_CTRL_CLKSOURCE_Pos)            /*!< SysT
+ 247:./bsp/core_cm0.h **** 
+ 248:./bsp/core_cm0.h **** #define SysTick_CTRL_TICKINT_Pos            1                                             /*!< SysT
+ 249:./bsp/core_cm0.h **** #define SysTick_CTRL_TICKINT_Msk           (1ul << SysTick_CTRL_TICKINT_Pos)              /*!< SysT
+ 250:./bsp/core_cm0.h **** 
+ 251:./bsp/core_cm0.h **** #define SysTick_CTRL_ENABLE_Pos             0                                             /*!< SysT
+ 252:./bsp/core_cm0.h **** #define SysTick_CTRL_ENABLE_Msk            (1ul << SysTick_CTRL_ENABLE_Pos)               /*!< SysT
+ 253:./bsp/core_cm0.h **** 
+ 254:./bsp/core_cm0.h **** /* SysTick Reload Register Definitions */
+ 255:./bsp/core_cm0.h **** #define SysTick_LOAD_RELOAD_Pos             0                                             /*!< SysT
+ 256:./bsp/core_cm0.h **** #define SysTick_LOAD_RELOAD_Msk            (0xFFFFFFul << SysTick_LOAD_RELOAD_Pos)        /*!< SysT
+ 257:./bsp/core_cm0.h **** 
+ 258:./bsp/core_cm0.h **** /* SysTick Current Register Definitions */
+ 259:./bsp/core_cm0.h **** #define SysTick_VAL_CURRENT_Pos             0                                             /*!< SysT
+ 260:./bsp/core_cm0.h **** #define SysTick_VAL_CURRENT_Msk            (0xFFFFFFul << SysTick_VAL_CURRENT_Pos)        /*!< SysT
+ 261:./bsp/core_cm0.h **** 
+ 262:./bsp/core_cm0.h **** /* SysTick Calibration Register Definitions */
+ 263:./bsp/core_cm0.h **** #define SysTick_CALIB_NOREF_Pos            31                                             /*!< SysT
+ 264:./bsp/core_cm0.h **** #define SysTick_CALIB_NOREF_Msk            (1ul << SysTick_CALIB_NOREF_Pos)               /*!< SysT
+ 265:./bsp/core_cm0.h **** 
+ 266:./bsp/core_cm0.h **** #define SysTick_CALIB_SKEW_Pos             30                                             /*!< SysT
+ 267:./bsp/core_cm0.h **** #define SysTick_CALIB_SKEW_Msk             (1ul << SysTick_CALIB_SKEW_Pos)                /*!< SysT
+ 268:./bsp/core_cm0.h **** 
+ 269:./bsp/core_cm0.h **** #define SysTick_CALIB_TENMS_Pos             0                                             /*!< SysT
+ 270:./bsp/core_cm0.h **** #define SysTick_CALIB_TENMS_Msk            (0xFFFFFFul << SysTick_VAL_CURRENT_Pos)        /*!< SysT
+ 271:./bsp/core_cm0.h **** /*@}*/ /* end of group CMSIS_CM0_SysTick */
+ 272:./bsp/core_cm0.h **** 
+ 273:./bsp/core_cm0.h **** 
+ 274:./bsp/core_cm0.h **** /** @addtogroup CMSIS_CM0_CoreDebug CMSIS CM0 Core Debug
+ 275:./bsp/core_cm0.h ****   memory mapped structure for Core Debug Register
+ 276:./bsp/core_cm0.h ****   @{
+ 277:./bsp/core_cm0.h ****  */
+ 278:./bsp/core_cm0.h **** typedef struct
+ 279:./bsp/core_cm0.h **** {
+ 280:./bsp/core_cm0.h ****   __IO uint32_t DHCSR;                        /*!< Offset: 0x00  Debug Halting Control and Status R
+ 281:./bsp/core_cm0.h ****   __O  uint32_t DCRSR;                        /*!< Offset: 0x04  Debug Core Register Selector Regis
+ 282:./bsp/core_cm0.h ****   __IO uint32_t DCRDR;                        /*!< Offset: 0x08  Debug Core Register Data Register 
+ 283:./bsp/core_cm0.h ****   __IO uint32_t DEMCR;                        /*!< Offset: 0x0C  Debug Exception and Monitor Contro
+ 284:./bsp/core_cm0.h **** } CoreDebug_Type;
+ 285:./bsp/core_cm0.h **** 
+ 286:./bsp/core_cm0.h **** /* Debug Halting Control and Status Register */
+ 287:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_DBGKEY_Pos         16                                             /*!< Core
+ 288:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_DBGKEY_Msk         (0xFFFFul << CoreDebug_DHCSR_DBGKEY_Pos)       /*!< Core
+ 289:./bsp/core_cm0.h **** 
+ 290:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_RESET_ST_Pos     25                                             /*!< Core
+ 291:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_RESET_ST_Msk     (1ul << CoreDebug_DHCSR_S_RESET_ST_Pos)        /*!< Core
+ 292:./bsp/core_cm0.h **** 
+ 293:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_RETIRE_ST_Pos    24                                             /*!< Core
+ 294:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_RETIRE_ST_Msk    (1ul << CoreDebug_DHCSR_S_RETIRE_ST_Pos)       /*!< Core
+ 295:./bsp/core_cm0.h **** 
+ 296:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_LOCKUP_Pos       19                                             /*!< Core
+ 297:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_LOCKUP_Msk       (1ul << CoreDebug_DHCSR_S_LOCKUP_Pos)          /*!< Core
+ 298:./bsp/core_cm0.h **** 
+ 299:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_SLEEP_Pos        18                                             /*!< Core
+ 300:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_SLEEP_Msk        (1ul << CoreDebug_DHCSR_S_SLEEP_Pos)           /*!< Core
+ 301:./bsp/core_cm0.h **** 
+ 302:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_HALT_Pos         17                                             /*!< Core
+ 303:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_HALT_Msk         (1ul << CoreDebug_DHCSR_S_HALT_Pos)            /*!< Core
+ 304:./bsp/core_cm0.h **** 
+ 305:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_REGRDY_Pos       16                                             /*!< Core
+ 306:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_REGRDY_Msk       (1ul << CoreDebug_DHCSR_S_REGRDY_Pos)          /*!< Core
+ 307:./bsp/core_cm0.h **** 
+ 308:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_C_MASKINTS_Pos      3                                             /*!< Core
+ 309:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_C_MASKINTS_Msk     (1ul << CoreDebug_DHCSR_C_MASKINTS_Pos)        /*!< Core
+ 310:./bsp/core_cm0.h **** 
+ 311:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_C_STEP_Pos          2                                             /*!< Core
+ 312:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_C_STEP_Msk         (1ul << CoreDebug_DHCSR_C_STEP_Pos)            /*!< Core
+ 313:./bsp/core_cm0.h **** 
+ 314:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_C_HALT_Pos          1                                             /*!< Core
+ 315:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_C_HALT_Msk         (1ul << CoreDebug_DHCSR_C_HALT_Pos)            /*!< Core
+ 316:./bsp/core_cm0.h **** 
+ 317:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_C_DEBUGEN_Pos       0                                             /*!< Core
+ 318:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_C_DEBUGEN_Msk      (1ul << CoreDebug_DHCSR_C_DEBUGEN_Pos)         /*!< Core
+ 319:./bsp/core_cm0.h **** 
+ 320:./bsp/core_cm0.h **** /* Debug Core Register Selector Register */
+ 321:./bsp/core_cm0.h **** #define CoreDebug_DCRSR_REGWnR_Pos         16                                             /*!< Core
+ 322:./bsp/core_cm0.h **** #define CoreDebug_DCRSR_REGWnR_Msk         (1ul << CoreDebug_DCRSR_REGWnR_Pos)            /*!< Core
+ 323:./bsp/core_cm0.h **** 
+ 324:./bsp/core_cm0.h **** #define CoreDebug_DCRSR_REGSEL_Pos          0                                             /*!< Core
+ 325:./bsp/core_cm0.h **** #define CoreDebug_DCRSR_REGSEL_Msk         (0x1Ful << CoreDebug_DCRSR_REGSEL_Pos)         /*!< Core
+ 326:./bsp/core_cm0.h **** 
+ 327:./bsp/core_cm0.h **** /* Debug Exception and Monitor Control Register */
+ 328:./bsp/core_cm0.h **** #define CoreDebug_DEMCR_DWTENA_Pos         24                                             /*!< Core
+ 329:./bsp/core_cm0.h **** #define CoreDebug_DEMCR_DWTENA_Msk         (1ul << CoreDebug_DEMCR_DWTENA_Pos)            /*!< Core
+ 330:./bsp/core_cm0.h **** 
+ 331:./bsp/core_cm0.h **** #define CoreDebug_DEMCR_VC_HARDERR_Pos     10                                             /*!< Core
+ 332:./bsp/core_cm0.h **** #define CoreDebug_DEMCR_VC_HARDERR_Msk     (1ul << CoreDebug_DEMCR_VC_HARDERR_Pos)        /*!< Core
+ 333:./bsp/core_cm0.h **** 
+ 334:./bsp/core_cm0.h **** #define CoreDebug_DEMCR_VC_CORERESET_Pos    0                                             /*!< Core
+ 335:./bsp/core_cm0.h **** #define CoreDebug_DEMCR_VC_CORERESET_Msk   (1ul << CoreDebug_DEMCR_VC_CORERESET_Pos)      /*!< Core
+ 336:./bsp/core_cm0.h **** /*@}*/ /* end of group CMSIS_CM0_CoreDebug */
+ 337:./bsp/core_cm0.h **** 
+ 338:./bsp/core_cm0.h **** 
+ 339:./bsp/core_cm0.h **** /* Memory mapping of Cortex-M0 Hardware */
+ 340:./bsp/core_cm0.h **** #define SCS_BASE            (0xE000E000)                              /*!< System Control Space Bas
+ 341:./bsp/core_cm0.h **** #define CoreDebug_BASE      (0xE000EDF0)                              /*!< Core Debug Base Address 
+ 342:./bsp/core_cm0.h **** #define SysTick_BASE        (SCS_BASE +  0x0010)                      /*!< SysTick Base Address    
+ 343:./bsp/core_cm0.h **** #define NVIC_BASE           (SCS_BASE +  0x0100)                      /*!< NVIC Base Address       
+ 344:./bsp/core_cm0.h **** #define SCB_BASE            (SCS_BASE +  0x0D00)                      /*!< System Control Block Bas
+ 345:./bsp/core_cm0.h **** 
+ 346:./bsp/core_cm0.h **** #define SCB                 ((SCB_Type *)           SCB_BASE)         /*!< SCB configuration struct
+ 347:./bsp/core_cm0.h **** #define SysTick             ((SysTick_Type *)       SysTick_BASE)     /*!< SysTick configuration st
+ 348:./bsp/core_cm0.h **** #define NVIC                ((NVIC_Type *)          NVIC_BASE)        /*!< NVIC configuration struc
+ 349:./bsp/core_cm0.h **** #define CoreDebug           ((CoreDebug_Type *)     CoreDebug_BASE)   /*!< Core Debug configuration
+ 350:./bsp/core_cm0.h **** 
+ 351:./bsp/core_cm0.h **** /*@}*/ /* end of group CMSIS_CM0_core_register */
+ 352:./bsp/core_cm0.h **** 
+ 353:./bsp/core_cm0.h **** 
+ 354:./bsp/core_cm0.h **** /*******************************************************************************
+ 355:./bsp/core_cm0.h ****  *                Hardware Abstraction Layer
+ 356:./bsp/core_cm0.h ****  ******************************************************************************/
+ 357:./bsp/core_cm0.h **** 
+ 358:./bsp/core_cm0.h **** 
+ 359:./bsp/core_cm0.h **** #if defined ( __CC_ARM   )
+ 360:./bsp/core_cm0.h ****   #define __ASM            __asm                                      /*!< asm keyword for ARM Comp
+ 361:./bsp/core_cm0.h ****   #define __INLINE         __inline                                   /*!< inline keyword for ARM C
+ 362:./bsp/core_cm0.h ****   #define __STATIC_INLINE  static __inline
+ 363:./bsp/core_cm0.h **** #elif defined ( __ICCARM__ )
+ 364:./bsp/core_cm0.h ****   #define __ASM           __asm                                       /*!< asm keyword for IAR Comp
+ 365:./bsp/core_cm0.h ****   #define __INLINE        inline                                      /*!< inline keyword for IAR C
+ 366:./bsp/core_cm0.h ****   #define __STATIC_INLINE  static inline
+ 367:./bsp/core_cm0.h **** #elif defined   (  __GNUC__  )
+ 368:./bsp/core_cm0.h ****   #define __ASM            __asm                                      /*!< asm keyword for GNU Comp
+ 369:./bsp/core_cm0.h ****   #define __INLINE         inline                                     /*!< inline keyword for GNU C
+ 370:./bsp/core_cm0.h ****   #define __STATIC_INLINE  static inline
+ 371:./bsp/core_cm0.h **** #elif defined   (  __TASKING__  )
+ 372:./bsp/core_cm0.h ****   #define __ASM            __asm                                      /*!< asm keyword for TASKING 
+ 373:./bsp/core_cm0.h ****   #define __INLINE         inline                                     /*!< inline keyword for TASKI
+ 374:./bsp/core_cm0.h ****   #define __STATIC_INLINE  static inline
+ 375:./bsp/core_cm0.h **** #endif
+ 376:./bsp/core_cm0.h **** 
+ 377:./bsp/core_cm0.h **** 
+ 378:./bsp/core_cm0.h **** /* ###################  Compiler specific Intrinsics  ########################### */
+ 379:./bsp/core_cm0.h **** 
+ 380:./bsp/core_cm0.h **** #if defined ( __CC_ARM   ) /*------------------RealView Compiler -----------------*/
+ 381:./bsp/core_cm0.h **** /* ARM armcc specific functions */
+ 382:./bsp/core_cm0.h **** 
+ 383:./bsp/core_cm0.h **** #define __enable_fault_irq                __enable_fiq
+ 384:./bsp/core_cm0.h **** #define __disable_fault_irq               __disable_fiq
+ 385:./bsp/core_cm0.h **** 
+ 386:./bsp/core_cm0.h **** #define __NOP                             __nop
+ 387:./bsp/core_cm0.h **** #define __WFI                             __wfi
+ 388:./bsp/core_cm0.h **** #define __WFE                             __wfe
+ 389:./bsp/core_cm0.h **** #define __SEV                             __sev
+ 390:./bsp/core_cm0.h **** #define __ISB()                           __isb(0)
+ 391:./bsp/core_cm0.h **** #define __DSB()                           __dsb(0)
+ 392:./bsp/core_cm0.h **** #define __DMB()                           __dmb(0)
+ 393:./bsp/core_cm0.h **** #define __REV                             __rev
+ 394:./bsp/core_cm0.h **** 
+ 395:./bsp/core_cm0.h **** 
+ 396:./bsp/core_cm0.h **** /* intrinsic void __enable_irq();     */
+ 397:./bsp/core_cm0.h **** /* intrinsic void __disable_irq();    */
+ 398:./bsp/core_cm0.h **** 
+ 399:./bsp/core_cm0.h **** 
+ 400:./bsp/core_cm0.h **** /**
+ 401:./bsp/core_cm0.h ****  * @brief  Return the Process Stack Pointer
+ 402:./bsp/core_cm0.h ****  *
+ 403:./bsp/core_cm0.h ****  * @return ProcessStackPointer
+ 404:./bsp/core_cm0.h ****  *
+ 405:./bsp/core_cm0.h ****  * Return the actual process stack pointer
+ 406:./bsp/core_cm0.h ****  */
+ 407:./bsp/core_cm0.h **** extern uint32_t __get_PSP(void);
+ 408:./bsp/core_cm0.h **** 
+ 409:./bsp/core_cm0.h **** /**
+ 410:./bsp/core_cm0.h ****  * @brief  Set the Process Stack Pointer
+ 411:./bsp/core_cm0.h ****  *
+ 412:./bsp/core_cm0.h ****  * @param  topOfProcStack  Process Stack Pointer
+ 413:./bsp/core_cm0.h ****  *
+ 414:./bsp/core_cm0.h ****  * Assign the value ProcessStackPointer to the MSP 
+ 415:./bsp/core_cm0.h ****  * (process stack pointer) Cortex processor register
+ 416:./bsp/core_cm0.h ****  */
+ 417:./bsp/core_cm0.h **** extern void __set_PSP(uint32_t topOfProcStack);
+ 418:./bsp/core_cm0.h **** 
+ 419:./bsp/core_cm0.h **** /**
+ 420:./bsp/core_cm0.h ****  * @brief  Return the Main Stack Pointer
+ 421:./bsp/core_cm0.h ****  *
+ 422:./bsp/core_cm0.h ****  * @return Main Stack Pointer
+ 423:./bsp/core_cm0.h ****  *
+ 424:./bsp/core_cm0.h ****  * Return the current value of the MSP (main stack pointer)
+ 425:./bsp/core_cm0.h ****  * Cortex processor register
+ 426:./bsp/core_cm0.h ****  */
+ 427:./bsp/core_cm0.h **** extern uint32_t __get_MSP(void);
+ 428:./bsp/core_cm0.h **** 
+ 429:./bsp/core_cm0.h **** /**
+ 430:./bsp/core_cm0.h ****  * @brief  Set the Main Stack Pointer
+ 431:./bsp/core_cm0.h ****  *
+ 432:./bsp/core_cm0.h ****  * @param  topOfMainStack  Main Stack Pointer
+ 433:./bsp/core_cm0.h ****  *
+ 434:./bsp/core_cm0.h ****  * Assign the value mainStackPointer to the MSP 
+ 435:./bsp/core_cm0.h ****  * (main stack pointer) Cortex processor register
+ 436:./bsp/core_cm0.h ****  */
+ 437:./bsp/core_cm0.h **** extern void __set_MSP(uint32_t topOfMainStack);
+ 438:./bsp/core_cm0.h **** 
+ 439:./bsp/core_cm0.h **** /**
+ 440:./bsp/core_cm0.h ****  * @brief  Reverse byte order in unsigned short value
+ 441:./bsp/core_cm0.h ****  *
+ 442:./bsp/core_cm0.h ****  * @param   value  value to reverse
+ 443:./bsp/core_cm0.h ****  * @return         reversed value
+ 444:./bsp/core_cm0.h ****  *
+ 445:./bsp/core_cm0.h ****  * Reverse byte order in unsigned short value
+ 446:./bsp/core_cm0.h ****  */
+ 447:./bsp/core_cm0.h **** extern uint32_t __REV16(uint16_t value);
+ 448:./bsp/core_cm0.h **** 
+ 449:./bsp/core_cm0.h **** /**
+ 450:./bsp/core_cm0.h ****  * @brief  Reverse byte order in signed short value with sign extension to integer
+ 451:./bsp/core_cm0.h ****  *
+ 452:./bsp/core_cm0.h ****  * @param   value  value to reverse
+ 453:./bsp/core_cm0.h ****  * @return         reversed value
+ 454:./bsp/core_cm0.h ****  *
+ 455:./bsp/core_cm0.h ****  * Reverse byte order in signed short value with sign extension to integer
+ 456:./bsp/core_cm0.h ****  */
+ 457:./bsp/core_cm0.h **** extern int32_t __REVSH(int16_t value);
+ 458:./bsp/core_cm0.h **** 
+ 459:./bsp/core_cm0.h **** 
+ 460:./bsp/core_cm0.h **** #if (__ARMCC_VERSION < 400000)
+ 461:./bsp/core_cm0.h **** 
+ 462:./bsp/core_cm0.h **** /**
+ 463:./bsp/core_cm0.h ****  * @brief  Return the Priority Mask value
+ 464:./bsp/core_cm0.h ****  *
+ 465:./bsp/core_cm0.h ****  * @return PriMask
+ 466:./bsp/core_cm0.h ****  *
+ 467:./bsp/core_cm0.h ****  * Return state of the priority mask bit from the priority mask register
+ 468:./bsp/core_cm0.h ****  */
+ 469:./bsp/core_cm0.h **** extern uint32_t __get_PRIMASK(void);
+ 470:./bsp/core_cm0.h **** 
+ 471:./bsp/core_cm0.h **** /**
+ 472:./bsp/core_cm0.h ****  * @brief  Set the Priority Mask value
+ 473:./bsp/core_cm0.h ****  *
+ 474:./bsp/core_cm0.h ****  * @param   priMask  PriMask
+ 475:./bsp/core_cm0.h ****  *
+ 476:./bsp/core_cm0.h ****  * Set the priority mask bit in the priority mask register
+ 477:./bsp/core_cm0.h ****  */
+ 478:./bsp/core_cm0.h **** extern void __set_PRIMASK(uint32_t priMask);
+ 479:./bsp/core_cm0.h **** 
+ 480:./bsp/core_cm0.h **** /**
+ 481:./bsp/core_cm0.h ****  * @brief  Return the Control Register value
+ 482:./bsp/core_cm0.h ****  * 
+ 483:./bsp/core_cm0.h ****  * @return Control value
+ 484:./bsp/core_cm0.h ****  *
+ 485:./bsp/core_cm0.h ****  * Return the content of the control register
+ 486:./bsp/core_cm0.h ****  */
+ 487:./bsp/core_cm0.h **** extern uint32_t __get_CONTROL(void);
+ 488:./bsp/core_cm0.h **** 
+ 489:./bsp/core_cm0.h **** /**
+ 490:./bsp/core_cm0.h ****  * @brief  Set the Control Register value
+ 491:./bsp/core_cm0.h ****  *
+ 492:./bsp/core_cm0.h ****  * @param  control  Control value
+ 493:./bsp/core_cm0.h ****  *
+ 494:./bsp/core_cm0.h ****  * Set the control register
+ 495:./bsp/core_cm0.h ****  */
+ 496:./bsp/core_cm0.h **** extern void __set_CONTROL(uint32_t control);
+ 497:./bsp/core_cm0.h **** 
+ 498:./bsp/core_cm0.h **** #else  /* (__ARMCC_VERSION >= 400000)  */
+ 499:./bsp/core_cm0.h **** 
+ 500:./bsp/core_cm0.h **** 
+ 501:./bsp/core_cm0.h **** /**
+ 502:./bsp/core_cm0.h ****  * @brief  Return the Priority Mask value
+ 503:./bsp/core_cm0.h ****  *
+ 504:./bsp/core_cm0.h ****  * @return PriMask
+ 505:./bsp/core_cm0.h ****  *
+ 506:./bsp/core_cm0.h ****  * Return state of the priority mask bit from the priority mask register
+ 507:./bsp/core_cm0.h ****  */
+ 508:./bsp/core_cm0.h **** static __INLINE uint32_t __get_PRIMASK(void)
+ 509:./bsp/core_cm0.h **** {
+ 510:./bsp/core_cm0.h ****   register uint32_t __regPriMask         __ASM("primask");
+ 511:./bsp/core_cm0.h ****   return(__regPriMask);
+ 512:./bsp/core_cm0.h **** }
+ 513:./bsp/core_cm0.h **** 
+ 514:./bsp/core_cm0.h **** /**
+ 515:./bsp/core_cm0.h ****  * @brief  Set the Priority Mask value
+ 516:./bsp/core_cm0.h ****  *
+ 517:./bsp/core_cm0.h ****  * @param  priMask  PriMask
+ 518:./bsp/core_cm0.h ****  *
+ 519:./bsp/core_cm0.h ****  * Set the priority mask bit in the priority mask register
+ 520:./bsp/core_cm0.h ****  */
+ 521:./bsp/core_cm0.h **** static __INLINE void __set_PRIMASK(uint32_t priMask)
+ 522:./bsp/core_cm0.h **** {
+ 523:./bsp/core_cm0.h ****   register uint32_t __regPriMask         __ASM("primask");
+ 524:./bsp/core_cm0.h ****   __regPriMask = (priMask);
+ 525:./bsp/core_cm0.h **** }
+ 526:./bsp/core_cm0.h **** 
+ 527:./bsp/core_cm0.h **** /**
+ 528:./bsp/core_cm0.h ****  * @brief  Return the Control Register value
+ 529:./bsp/core_cm0.h ****  * 
+ 530:./bsp/core_cm0.h ****  * @return Control value
+ 531:./bsp/core_cm0.h ****  *
+ 532:./bsp/core_cm0.h ****  * Return the content of the control register
+ 533:./bsp/core_cm0.h ****  */
+ 534:./bsp/core_cm0.h **** static __INLINE uint32_t __get_CONTROL(void)
+ 535:./bsp/core_cm0.h **** {
+ 536:./bsp/core_cm0.h ****   register uint32_t __regControl         __ASM("control");
+ 537:./bsp/core_cm0.h ****   return(__regControl);
+ 538:./bsp/core_cm0.h **** }
+ 539:./bsp/core_cm0.h **** 
+ 540:./bsp/core_cm0.h **** /**
+ 541:./bsp/core_cm0.h ****  * @brief  Set the Control Register value
+ 542:./bsp/core_cm0.h ****  *
+ 543:./bsp/core_cm0.h ****  * @param  control  Control value
+ 544:./bsp/core_cm0.h ****  *
+ 545:./bsp/core_cm0.h ****  * Set the control register
+ 546:./bsp/core_cm0.h ****  */
+ 547:./bsp/core_cm0.h **** static __INLINE void __set_CONTROL(uint32_t control)
+ 548:./bsp/core_cm0.h **** {
+ 549:./bsp/core_cm0.h ****   register uint32_t __regControl         __ASM("control");
+ 550:./bsp/core_cm0.h ****   __regControl = control;
+ 551:./bsp/core_cm0.h **** }
+ 552:./bsp/core_cm0.h **** 
+ 553:./bsp/core_cm0.h **** #endif /* __ARMCC_VERSION  */ 
+ 554:./bsp/core_cm0.h **** 
+ 555:./bsp/core_cm0.h **** 
+ 556:./bsp/core_cm0.h **** 
+ 557:./bsp/core_cm0.h **** #elif (defined (__ICCARM__)) /*------------------ ICC Compiler -------------------*/
+ 558:./bsp/core_cm0.h **** /* IAR iccarm specific functions */
+ 559:./bsp/core_cm0.h **** 
+ 560:./bsp/core_cm0.h **** #define __enable_irq                              __enable_interrupt        /*!< global Interrupt e
+ 561:./bsp/core_cm0.h **** #define __disable_irq                             __disable_interrupt       /*!< global Interrupt d
+ 562:./bsp/core_cm0.h **** 
+ 563:./bsp/core_cm0.h **** static __INLINE void __enable_fault_irq()         { __ASM ("cpsie f"); }
+ 564:./bsp/core_cm0.h **** static __INLINE void __disable_fault_irq()        { __ASM ("cpsid f"); }
+ 565:./bsp/core_cm0.h **** 
+ 566:./bsp/core_cm0.h **** #define __NOP                                     __no_operation            /*!< no operation intri
+ 567:./bsp/core_cm0.h **** static __INLINE  void __WFI()                     { __ASM ("wfi"); }
+ 568:./bsp/core_cm0.h **** static __INLINE  void __WFE()                     { __ASM ("wfe"); }
+ 569:./bsp/core_cm0.h **** static __INLINE  void __SEV()                     { __ASM ("sev"); }
+ 570:./bsp/core_cm0.h **** 
+ 571:./bsp/core_cm0.h **** /* intrinsic void __ISB(void)                                     */
+ 572:./bsp/core_cm0.h **** /* intrinsic void __DSB(void)                                     */
+ 573:./bsp/core_cm0.h **** /* intrinsic void __DMB(void)                                     */
+ 574:./bsp/core_cm0.h **** /* intrinsic void __set_PRIMASK();                                */
+ 575:./bsp/core_cm0.h **** /* intrinsic void __get_PRIMASK();                                */
+ 576:./bsp/core_cm0.h **** 
+ 577:./bsp/core_cm0.h **** 
+ 578:./bsp/core_cm0.h **** /* intrinsic uint32_t __REV(uint32_t value);                      */
+ 579:./bsp/core_cm0.h **** /* intrinsic uint32_t __REVSH(uint32_t value);                    */
+ 580:./bsp/core_cm0.h **** 
+ 581:./bsp/core_cm0.h **** 
+ 582:./bsp/core_cm0.h **** /**
+ 583:./bsp/core_cm0.h ****  * @brief  Return the Process Stack Pointer
+ 584:./bsp/core_cm0.h ****  *
+ 585:./bsp/core_cm0.h ****  * @return ProcessStackPointer
+ 586:./bsp/core_cm0.h ****  *
+ 587:./bsp/core_cm0.h ****  * Return the actual process stack pointer
+ 588:./bsp/core_cm0.h ****  */
+ 589:./bsp/core_cm0.h **** extern uint32_t __get_PSP(void);
+ 590:./bsp/core_cm0.h **** 
+ 591:./bsp/core_cm0.h **** /**
+ 592:./bsp/core_cm0.h ****  * @brief  Set the Process Stack Pointer
+ 593:./bsp/core_cm0.h ****  *
+ 594:./bsp/core_cm0.h ****  * @param  topOfProcStack  Process Stack Pointer
+ 595:./bsp/core_cm0.h ****  *
+ 596:./bsp/core_cm0.h ****  * Assign the value ProcessStackPointer to the MSP 
+ 597:./bsp/core_cm0.h ****  * (process stack pointer) Cortex processor register
+ 598:./bsp/core_cm0.h ****  */
+ 599:./bsp/core_cm0.h **** extern void __set_PSP(uint32_t topOfProcStack);
+ 600:./bsp/core_cm0.h **** 
+ 601:./bsp/core_cm0.h **** /**
+ 602:./bsp/core_cm0.h ****  * @brief  Return the Main Stack Pointer
+ 603:./bsp/core_cm0.h ****  *
+ 604:./bsp/core_cm0.h ****  * @return Main Stack Pointer
+ 605:./bsp/core_cm0.h ****  *
+ 606:./bsp/core_cm0.h ****  * Return the current value of the MSP (main stack pointer)
+ 607:./bsp/core_cm0.h ****  * Cortex processor register
+ 608:./bsp/core_cm0.h ****  */
+ 609:./bsp/core_cm0.h **** extern uint32_t __get_MSP(void);
+ 610:./bsp/core_cm0.h **** 
+ 611:./bsp/core_cm0.h **** /**
+ 612:./bsp/core_cm0.h ****  * @brief  Set the Main Stack Pointer
+ 613:./bsp/core_cm0.h ****  *
+ 614:./bsp/core_cm0.h ****  * @param  topOfMainStack  Main Stack Pointer
+ 615:./bsp/core_cm0.h ****  *
+ 616:./bsp/core_cm0.h ****  * Assign the value mainStackPointer to the MSP 
+ 617:./bsp/core_cm0.h ****  * (main stack pointer) Cortex processor register
+ 618:./bsp/core_cm0.h ****  */
+ 619:./bsp/core_cm0.h **** extern void __set_MSP(uint32_t topOfMainStack);
+ 620:./bsp/core_cm0.h **** 
+ 621:./bsp/core_cm0.h **** /**
+ 622:./bsp/core_cm0.h ****  * @brief  Reverse byte order in unsigned short value
+ 623:./bsp/core_cm0.h ****  *
+ 624:./bsp/core_cm0.h ****  * @param  value  value to reverse
+ 625:./bsp/core_cm0.h ****  * @return        reversed value
+ 626:./bsp/core_cm0.h ****  *
+ 627:./bsp/core_cm0.h ****  * Reverse byte order in unsigned short value
+ 628:./bsp/core_cm0.h ****  */
+ 629:./bsp/core_cm0.h **** extern uint32_t __REV16(uint16_t value);
+ 630:./bsp/core_cm0.h **** 
+ 631:./bsp/core_cm0.h **** 
+ 632:./bsp/core_cm0.h **** 
+ 633:./bsp/core_cm0.h **** 
+ 634:./bsp/core_cm0.h **** 
+ 635:./bsp/core_cm0.h **** #elif (defined (__GNUC__)) /*------------------ GNU Compiler ---------------------*/
+ 636:./bsp/core_cm0.h **** /* GNU gcc specific functions */
+ 637:./bsp/core_cm0.h **** 
+ 638:./bsp/core_cm0.h **** static __INLINE void __enable_irq()               { __ASM volatile ("cpsie i"); }
+ 639:./bsp/core_cm0.h **** static __INLINE void __disable_irq()              { __ASM volatile ("cpsid i"); }
+ 640:./bsp/core_cm0.h **** 
+ 641:./bsp/core_cm0.h **** static __INLINE void __enable_fault_irq()         { __ASM volatile ("cpsie f"); }
+ 642:./bsp/core_cm0.h **** static __INLINE void __disable_fault_irq()        { __ASM volatile ("cpsid f"); }
+ 643:./bsp/core_cm0.h **** 
+ 644:./bsp/core_cm0.h **** static __INLINE void __NOP()                      { __ASM volatile ("nop"); }
+ 645:./bsp/core_cm0.h **** static __INLINE void __WFI()                      { __ASM volatile ("wfi"); }
+ 646:./bsp/core_cm0.h **** static __INLINE void __WFE()                      { __ASM volatile ("wfe"); }
+ 647:./bsp/core_cm0.h **** static __INLINE void __SEV()                      { __ASM volatile ("sev"); }
+ 648:./bsp/core_cm0.h **** static __INLINE void __ISB()                      { __ASM volatile ("isb"); }
+ 649:./bsp/core_cm0.h **** static __INLINE void __DSB()                      { __ASM volatile ("dsb"); }
+ 650:./bsp/core_cm0.h **** static __INLINE void __DMB()                      { __ASM volatile ("dmb"); }
+ 651:./bsp/core_cm0.h **** 
+ 652:./bsp/core_cm0.h **** 
+ 653:./bsp/core_cm0.h **** /**
+ 654:./bsp/core_cm0.h ****  * @brief  Return the Process Stack Pointer
+ 655:./bsp/core_cm0.h ****  *
+ 656:./bsp/core_cm0.h ****  * @return ProcessStackPointer
+ 657:./bsp/core_cm0.h ****  *
+ 658:./bsp/core_cm0.h ****  * Return the actual process stack pointer
+ 659:./bsp/core_cm0.h ****  */
+ 660:./bsp/core_cm0.h **** extern uint32_t __get_PSP(void);
+ 661:./bsp/core_cm0.h **** 
+ 662:./bsp/core_cm0.h **** /**
+ 663:./bsp/core_cm0.h ****  * @brief  Set the Process Stack Pointer
+ 664:./bsp/core_cm0.h ****  *
+ 665:./bsp/core_cm0.h ****  * @param  topOfProcStack  Process Stack Pointer
+ 666:./bsp/core_cm0.h ****  *
+ 667:./bsp/core_cm0.h ****  * Assign the value ProcessStackPointer to the MSP 
+ 668:./bsp/core_cm0.h ****  * (process stack pointer) Cortex processor register
+ 669:./bsp/core_cm0.h ****  */
+ 670:./bsp/core_cm0.h **** extern void __set_PSP(uint32_t topOfProcStack);
+ 671:./bsp/core_cm0.h **** 
+ 672:./bsp/core_cm0.h **** /**
+ 673:./bsp/core_cm0.h ****  * @brief  Return the Main Stack Pointer
+ 674:./bsp/core_cm0.h ****  *
+ 675:./bsp/core_cm0.h ****  * @return Main Stack Pointer
+ 676:./bsp/core_cm0.h ****  *
+ 677:./bsp/core_cm0.h ****  * Return the current value of the MSP (main stack pointer)
+ 678:./bsp/core_cm0.h ****  * Cortex processor register
+ 679:./bsp/core_cm0.h ****  */
+ 680:./bsp/core_cm0.h **** extern uint32_t __get_MSP(void);
+ 681:./bsp/core_cm0.h **** 
+ 682:./bsp/core_cm0.h **** /**
+ 683:./bsp/core_cm0.h ****  * @brief  Set the Main Stack Pointer
+ 684:./bsp/core_cm0.h ****  *
+ 685:./bsp/core_cm0.h ****  * @param  topOfMainStack  Main Stack Pointer
+ 686:./bsp/core_cm0.h ****  *
+ 687:./bsp/core_cm0.h ****  * Assign the value mainStackPointer to the MSP 
+ 688:./bsp/core_cm0.h ****  * (main stack pointer) Cortex processor register
+ 689:./bsp/core_cm0.h ****  */
+ 690:./bsp/core_cm0.h **** extern void __set_MSP(uint32_t topOfMainStack);
+ 691:./bsp/core_cm0.h **** 
+ 692:./bsp/core_cm0.h **** /**
+ 693:./bsp/core_cm0.h ****  * @brief  Return the Priority Mask value
+ 694:./bsp/core_cm0.h ****  *
+ 695:./bsp/core_cm0.h ****  * @return PriMask
+ 696:./bsp/core_cm0.h ****  *
+ 697:./bsp/core_cm0.h ****  * Return state of the priority mask bit from the priority mask register
+ 698:./bsp/core_cm0.h ****  */
+ 699:./bsp/core_cm0.h **** extern uint32_t  __get_PRIMASK(void);
+ 700:./bsp/core_cm0.h **** 
+ 701:./bsp/core_cm0.h **** /**
+ 702:./bsp/core_cm0.h ****  * @brief  Set the Priority Mask value
+ 703:./bsp/core_cm0.h ****  *
+ 704:./bsp/core_cm0.h ****  * @param  priMask  PriMask
+ 705:./bsp/core_cm0.h ****  *
+ 706:./bsp/core_cm0.h ****  * Set the priority mask bit in the priority mask register
+ 707:./bsp/core_cm0.h ****  */
+ 708:./bsp/core_cm0.h **** extern void __set_PRIMASK(uint32_t priMask);
+ 709:./bsp/core_cm0.h **** 
+ 710:./bsp/core_cm0.h **** /**
+ 711:./bsp/core_cm0.h ****  * @brief  Return the Control Register value
+ 712:./bsp/core_cm0.h **** * 
+ 713:./bsp/core_cm0.h **** *  @return Control value
+ 714:./bsp/core_cm0.h ****  *
+ 715:./bsp/core_cm0.h ****  * Return the content of the control register
+ 716:./bsp/core_cm0.h ****  */
+ 717:./bsp/core_cm0.h **** extern uint32_t __get_CONTROL(void);
+ 718:./bsp/core_cm0.h **** 
+ 719:./bsp/core_cm0.h **** /**
+ 720:./bsp/core_cm0.h ****  * @brief  Set the Control Register value
+ 721:./bsp/core_cm0.h ****  *
+ 722:./bsp/core_cm0.h ****  * @param  control  Control value
+ 723:./bsp/core_cm0.h ****  *
+ 724:./bsp/core_cm0.h ****  * Set the control register
+ 725:./bsp/core_cm0.h ****  */
+ 726:./bsp/core_cm0.h **** extern void __set_CONTROL(uint32_t control);
+ 727:./bsp/core_cm0.h **** 
+ 728:./bsp/core_cm0.h **** /**
+ 729:./bsp/core_cm0.h ****  * @brief  Reverse byte order in integer value
+ 730:./bsp/core_cm0.h ****  *
+ 731:./bsp/core_cm0.h ****  * @param  value  value to reverse
+ 732:./bsp/core_cm0.h ****  * @return        reversed value
+ 733:./bsp/core_cm0.h ****  *
+ 734:./bsp/core_cm0.h ****  * Reverse byte order in integer value
+ 735:./bsp/core_cm0.h ****  */
+ 736:./bsp/core_cm0.h **** extern uint32_t __REV(uint32_t value);
+ 737:./bsp/core_cm0.h **** 
+ 738:./bsp/core_cm0.h **** /**
+ 739:./bsp/core_cm0.h ****  * @brief  Reverse byte order in unsigned short value
+ 740:./bsp/core_cm0.h ****  *
+ 741:./bsp/core_cm0.h ****  * @param  value  value to reverse
+ 742:./bsp/core_cm0.h ****  * @return        reversed value
+ 743:./bsp/core_cm0.h ****  *
+ 744:./bsp/core_cm0.h ****  * Reverse byte order in unsigned short value
+ 745:./bsp/core_cm0.h ****  */
+ 746:./bsp/core_cm0.h **** extern uint32_t __REV16(uint16_t value);
+ 747:./bsp/core_cm0.h **** 
+ 748:./bsp/core_cm0.h **** /**
+ 749:./bsp/core_cm0.h ****  * @brief  Reverse byte order in signed short value with sign extension to integer
+ 750:./bsp/core_cm0.h ****  *
+ 751:./bsp/core_cm0.h ****  * @param  value  value to reverse
+ 752:./bsp/core_cm0.h ****  * @return        reversed value
+ 753:./bsp/core_cm0.h ****  *
+ 754:./bsp/core_cm0.h ****  * Reverse byte order in signed short value with sign extension to integer
+ 755:./bsp/core_cm0.h ****  */
+ 756:./bsp/core_cm0.h **** extern int32_t __REVSH(int16_t value);
+ 757:./bsp/core_cm0.h **** 
+ 758:./bsp/core_cm0.h **** 
+ 759:./bsp/core_cm0.h **** #elif (defined (__TASKING__)) /*------------------ TASKING Compiler ---------------------*/
+ 760:./bsp/core_cm0.h **** /* TASKING carm specific functions */
+ 761:./bsp/core_cm0.h **** 
+ 762:./bsp/core_cm0.h **** /*
+ 763:./bsp/core_cm0.h ****  * The CMSIS functions have been implemented as intrinsics in the compiler.
+ 764:./bsp/core_cm0.h ****  * Please use "carm -?i" to get an up to date list of all instrinsics,
+ 765:./bsp/core_cm0.h ****  * Including the CMSIS ones.
+ 766:./bsp/core_cm0.h ****  */
+ 767:./bsp/core_cm0.h **** 
+ 768:./bsp/core_cm0.h **** #endif
+ 769:./bsp/core_cm0.h **** 
+ 770:./bsp/core_cm0.h **** 
+ 771:./bsp/core_cm0.h **** /** @addtogroup CMSIS_CM0_Core_FunctionInterface CMSIS CM0 Core Function Interface
+ 772:./bsp/core_cm0.h ****   Core  Function Interface containing:
+ 773:./bsp/core_cm0.h ****   - Core NVIC Functions
+ 774:./bsp/core_cm0.h ****   - Core SysTick Functions
+ 775:./bsp/core_cm0.h ****   - Core Reset Functions
+ 776:./bsp/core_cm0.h **** */
+ 777:./bsp/core_cm0.h **** /*@{*/
+ 778:./bsp/core_cm0.h **** 
+ 779:./bsp/core_cm0.h **** /* ##########################   NVIC functions  #################################### */
+ 780:./bsp/core_cm0.h **** 
+ 781:./bsp/core_cm0.h **** /* Interrupt Priorities are WORD accessible only under ARMv6M                   */
+ 782:./bsp/core_cm0.h **** /* The following MACROS handle generation of the register offset and byte masks */
+ 783:./bsp/core_cm0.h **** #define _BIT_SHIFT(IRQn)         (  (((uint32_t)(IRQn)       )    &  0x03) * 8 )
+ 784:./bsp/core_cm0.h **** #define _SHP_IDX(IRQn)           ( ((((uint32_t)(IRQn) & 0x0F)-8) >>    2)     )
+ 785:./bsp/core_cm0.h **** #define _IP_IDX(IRQn)            (   ((uint32_t)(IRQn)            >>    2)     )
+ 786:./bsp/core_cm0.h **** 
+ 787:./bsp/core_cm0.h **** 
+ 788:./bsp/core_cm0.h **** /**
+ 789:./bsp/core_cm0.h ****  * @brief  Enable Interrupt in NVIC Interrupt Controller
+ 790:./bsp/core_cm0.h ****  *
+ 791:./bsp/core_cm0.h ****  * @param  IRQn   The positive number of the external interrupt to enable
+ 792:./bsp/core_cm0.h ****  *
+ 793:./bsp/core_cm0.h ****  * Enable a device specific interupt in the NVIC interrupt controller.
+ 794:./bsp/core_cm0.h ****  * The interrupt number cannot be a negative value.
+ 795:./bsp/core_cm0.h ****  */
+ 796:./bsp/core_cm0.h **** static __INLINE void NVIC_EnableIRQ(IRQn_Type IRQn)
+ 797:./bsp/core_cm0.h **** {
+ 798:./bsp/core_cm0.h ****   NVIC->ISER[0] = (1 << ((uint32_t)(IRQn) & 0x1F)); /* enable interrupt */
+ 182              		.loc 3 798 0
+ 183 0022 8022     		movs	r2, #128
+ 184 0024 114B     		ldr	r3, .L17+20
+ 185 0026 9205     		lsls	r2, r2, #22
+ 186 0028 1A60     		str	r2, [r3]
+ 187              	.LVL10:
+ 188              	.LBE29:
+ 189              	.LBE28:
+ 190              	.LBB30:
+ 191              	.LBB31:
+ 192 002a 8022     		movs	r2, #128
+ 193 002c 5200     		lsls	r2, r2, #1
+ 194 002e 1A60     		str	r2, [r3]
+ 195              	.LVL11:
+ 196              	.LBE31:
+ 197              	.LBE30:
+ 106:./drive/nuc_adc.c **** 
+ 107:./drive/nuc_adc.c ****     NVIC_EnableIRQ(ADC_IRQn );
+ 108:./drive/nuc_adc.c ****     NVIC_EnableIRQ(TMR0_IRQn );
+ 109:./drive/nuc_adc.c **** 
+ 110:./drive/nuc_adc.c ****     ADC->ADCHER =
+ 198              		.loc 1 110 0
+ 199 0030 0F4B     		ldr	r3, .L17+24
+ 200 0032 013A     		subs	r2, r2, #1
+ 201 0034 5A62     		str	r2, [r3, #36]
+ 111:./drive/nuc_adc.c ****     		ADC_ADCHER_PRESEL_EXT_INPUT_SIGNAL //通道7 模拟输入
+ 112:./drive/nuc_adc.c ****     		| 0xFF;                            //打开所有通道
+ 113:./drive/nuc_adc.c ****     ADC->ADCR   =  ADC_ADCR_ADEN_CONVERTER_ENABLE //AD使能
+ 202              		.loc 1 113 0
+ 203 0036 F43A     		subs	r2, r2, #244
+ 204 0038 1A62     		str	r2, [r3, #32]
+ 114:./drive/nuc_adc.c ****         | ADC_ADCR_ADIE_Msk  //转换中断打开
+ 115:./drive/nuc_adc.c ****         | ADC_ADCR_ADMD_SINGLE_CYCLE;//单周期转换
+ 116:./drive/nuc_adc.c ****     /* Enable analog input channel 2 for differential input channel pair 1 */
+ 117:./drive/nuc_adc.c ****     //ADC->ADCHER |= ((ADC->ADCHER & ~ADC_ADCHER_CHEN_Msk) | (1 << ADCchannel ));
+ 118:./drive/nuc_adc.c **** 
+ 119:./drive/nuc_adc.c ****     /* Clear the A/D interrupt flag for safe */
+ 120:./drive/nuc_adc.c ****     ADC->ADSR = ADC_ADSR_ADF_Msk;
+ 205              		.loc 1 120 0
+ 206 003a 0A3A     		subs	r2, r2, #10
+ 207 003c 1A63     		str	r2, [r3, #48]
+ 121:./drive/nuc_adc.c **** 
+ 122:./drive/nuc_adc.c ****     /* Enable Timer0 event counter input and external capture function */
+ 123:./drive/nuc_adc.c ****     TIMER0->TCMPR   = ACHZ_MR0;
+ 208              		.loc 1 123 0
+ 209 003e 0D4B     		ldr	r3, .L17+28
+ 210 0040 0D4A     		ldr	r2, .L17+32
+ 211 0042 5A60     		str	r2, [r3, #4]
+ 124:./drive/nuc_adc.c ****     TIMER0->TCSR    = TIMER_TCSR_CEN_Msk | TIMER_TCSR_IE_Msk  |  TIMER_PERIODIC_MODE;
+ 212              		.loc 1 124 0
+ 213 0044 D022     		movs	r2, #208
+ 214 0046 D205     		lsls	r2, r2, #23
+ 215 0048 1A60     		str	r2, [r3]
+ 125:./drive/nuc_adc.c ****     while(!(TIMER0->TCSR & TIMER_TCSR_CACT_Msk));
+ 216              		.loc 1 125 0
+ 217 004a 8022     		movs	r2, #128
+ 218 004c 9204     		lsls	r2, r2, #18
+ 219              	.L14:
+ 220              		.loc 1 125 0 is_stmt 0 discriminator 1
+ 221 004e 1968     		ldr	r1, [r3]
+ 222 0050 1142     		tst	r1, r2
+ 223 0052 FCD0     		beq	.L14
+ 126:./drive/nuc_adc.c ****    
+ 127:./drive/nuc_adc.c **** }
+ 224              		.loc 1 127 0 is_stmt 1
+ 225              		@ sp needed
+ 226 0054 10BD     		pop	{r4, pc}
+ 227              	.L18:
+ 228 0056 C046     		.align	2
+ 229              	.L17:
+ 230 0058 00000000 		.word	ADCsize
+ 231 005c 00000000 		.word	ADCFlag
+ 232 0060 00000000 		.word	ulADCBuf
+ 233 0064 00000000 		.word	ADCchannel
+ 234 0068 00000000 		.word	lADCBuff
+ 235 006c 00E100E0 		.word	-536813312
+ 236 0070 00000E40 		.word	1074659328
+ 237 0074 00000140 		.word	1073807360
+ 238 0078 A60E0000 		.word	3750
+ 239              		.cfi_endproc
+ 240              	.LFE62:
+ 242              		.section	.text.ADC_Disable,"ax",%progbits
+ 243              		.align	1
+ 244              		.global	ADC_Disable
+ 245              		.code	16
+ 246              		.thumb_func
+ 248              	ADC_Disable:
+ 249              	.LFB63:
+ 128:./drive/nuc_adc.c **** 
+ 129:./drive/nuc_adc.c **** void ADC_Disable( void )
+ 130:./drive/nuc_adc.c **** {
+ 250              		.loc 1 130 0
+ 251              		.cfi_startproc
+ 252              		@ args = 0, pretend = 0, frame = 0
+ 253              		@ frame_needed = 0, uses_anonymous_args = 0
+ 254              		@ link register save eliminated.
+ 131:./drive/nuc_adc.c ****     /* Disable the ADC interrupt */
+ 132:./drive/nuc_adc.c ****     ADC->ADCR = (ADC_ADCR_ADMD_SINGLE_CYCLE 
+ 255              		.loc 1 132 0
+ 256 0000 0922     		movs	r2, #9
+ 257 0002 084B     		ldr	r3, .L20
+ 133:./drive/nuc_adc.c ****             | ADC_ADCR_DIFFEN_SINGLE_END 
+ 134:./drive/nuc_adc.c ****             | ADC_ADCR_ADEN_CONVERTER_ENABLE  /*使能AD*/
+ 135:./drive/nuc_adc.c ****             );
+ 136:./drive/nuc_adc.c ****     TIMER0->TCSR  = 0;
+ 137:./drive/nuc_adc.c ****     NVIC_DisableIRQ( ADC_IRQn );
+ 138:./drive/nuc_adc.c ****     NVIC_DisableIRQ( TMR0_IRQn );
+ 139:./drive/nuc_adc.c ****     ADCFlag  = 1;                             /* 置标志位                     */
+ 140:./drive/nuc_adc.c **** }
+ 258              		.loc 1 140 0
+ 259              		@ sp needed
+ 132:./drive/nuc_adc.c ****             | ADC_ADCR_DIFFEN_SINGLE_END 
+ 260              		.loc 1 132 0
+ 261 0004 1A62     		str	r2, [r3, #32]
+ 136:./drive/nuc_adc.c ****     NVIC_DisableIRQ( ADC_IRQn );
+ 262              		.loc 1 136 0
+ 263 0006 0022     		movs	r2, #0
+ 264 0008 074B     		ldr	r3, .L20+4
+ 265 000a 1A60     		str	r2, [r3]
+ 266              	.LVL12:
+ 267              	.LBB32:
+ 268              	.LBB33:
+ 799:./bsp/core_cm0.h **** }
+ 800:./bsp/core_cm0.h **** 
+ 801:./bsp/core_cm0.h **** /**
+ 802:./bsp/core_cm0.h ****  * @brief  Disable the interrupt line for external interrupt specified
+ 803:./bsp/core_cm0.h ****  * 
+ 804:./bsp/core_cm0.h ****  * @param  IRQn   The positive number of the external interrupt to disable
+ 805:./bsp/core_cm0.h ****  * 
+ 806:./bsp/core_cm0.h ****  * Disable a device specific interupt in the NVIC interrupt controller.
+ 807:./bsp/core_cm0.h ****  * The interrupt number cannot be a negative value.
+ 808:./bsp/core_cm0.h ****  */
+ 809:./bsp/core_cm0.h **** static __INLINE void NVIC_DisableIRQ(IRQn_Type IRQn)
+ 810:./bsp/core_cm0.h **** {
+ 811:./bsp/core_cm0.h ****   NVIC->ICER[0] = (1 << ((uint32_t)(IRQn) & 0x1F)); /* disable interrupt */
+ 269              		.loc 3 811 0
+ 270 000c 8022     		movs	r2, #128
+ 271 000e 074B     		ldr	r3, .L20+8
+ 272 0010 9205     		lsls	r2, r2, #22
+ 273 0012 DA67     		str	r2, [r3, #124]
+ 274              	.LVL13:
+ 275              	.LBE33:
+ 276              	.LBE32:
+ 277              	.LBB34:
+ 278              	.LBB35:
+ 279 0014 8022     		movs	r2, #128
+ 280 0016 5200     		lsls	r2, r2, #1
+ 281 0018 DA67     		str	r2, [r3, #124]
+ 282              	.LVL14:
+ 283              	.LBE35:
+ 284              	.LBE34:
+ 139:./drive/nuc_adc.c **** }
+ 285              		.loc 1 139 0
+ 286 001a 054B     		ldr	r3, .L20+12
+ 287 001c FF3A     		subs	r2, r2, #255
+ 288 001e 1A60     		str	r2, [r3]
+ 289              		.loc 1 140 0
+ 290 0020 7047     		bx	lr
+ 291              	.L21:
+ 292 0022 C046     		.align	2
+ 293              	.L20:
+ 294 0024 00000E40 		.word	1074659328
+ 295 0028 00000140 		.word	1073807360
+ 296 002c 04E100E0 		.word	-536813308
+ 297 0030 00000000 		.word	ADCFlag
+ 298              		.cfi_endproc
+ 299              	.LFE63:
+ 301              		.section	.after_vectors
+ 302              		.align	1
+ 303              		.global	ADC_IRQHandler
+ 304              		.code	16
+ 305              		.thumb_func
+ 307              	ADC_IRQHandler:
+ 308              	.LFB60:
+  57:./drive/nuc_adc.c ****     for(int i=0; i<8; i++)
+ 309              		.loc 1 57 0
+ 310              		.cfi_startproc
+ 311              		@ args = 0, pretend = 0, frame = 0
+ 312              		@ frame_needed = 0, uses_anonymous_args = 0
+ 313              	.LVL15:
+ 314              	.LBB36:
+  58:./drive/nuc_adc.c ****     {
+ 315              		.loc 1 58 0
+ 316 002c 0021     		movs	r1, #0
+ 317              	.LBE36:
+  57:./drive/nuc_adc.c ****     for(int i=0; i<8; i++)
+ 318              		.loc 1 57 0
+ 319 002e 70B5     		push	{r4, r5, r6, lr}
+ 320              	.LCFI1:
+ 321              		.cfi_def_cfa_offset 16
+ 322              		.cfi_offset 4, -16
+ 323              		.cfi_offset 5, -12
+ 324              		.cfi_offset 6, -8
+ 325              		.cfi_offset 14, -4
+ 326              	.LBB39:
+ 327              	.LBB37:
+  62:./drive/nuc_adc.c ****     }
+ 328              		.loc 1 62 0
+ 329 0030 0C48     		ldr	r0, .L26
+  60:./drive/nuc_adc.c **** //        tmp >>= 2;
+ 330              		.loc 1 60 0
+ 331 0032 0D4C     		ldr	r4, .L26+4
+ 332              	.LVL16:
+ 333              	.L23:
+  60:./drive/nuc_adc.c **** //        tmp >>= 2;
+ 334              		.loc 1 60 0 is_stmt 0 discriminator 3
+ 335 0034 8A00     		lsls	r2, r1, #2
+ 336 0036 1359     		ldr	r3, [r2, r4]
+  62:./drive/nuc_adc.c ****     }
+ 337              		.loc 1 62 0 is_stmt 1 discriminator 3
+ 338 0038 1218     		adds	r2, r2, r0
+  60:./drive/nuc_adc.c **** //        tmp >>= 2;
+ 339              		.loc 1 60 0 discriminator 3
+ 340 003a 9BB2     		uxth	r3, r3
+ 341              	.LVL17:
+  62:./drive/nuc_adc.c ****     }
+ 342              		.loc 1 62 0 discriminator 3
+ 343 003c 5B43     		muls	r3, r3
+ 344              	.LVL18:
+ 345 003e 1568     		ldr	r5, [r2]
+ 346              	.LBE37:
+  58:./drive/nuc_adc.c ****     {
+ 347              		.loc 1 58 0 discriminator 3
+ 348 0040 0131     		adds	r1, r1, #1
+ 349              	.LVL19:
+ 350              	.LBB38:
+  62:./drive/nuc_adc.c ****     }
+ 351              		.loc 1 62 0 discriminator 3
+ 352 0042 EB18     		adds	r3, r5, r3
+ 353 0044 1360     		str	r3, [r2]
+ 354              	.LBE38:
+  58:./drive/nuc_adc.c ****     {
+ 355              		.loc 1 58 0 discriminator 3
+ 356 0046 0829     		cmp	r1, #8
+ 357 0048 F4D1     		bne	.L23
+ 358              	.LBE39:
+  64:./drive/nuc_adc.c ****     if( ADCsize == 0 )
+ 359              		.loc 1 64 0
+ 360 004a 084A     		ldr	r2, .L26+8
+ 361 004c 1368     		ldr	r3, [r2]
+ 362 004e 013B     		subs	r3, r3, #1
+ 363 0050 1360     		str	r3, [r2]
+  65:./drive/nuc_adc.c ****     {
+ 364              		.loc 1 65 0
+ 365 0052 002B     		cmp	r3, #0
+ 366 0054 01D1     		bne	.L24
+  67:./drive/nuc_adc.c ****     }
+ 367              		.loc 1 67 0
+ 368 0056 FFF7FEFF 		bl	ADC_Disable
+ 369              	.LVL20:
+ 370              	.L24:
+  70:./drive/nuc_adc.c ****     //NBI_P( B, 5 );
+ 371              		.loc 1 70 0
+ 372 005a 0122     		movs	r2, #1
+ 373 005c 024B     		ldr	r3, .L26+4
+  72:./drive/nuc_adc.c **** 
+ 374              		.loc 1 72 0
+ 375              		@ sp needed
+  70:./drive/nuc_adc.c ****     //NBI_P( B, 5 );
+ 376              		.loc 1 70 0
+ 377 005e 1A63     		str	r2, [r3, #48]
+  72:./drive/nuc_adc.c **** 
+ 378              		.loc 1 72 0
+ 379 0060 70BD     		pop	{r4, r5, r6, pc}
+ 380              	.L27:
+ 381 0062 C046     		.align	2
+ 382              	.L26:
+ 383 0064 00000000 		.word	lADCBuff
+ 384 0068 00000E40 		.word	1074659328
+ 385 006c 00000000 		.word	ADCsize
+ 386              		.cfi_endproc
+ 387              	.LFE60:
+ 389              		.section	.text.ADC_Flag,"ax",%progbits
+ 390              		.align	1
+ 391              		.global	ADC_Flag
+ 392              		.code	16
+ 393              		.thumb_func
+ 395              	ADC_Flag:
+ 396              	.LFB65:
+ 141:./drive/nuc_adc.c **** 
+ 142:./drive/nuc_adc.c **** static uint16 sqrt_fixed(uint32 a)
+ 143:./drive/nuc_adc.c **** {
+ 144:./drive/nuc_adc.c ****     uint32 i,c;
+ 145:./drive/nuc_adc.c ****     uint32 b = 0;
+ 146:./drive/nuc_adc.c ****     if(a == 0) return 0;
+ 147:./drive/nuc_adc.c ****     for(i=0x40000000; i!=0; i>>=2)
+ 148:./drive/nuc_adc.c ****     {
+ 149:./drive/nuc_adc.c ****         c = i+b;
+ 150:./drive/nuc_adc.c ****         b >>= 1;
+ 151:./drive/nuc_adc.c ****         if(c <= a)
+ 152:./drive/nuc_adc.c ****         {
+ 153:./drive/nuc_adc.c ****             a -= c;
+ 154:./drive/nuc_adc.c ****             b += i;
+ 155:./drive/nuc_adc.c ****         }
+ 156:./drive/nuc_adc.c ****     }
+ 157:./drive/nuc_adc.c ****     return ((uint16)b);
+ 158:./drive/nuc_adc.c **** }
+ 159:./drive/nuc_adc.c **** 
+ 160:./drive/nuc_adc.c **** 
+ 161:./drive/nuc_adc.c **** 
+ 162:./drive/nuc_adc.c **** int ADC_Flag( void )
+ 163:./drive/nuc_adc.c **** {
+ 397              		.loc 1 163 0
+ 398              		.cfi_startproc
+ 399              		@ args = 0, pretend = 0, frame = 0
+ 400              		@ frame_needed = 0, uses_anonymous_args = 0
+ 401              		@ link register save eliminated.
+ 164:./drive/nuc_adc.c ****     int ret = ADCFlag;
+ 165:./drive/nuc_adc.c ****     ADCFlag = 0;
+ 402              		.loc 1 165 0
+ 403 0000 0022     		movs	r2, #0
+ 164:./drive/nuc_adc.c ****     int ret = ADCFlag;
+ 404              		.loc 1 164 0
+ 405 0002 034B     		ldr	r3, .L29
+ 166:./drive/nuc_adc.c ****     return ret ? 0 : -1;
+ 167:./drive/nuc_adc.c **** }
+ 406              		.loc 1 167 0
+ 407              		@ sp needed
+ 164:./drive/nuc_adc.c ****     int ret = ADCFlag;
+ 408              		.loc 1 164 0
+ 409 0004 1868     		ldr	r0, [r3]
+ 410              	.LVL21:
+ 165:./drive/nuc_adc.c ****     return ret ? 0 : -1;
+ 411              		.loc 1 165 0
+ 412 0006 1A60     		str	r2, [r3]
+ 166:./drive/nuc_adc.c ****     return ret ? 0 : -1;
+ 413              		.loc 1 166 0
+ 414 0008 4342     		rsbs	r3, r0, #0
+ 415 000a 5841     		adcs	r0, r0, r3
+ 416              	.LVL22:
+ 417 000c 4042     		rsbs	r0, r0, #0
+ 418              		.loc 1 167 0
+ 419 000e 7047     		bx	lr
+ 420              	.L30:
+ 421              		.align	2
+ 422              	.L29:
+ 423 0010 00000000 		.word	ADCFlag
+ 424              		.cfi_endproc
+ 425              	.LFE65:
+ 427              		.global	__aeabi_uidiv
+ 428              		.section	.text.ADC_GetExt,"ax",%progbits
+ 429              		.align	1
+ 430              		.global	ADC_GetExt
+ 431              		.code	16
+ 432              		.thumb_func
+ 434              	ADC_GetExt:
+ 435              	.LFB66:
+ 168:./drive/nuc_adc.c **** 
+ 169:./drive/nuc_adc.c **** 
+ 170:./drive/nuc_adc.c **** int ADC_GetExt( int channel, int ac )
+ 171:./drive/nuc_adc.c **** {
+ 436              		.loc 1 171 0
+ 437              		.cfi_startproc
+ 438              		@ args = 0, pretend = 0, frame = 0
+ 439              		@ frame_needed = 0, uses_anonymous_args = 0
+ 440              	.LVL23:
+ 441 0000 10B5     		push	{r4, lr}
+ 442              	.LCFI2:
+ 443              		.cfi_def_cfa_offset 8
+ 444              		.cfi_offset 4, -8
+ 445              		.cfi_offset 14, -4
+ 172:./drive/nuc_adc.c ****     int ret ;
+ 173:./drive/nuc_adc.c ****     ret = ac? ACHZ_GETCNT/2: ACHZ_GETCNT;
+ 446              		.loc 1 173 0
+ 447 0002 2022     		movs	r2, #32
+ 448 0004 0029     		cmp	r1, #0
+ 449 0006 00D1     		bne	.L32
+ 450 0008 9218     		adds	r2, r2, r2
+ 451              	.L32:
+ 452              	.LVL24:
+ 174:./drive/nuc_adc.c ****     ret = sqrt_fixed(   lADCBuff[channel & 0x07] / ret );
+ 453              		.loc 1 174 0 discriminator 4
+ 454 000a 0723     		movs	r3, #7
+ 455 000c 1840     		ands	r0, r3
+ 456              	.LVL25:
+ 457 000e 0C4B     		ldr	r3, .L40
+ 458 0010 8000     		lsls	r0, r0, #2
+ 459 0012 C058     		ldr	r0, [r0, r3]
+ 460 0014 1100     		movs	r1, r2
+ 461              	.LVL26:
+ 462 0016 FFF7FEFF 		bl	__aeabi_uidiv
+ 463              	.LVL27:
+ 464              	.LBB44:
+ 465              	.LBB45:
+ 146:./drive/nuc_adc.c ****     for(i=0x40000000; i!=0; i>>=2)
+ 466              		.loc 1 146 0 discriminator 4
+ 467 001a 0023     		movs	r3, #0
+ 468 001c 9842     		cmp	r0, r3
+ 469 001e 0DD0     		beq	.L33
+ 146:./drive/nuc_adc.c ****     for(i=0x40000000; i!=0; i>>=2)
+ 470              		.loc 1 146 0 is_stmt 0
+ 471 0020 8022     		movs	r2, #128
+ 472 0022 1021     		movs	r1, #16
+ 473 0024 D205     		lsls	r2, r2, #23
+ 474              	.LVL28:
+ 475              	.L35:
+ 476              	.LBB46:
+ 477              	.LBB47:
+ 149:./drive/nuc_adc.c ****         b >>= 1;
+ 478              		.loc 1 149 0 is_stmt 1
+ 479 0026 9C18     		adds	r4, r3, r2
+ 480              	.LVL29:
+ 150:./drive/nuc_adc.c ****         if(c <= a)
+ 481              		.loc 1 150 0
+ 482 0028 5B08     		lsrs	r3, r3, #1
+ 483              	.LVL30:
+ 151:./drive/nuc_adc.c ****         {
+ 484              		.loc 1 151 0
+ 485 002a 8442     		cmp	r4, r0
+ 486 002c 01D8     		bhi	.L34
+ 153:./drive/nuc_adc.c ****             b += i;
+ 487              		.loc 1 153 0
+ 488 002e 001B     		subs	r0, r0, r4
+ 489              	.LVL31:
+ 154:./drive/nuc_adc.c ****         }
+ 490              		.loc 1 154 0
+ 491 0030 9B18     		adds	r3, r3, r2
+ 492              	.LVL32:
+ 493              	.L34:
+ 494 0032 0139     		subs	r1, r1, #1
+ 147:./drive/nuc_adc.c ****     {
+ 495              		.loc 1 147 0
+ 496 0034 9208     		lsrs	r2, r2, #2
+ 497              	.LVL33:
+ 498 0036 0029     		cmp	r1, #0
+ 499 0038 F5D1     		bne	.L35
+ 157:./drive/nuc_adc.c **** }
+ 500              		.loc 1 157 0
+ 501 003a 9BB2     		uxth	r3, r3
+ 502              	.LVL34:
+ 503              	.L33:
+ 504              	.LBE47:
+ 505              	.LBE46:
+ 506              	.LBE45:
+ 507              	.LBE44:
+ 175:./drive/nuc_adc.c ****     return ret;
+ 176:./drive/nuc_adc.c **** }
+ 508              		.loc 1 176 0
+ 509 003c 1800     		movs	r0, r3
+ 510              		@ sp needed
+ 511 003e 10BD     		pop	{r4, pc}
+ 512              	.L41:
+ 513              		.align	2
+ 514              	.L40:
+ 515 0040 00000000 		.word	lADCBuff
+ 516              		.cfi_endproc
+ 517              	.LFE66:
+ 519              		.section	.text.ADC_Get,"ax",%progbits
+ 520              		.align	1
+ 521              		.global	ADC_Get
+ 522              		.code	16
+ 523              		.thumb_func
+ 525              	ADC_Get:
+ 526              	.LFB67:
+ 177:./drive/nuc_adc.c **** 
+ 178:./drive/nuc_adc.c **** 
+ 179:./drive/nuc_adc.c **** int ADC_Get( int ac )
+ 180:./drive/nuc_adc.c **** {
+ 527              		.loc 1 180 0
+ 528              		.cfi_startproc
+ 529              		@ args = 0, pretend = 0, frame = 0
+ 530              		@ frame_needed = 0, uses_anonymous_args = 0
+ 531              	.LVL35:
+ 181:./drive/nuc_adc.c ****     int ret ;
+ 182:./drive/nuc_adc.c ****     if( !ADCFlag )
+ 532              		.loc 1 182 0
+ 533 0000 144B     		ldr	r3, .L53
+ 180:./drive/nuc_adc.c ****     int ret ;
+ 534              		.loc 1 180 0
+ 535 0002 10B5     		push	{r4, lr}
+ 536              	.LCFI3:
+ 537              		.cfi_def_cfa_offset 8
+ 538              		.cfi_offset 4, -8
+ 539              		.cfi_offset 14, -4
+ 540              		.loc 1 182 0
+ 541 0004 1A68     		ldr	r2, [r3]
+ 542 0006 002A     		cmp	r2, #0
+ 543 0008 21D0     		beq	.L48
+ 183:./drive/nuc_adc.c ****         return -1;
+ 184:./drive/nuc_adc.c ****     ADCFlag = 0;
+ 544              		.loc 1 184 0
+ 545 000a 0022     		movs	r2, #0
+ 185:./drive/nuc_adc.c ****     ret = ac? ACHZ_GETCNT/2: ACHZ_GETCNT;
+ 546              		.loc 1 185 0
+ 547 000c 2021     		movs	r1, #32
+ 184:./drive/nuc_adc.c ****     ret = ac? ACHZ_GETCNT/2: ACHZ_GETCNT;
+ 548              		.loc 1 184 0
+ 549 000e 1A60     		str	r2, [r3]
+ 550              		.loc 1 185 0
+ 551 0010 9042     		cmp	r0, r2
+ 552 0012 00D1     		bne	.L44
+ 553 0014 4918     		adds	r1, r1, r1
+ 554              	.L44:
+ 555              	.LVL36:
+ 186:./drive/nuc_adc.c **** 
+ 187:./drive/nuc_adc.c ****     ret = sqrt_fixed( lADCBuff[ADCchannel & 0x07] / ret );
+ 556              		.loc 1 187 0 discriminator 4
+ 557 0016 104B     		ldr	r3, .L53+4
+ 558 0018 1A68     		ldr	r2, [r3]
+ 559 001a 0723     		movs	r3, #7
+ 560 001c 1340     		ands	r3, r2
+ 561 001e 0F4A     		ldr	r2, .L53+8
+ 562 0020 9B00     		lsls	r3, r3, #2
+ 563 0022 9858     		ldr	r0, [r3, r2]
+ 564              	.LVL37:
+ 565 0024 FFF7FEFF 		bl	__aeabi_uidiv
+ 566              	.LVL38:
+ 567              	.LBB52:
+ 568              	.LBB53:
+ 146:./drive/nuc_adc.c ****     for(i=0x40000000; i!=0; i>>=2)
+ 569              		.loc 1 146 0 discriminator 4
+ 570 0028 0023     		movs	r3, #0
+ 571 002a 9842     		cmp	r0, r3
+ 572 002c 0DD0     		beq	.L45
+ 146:./drive/nuc_adc.c ****     for(i=0x40000000; i!=0; i>>=2)
+ 573              		.loc 1 146 0 is_stmt 0
+ 574 002e 8022     		movs	r2, #128
+ 575 0030 1021     		movs	r1, #16
+ 576 0032 D205     		lsls	r2, r2, #23
+ 577              	.LVL39:
+ 578              	.L47:
+ 579              	.LBB54:
+ 580              	.LBB55:
+ 149:./drive/nuc_adc.c ****         b >>= 1;
+ 581              		.loc 1 149 0 is_stmt 1
+ 582 0034 9C18     		adds	r4, r3, r2
+ 583              	.LVL40:
+ 150:./drive/nuc_adc.c ****         if(c <= a)
+ 584              		.loc 1 150 0
+ 585 0036 5B08     		lsrs	r3, r3, #1
+ 586              	.LVL41:
+ 151:./drive/nuc_adc.c ****         {
+ 587              		.loc 1 151 0
+ 588 0038 8442     		cmp	r4, r0
+ 589 003a 01D8     		bhi	.L46
+ 153:./drive/nuc_adc.c ****             b += i;
+ 590              		.loc 1 153 0
+ 591 003c 001B     		subs	r0, r0, r4
+ 592              	.LVL42:
+ 154:./drive/nuc_adc.c ****         }
+ 593              		.loc 1 154 0
+ 594 003e 9B18     		adds	r3, r3, r2
+ 595              	.LVL43:
+ 596              	.L46:
+ 597 0040 0139     		subs	r1, r1, #1
+ 147:./drive/nuc_adc.c ****     {
+ 598              		.loc 1 147 0
+ 599 0042 9208     		lsrs	r2, r2, #2
+ 600              	.LVL44:
+ 601 0044 0029     		cmp	r1, #0
+ 602 0046 F5D1     		bne	.L47
+ 157:./drive/nuc_adc.c **** }
+ 603              		.loc 1 157 0
+ 604 0048 9BB2     		uxth	r3, r3
+ 605              	.LVL45:
+ 606              	.L45:
+ 607              	.LBE55:
+ 608              	.LBE54:
+ 609              	.LBE53:
+ 610              	.LBE52:
+ 188:./drive/nuc_adc.c ****     return ret;
+ 611              		.loc 1 188 0
+ 612 004a 1800     		movs	r0, r3
+ 613 004c 01E0     		b	.L43
+ 614              	.LVL46:
+ 615              	.L48:
+ 183:./drive/nuc_adc.c ****     ADCFlag = 0;
+ 616              		.loc 1 183 0
+ 617 004e 0120     		movs	r0, #1
+ 618              	.LVL47:
+ 619 0050 4042     		rsbs	r0, r0, #0
+ 620              	.L43:
+ 189:./drive/nuc_adc.c **** }
+ 621              		.loc 1 189 0
+ 622              		@ sp needed
+ 623 0052 10BD     		pop	{r4, pc}
+ 624              	.L54:
+ 625              		.align	2
+ 626              	.L53:
+ 627 0054 00000000 		.word	ADCFlag
+ 628 0058 00000000 		.word	ADCchannel
+ 629 005c 00000000 		.word	lADCBuff
+ 630              		.cfi_endproc
+ 631              	.LFE67:
+ 633              		.comm	lADCBuff,32,4
+ 634              		.comm	ADCchannel,4,4
+ 635              		.comm	ADCFlag,4,4
+ 636              		.comm	ADCsize,4,4
+ 637              		.comm	ulADCBuf,4,4
+ 638              		.text
+ 639              	.Letext0:
+ 640              		.file 4 "./bsp/NUC131.h"
+ 641              		.file 5 "d:\\wingcc\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 642              		.file 6 "d:\\wingcc\\arm-none-eabi\\include\\sys\\_stdint.h"
+ 643              		.file 7 "./bsp/mytype.h"
+ 644              		.file 8 "./bsp/system_NUC131.h"
+ 645              		.file 9 "../mylib_t/OSstring.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 nuc_adc.c
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:20     .text.ADCInit:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:25     .text.ADCInit:00000000 ADCInit
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:48     .text.ADCInit:0000000c $d
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:53     .after_vectors:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:58     .after_vectors:00000000 TMR0_IRQHandler
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:128    .after_vectors:00000024 $d
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:134    .text.ADC_Enable:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:139    .text.ADC_Enable:00000000 ADC_Enable
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:230    .text.ADC_Enable:00000058 $d
+                            *COM*:00000004 ADCsize
+                            *COM*:00000004 ADCFlag
+                            *COM*:00000004 ulADCBuf
+                            *COM*:00000004 ADCchannel
+                            *COM*:00000020 lADCBuff
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:243    .text.ADC_Disable:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:248    .text.ADC_Disable:00000000 ADC_Disable
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:294    .text.ADC_Disable:00000024 $d
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:302    .after_vectors:0000002c $t
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:307    .after_vectors:0000002c ADC_IRQHandler
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:383    .after_vectors:00000064 $d
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:390    .text.ADC_Flag:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:395    .text.ADC_Flag:00000000 ADC_Flag
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:423    .text.ADC_Flag:00000010 $d
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:429    .text.ADC_GetExt:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:434    .text.ADC_GetExt:00000000 ADC_GetExt
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:515    .text.ADC_GetExt:00000040 $d
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:520    .text.ADC_Get:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:525    .text.ADC_Get:00000000 ADC_Get
+C:\Users\beyond\AppData\Local\Temp\ccAatMtW.s:627    .text.ADC_Get:00000054 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+OSmemset
+__aeabi_uidiv

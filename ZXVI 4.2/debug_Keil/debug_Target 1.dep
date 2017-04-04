@@ -1,0 +1,4 @@
+Dependencies for Project 'debug', Target 'Target 1': (DO NOT MODIFY !)
+F (../app/debug.c)(0x5854E636)(-c -mcpu=cortex-m1 -gdwarf-2 -MD -Wall -O -mapcs-frame -mthumb-interwork -Ie:/Keil/ARM/CMSIS/Include -Ie:/Keil/ARM/Inc/NXP/LPC11xx -o ../testhex/debug.o)
+F (..\app\main.c)(0x5854E677)(-c -mcpu=cortex-m1 -gdwarf-2 -MD -Wall -O -mapcs-frame -mthumb-interwork -IE:/Keil/ARM/CMSIS/Include -IE:/Keil/ARM/Inc/NXP/LPC11xx -o ../testhex/main.o)
+F (..\app\shell.c)(0x5854E501)(-c -mcpu=cortex-m1 -gdwarf-2 -MD -Wall -O -mapcs-frame -mthumb-interwork -IE:/Keil/ARM/CMSIS/Include -IE:/Keil/ARM/Inc/NXP/LPC11xx -o ../testhex/shell.o)

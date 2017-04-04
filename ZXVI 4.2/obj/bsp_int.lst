@@ -1,0 +1,200 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 4
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"bsp_int.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.svc_handler_export,"ax",%progbits
+  20              		.align	1
+  21              		.global	svc_handler_export
+  22              		.code	16
+  23              		.thumb_func
+  25              	svc_handler_export:
+  26              	.LFB0:
+  27              		.file 1 "./bsp/bsp_int.c"
+   1:./bsp/bsp_int.c **** 
+   2:./bsp/bsp_int.c **** #include "mytype.h"
+   3:./bsp/bsp_int.c **** #include "app_cfg.h"
+   4:./bsp/bsp_int.c **** 
+   5:./bsp/bsp_int.c **** typedef uint32 (*Tsvc_func)(uint32, uint32, uint32, uint32);
+   6:./bsp/bsp_int.c **** 
+   7:./bsp/bsp_int.c **** __WEAK__
+   8:./bsp/bsp_int.c **** const void * svc_function[MAX_SVC_SIZE]={NULL};
+   9:./bsp/bsp_int.c **** 
+  10:./bsp/bsp_int.c **** /*
+  11:./bsp/bsp_int.c ****  * pwdSF[0] = R0,   pwdSF[1] = R1
+  12:./bsp/bsp_int.c ****  * pwdSF[2] = R2,   pwdSF[3] = R3
+  13:./bsp/bsp_int.c ****  * pwdSF[4] = R12,  pwdSF[5] = LR
+  14:./bsp/bsp_int.c ****  * pwdSF[6] = 返回地址（入栈的PC）
+  15:./bsp/bsp_int.c ****  * pwdSF[7] = xPSR
+  16:./bsp/bsp_int.c ****  */
+  17:./bsp/bsp_int.c **** uint32 svc_handler_export( uint32 * pwdSF);
+  18:./bsp/bsp_int.c **** uint32 svc_handler_export( uint32 * pwdSF)
+  19:./bsp/bsp_int.c **** {
+  28              		.loc 1 19 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              	.LVL0:
+  33 0000 70B5     		push	{r4, r5, r6, lr}
+  34              	.LCFI0:
+  35              		.cfi_def_cfa_offset 16
+  36              		.cfi_offset 4, -16
+  37              		.cfi_offset 5, -12
+  38              		.cfi_offset 6, -8
+  39              		.cfi_offset 14, -4
+  20:./bsp/bsp_int.c ****     Tsvc_func svc_func = NULL;
+  21:./bsp/bsp_int.c **** 	uint32 svc_number;
+  22:./bsp/bsp_int.c ****     /*
+  23:./bsp/bsp_int.c **** 	uint32 svc_r0;
+  24:./bsp/bsp_int.c **** 	uint32 svc_r1;
+  25:./bsp/bsp_int.c **** 	uint32 svc_r2;
+  26:./bsp/bsp_int.c **** 	uint32 svc_r3;
+  27:./bsp/bsp_int.c **** 	svc_r0 = pwdSF[0];
+  28:./bsp/bsp_int.c **** 	svc_r1 = pwdSF[1];
+  29:./bsp/bsp_int.c **** 	svc_r2 = pwdSF[2];
+  30:./bsp/bsp_int.c **** 	svc_r3 = pwdSF[3];	
+  31:./bsp/bsp_int.c **** 	*/
+  32:./bsp/bsp_int.c ****     svc_number = ((char*) pwdSF[6])[-2];
+  40              		.loc 1 32 0
+  41 0002 8369     		ldr	r3, [r0, #24]
+  19:./bsp/bsp_int.c ****     Tsvc_func svc_func = NULL;
+  42              		.loc 1 19 0
+  43 0004 0400     		movs	r4, r0
+  44              		.loc 1 32 0
+  45 0006 023B     		subs	r3, r3, #2
+  46 0008 1B78     		ldrb	r3, [r3]
+  47              	.LVL1:
+  33:./bsp/bsp_int.c **** 	
+  34:./bsp/bsp_int.c ****     //pr_debug("SVC number = %d\n", svc_number);
+  35:./bsp/bsp_int.c ****     if( svc_number < MAX_SVC_SIZE )
+  48              		.loc 1 35 0
+  49 000a 7F2B     		cmp	r3, #127
+  50 000c 0BD8     		bhi	.L2
+  36:./bsp/bsp_int.c ****         svc_func = svc_function[svc_number];
+  51              		.loc 1 36 0
+  52 000e 084A     		ldr	r2, .L8
+  53 0010 9B00     		lsls	r3, r3, #2
+  54              	.LVL2:
+  55 0012 9D58     		ldr	r5, [r3, r2]
+  56              	.LVL3:
+  37:./bsp/bsp_int.c **** 
+  38:./bsp/bsp_int.c ****     if( svc_func != NULL)
+  57              		.loc 1 38 0
+  58 0014 002D     		cmp	r5, #0
+  59 0016 06D0     		beq	.L2
+  39:./bsp/bsp_int.c ****         pwdSF[0] = svc_func( pwdSF[0], pwdSF[1], pwdSF[2], pwdSF[3]);
+  60              		.loc 1 39 0
+  61 0018 C368     		ldr	r3, [r0, #12]
+  62 001a 8268     		ldr	r2, [r0, #8]
+  63 001c 4168     		ldr	r1, [r0, #4]
+  64 001e 0068     		ldr	r0, [r0]
+  65              	.LVL4:
+  66 0020 A847     		blx	r5
+  67              	.LVL5:
+  68 0022 2060     		str	r0, [r4]
+  69 0024 01E0     		b	.L3
+  70              	.LVL6:
+  71              	.L2:
+  40:./bsp/bsp_int.c ****     else
+  41:./bsp/bsp_int.c ****         pwdSF[0] = 0;
+  72              		.loc 1 41 0
+  73 0026 0023     		movs	r3, #0
+  74 0028 2360     		str	r3, [r4]
+  75              	.LVL7:
+  76              	.L3:
+  42:./bsp/bsp_int.c **** 
+  43:./bsp/bsp_int.c ****     return 0;
+  44:./bsp/bsp_int.c **** }
+  77              		.loc 1 44 0
+  78 002a 0020     		movs	r0, #0
+  79              		@ sp needed
+  80              	.LVL8:
+  81 002c 70BD     		pop	{r4, r5, r6, pc}
+  82              	.L9:
+  83 002e C046     		.align	2
+  84              	.L8:
+  85 0030 00000000 		.word	svc_function
+  86              		.cfi_endproc
+  87              	.LFE0:
+  89              		.section	.text.HardFaultHandle_c,"ax",%progbits
+  90              		.align	1
+  91              		.global	HardFaultHandle_c
+  92              		.code	16
+  93              		.thumb_func
+  95              	HardFaultHandle_c:
+  96              	.LFB1:
+  45:./bsp/bsp_int.c **** 
+  46:./bsp/bsp_int.c **** 
+  47:./bsp/bsp_int.c **** /*
+  48:./bsp/bsp_int.c **** ***************************************************************************************************
+  49:./bsp/bsp_int.c **** *                                             App_Fault_ISR()
+  50:./bsp/bsp_int.c **** *
+  51:./bsp/bsp_int.c **** * Description : Handle hard fault.
+  52:./bsp/bsp_int.c **** *
+  53:./bsp/bsp_int.c **** * Argument(s) : none.
+  54:./bsp/bsp_int.c **** *
+  55:./bsp/bsp_int.c **** * Return(s)   : none.
+  56:./bsp/bsp_int.c **** *
+  57:./bsp/bsp_int.c **** * Caller(s)   : This is an ISR.
+  58:./bsp/bsp_int.c **** *
+  59:./bsp/bsp_int.c **** * Note(s)     : none.
+  60:./bsp/bsp_int.c **** ***************************************************************************************************
+  61:./bsp/bsp_int.c **** */
+  62:./bsp/bsp_int.c **** #ifndef BFSR        
+  63:./bsp/bsp_int.c **** #define BFSR          ((volatile uint32 *) 0xE000ED29)
+  64:./bsp/bsp_int.c **** #define UFSR          ((volatile uint32 *) 0xE000ED2A)
+  65:./bsp/bsp_int.c **** #define HFSR          ((volatile uint32 *) 0xE000ED2C)
+  66:./bsp/bsp_int.c **** #define DFSR          ((volatile uint32 *) 0xE000ED30)
+  67:./bsp/bsp_int.c **** #define AFSR          ((volatile uint32 *) 0xE000ED3C)
+  68:./bsp/bsp_int.c **** #endif
+  69:./bsp/bsp_int.c **** void HardFaultHandle_c( uint32 *hardfault_args, uint32 i);
+  70:./bsp/bsp_int.c **** void HardFaultHandle_c( uint32 *hardfault_args, uint32 i)
+  71:./bsp/bsp_int.c **** {
+  97              		.loc 1 71 0
+  98              		.cfi_startproc
+  99              		@ Volatile: function does not return.
+ 100              		@ args = 0, pretend = 0, frame = 0
+ 101              		@ frame_needed = 0, uses_anonymous_args = 0
+ 102              		@ link register save eliminated.
+ 103              	.LVL9:
+ 104              	.L11:
+ 105 0000 FEE7     		b	.L11
+ 106              		.cfi_endproc
+ 107              	.LFE1:
+ 109              		.weak	svc_function
+ 110              		.bss
+ 111              		.align	2
+ 114              	svc_function:
+ 115 0000 00000000 		.space	512
+ 115      00000000 
+ 115      00000000 
+ 115      00000000 
+ 115      00000000 
+ 116              		.text
+ 117              	.Letext0:
+ 118              		.file 2 "./bsp/mytype.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 bsp_int.c
+C:\Users\beyond\AppData\Local\Temp\ccQZR1Ok.s:20     .text.svc_handler_export:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccQZR1Ok.s:25     .text.svc_handler_export:00000000 svc_handler_export
+C:\Users\beyond\AppData\Local\Temp\ccQZR1Ok.s:85     .text.svc_handler_export:00000030 $d
+C:\Users\beyond\AppData\Local\Temp\ccQZR1Ok.s:114    .bss:00000000 svc_function
+C:\Users\beyond\AppData\Local\Temp\ccQZR1Ok.s:90     .text.HardFaultHandle_c:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccQZR1Ok.s:95     .text.HardFaultHandle_c:00000000 HardFaultHandle_c
+C:\Users\beyond\AppData\Local\Temp\ccQZR1Ok.s:111    .bss:00000000 $d
+                     .debug_frame:00000010 $d
+
+NO UNDEFINED SYMBOLS

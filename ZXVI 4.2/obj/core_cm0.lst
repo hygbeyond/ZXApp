@@ -1,0 +1,777 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 4
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"core_cm0.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.__get_PSP,"ax",%progbits
+  20              		.align	1
+  21              		.global	__get_PSP
+  22              		.code	16
+  23              		.thumb_func
+  25              	__get_PSP:
+  26              	.LFB0:
+  27              		.file 1 "./bsp/core_cm0.c"
+   1:./bsp/core_cm0.c **** /**************************************************************************//**
+   2:./bsp/core_cm0.c ****  * @file     core_cm0.c
+   3:./bsp/core_cm0.c ****  * @brief    CMSIS Cortex-M0 Core Peripheral Access Layer Source File
+   4:./bsp/core_cm0.c ****  * @version  V1.30
+   5:./bsp/core_cm0.c ****  * @date     30. October 2009
+   6:./bsp/core_cm0.c ****  *
+   7:./bsp/core_cm0.c ****  * @note
+   8:./bsp/core_cm0.c ****  * Copyright (C) 2009 ARM Limited. All rights reserved.
+   9:./bsp/core_cm0.c ****  *
+  10:./bsp/core_cm0.c ****  * @par
+  11:./bsp/core_cm0.c ****  * ARM Limited (ARM) is supplying this software for use with Cortex-M 
+  12:./bsp/core_cm0.c ****  * processor based microcontrollers.  This file can be freely distributed 
+  13:./bsp/core_cm0.c ****  * within development tools that are supporting such ARM based processors. 
+  14:./bsp/core_cm0.c ****  *
+  15:./bsp/core_cm0.c ****  * @par
+  16:./bsp/core_cm0.c ****  * THIS SOFTWARE IS PROVIDED "AS IS".  NO WARRANTIES, WHETHER EXPRESS, IMPLIED
+  17:./bsp/core_cm0.c ****  * OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, IMPLIED WARRANTIES OF
+  18:./bsp/core_cm0.c ****  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE APPLY TO THIS SOFTWARE.
+  19:./bsp/core_cm0.c ****  * ARM SHALL NOT, IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL, OR
+  20:./bsp/core_cm0.c ****  * CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
+  21:./bsp/core_cm0.c ****  *
+  22:./bsp/core_cm0.c ****  ******************************************************************************/
+  23:./bsp/core_cm0.c **** 
+  24:./bsp/core_cm0.c **** #include <stdint.h>
+  25:./bsp/core_cm0.c **** 
+  26:./bsp/core_cm0.c **** /* define compiler specific symbols */
+  27:./bsp/core_cm0.c **** #if defined ( __CC_ARM   )
+  28:./bsp/core_cm0.c ****   #define __ASM            __asm                                      /*!< asm keyword for ARM Comp
+  29:./bsp/core_cm0.c ****   #define __INLINE         __inline                                   /*!< inline keyword for ARM C
+  30:./bsp/core_cm0.c **** 
+  31:./bsp/core_cm0.c **** #elif defined ( __ICCARM__ )
+  32:./bsp/core_cm0.c ****   #define __ASM           __asm                                       /*!< asm keyword for IAR Comp
+  33:./bsp/core_cm0.c ****   #define __INLINE        inline                                      /*!< inline keyword for IAR C
+  34:./bsp/core_cm0.c **** 
+  35:./bsp/core_cm0.c **** #elif defined   (  __GNUC__  )
+  36:./bsp/core_cm0.c ****   #define __ASM            __asm                                      /*!< asm keyword for GNU Comp
+  37:./bsp/core_cm0.c ****   #define __INLINE         inline                                     /*!< inline keyword for GNU C
+  38:./bsp/core_cm0.c **** 
+  39:./bsp/core_cm0.c **** #elif defined   (  __TASKING__  )
+  40:./bsp/core_cm0.c ****   #define __ASM            __asm                                      /*!< asm keyword for TASKING 
+  41:./bsp/core_cm0.c ****   #define __INLINE         inline                                     /*!< inline keyword for TASKI
+  42:./bsp/core_cm0.c **** 
+  43:./bsp/core_cm0.c **** #endif
+  44:./bsp/core_cm0.c **** 
+  45:./bsp/core_cm0.c **** 
+  46:./bsp/core_cm0.c **** /* ###################  Compiler specific Intrinsics  ########################### */
+  47:./bsp/core_cm0.c **** 
+  48:./bsp/core_cm0.c **** #if defined ( __CC_ARM   ) /*------------------RealView Compiler -----------------*/
+  49:./bsp/core_cm0.c **** /* ARM armcc specific functions */
+  50:./bsp/core_cm0.c **** 
+  51:./bsp/core_cm0.c **** /**
+  52:./bsp/core_cm0.c ****  * @brief  Return the Process Stack Pointer
+  53:./bsp/core_cm0.c ****  *
+  54:./bsp/core_cm0.c ****  * @return ProcessStackPointer
+  55:./bsp/core_cm0.c ****  *
+  56:./bsp/core_cm0.c ****  * Return the actual process stack pointer
+  57:./bsp/core_cm0.c ****  */
+  58:./bsp/core_cm0.c **** __ASM uint32_t __get_PSP(void)
+  59:./bsp/core_cm0.c **** {
+  60:./bsp/core_cm0.c ****   mrs r0, psp
+  61:./bsp/core_cm0.c ****   bx lr
+  62:./bsp/core_cm0.c **** }
+  63:./bsp/core_cm0.c **** 
+  64:./bsp/core_cm0.c **** /**
+  65:./bsp/core_cm0.c ****  * @brief  Set the Process Stack Pointer
+  66:./bsp/core_cm0.c ****  *
+  67:./bsp/core_cm0.c ****  * @param  topOfProcStack  Process Stack Pointer
+  68:./bsp/core_cm0.c ****  *
+  69:./bsp/core_cm0.c ****  * Assign the value ProcessStackPointer to the MSP 
+  70:./bsp/core_cm0.c ****  * (process stack pointer) Cortex processor register
+  71:./bsp/core_cm0.c ****  */
+  72:./bsp/core_cm0.c **** __ASM void __set_PSP(uint32_t topOfProcStack)
+  73:./bsp/core_cm0.c **** {
+  74:./bsp/core_cm0.c ****   msr psp, r0
+  75:./bsp/core_cm0.c ****   bx lr
+  76:./bsp/core_cm0.c **** }
+  77:./bsp/core_cm0.c **** 
+  78:./bsp/core_cm0.c **** /**
+  79:./bsp/core_cm0.c ****  * @brief  Return the Main Stack Pointer
+  80:./bsp/core_cm0.c ****  *
+  81:./bsp/core_cm0.c ****  * @return Main Stack Pointer
+  82:./bsp/core_cm0.c ****  *
+  83:./bsp/core_cm0.c ****  * Return the current value of the MSP (main stack pointer)
+  84:./bsp/core_cm0.c ****  * Cortex processor register
+  85:./bsp/core_cm0.c ****  */
+  86:./bsp/core_cm0.c **** __ASM uint32_t __get_MSP(void)
+  87:./bsp/core_cm0.c **** {
+  88:./bsp/core_cm0.c ****   mrs r0, msp
+  89:./bsp/core_cm0.c ****   bx lr
+  90:./bsp/core_cm0.c **** }
+  91:./bsp/core_cm0.c **** 
+  92:./bsp/core_cm0.c **** /**
+  93:./bsp/core_cm0.c ****  * @brief  Set the Main Stack Pointer
+  94:./bsp/core_cm0.c ****  *
+  95:./bsp/core_cm0.c ****  * @param  topOfMainStack  Main Stack Pointer
+  96:./bsp/core_cm0.c ****  *
+  97:./bsp/core_cm0.c ****  * Assign the value mainStackPointer to the MSP 
+  98:./bsp/core_cm0.c ****  * (main stack pointer) Cortex processor register
+  99:./bsp/core_cm0.c ****  */
+ 100:./bsp/core_cm0.c **** __ASM void __set_MSP(uint32_t mainStackPointer)
+ 101:./bsp/core_cm0.c **** {
+ 102:./bsp/core_cm0.c ****   msr msp, r0
+ 103:./bsp/core_cm0.c ****   bx lr
+ 104:./bsp/core_cm0.c **** }
+ 105:./bsp/core_cm0.c **** 
+ 106:./bsp/core_cm0.c **** /**
+ 107:./bsp/core_cm0.c ****  * @brief  Reverse byte order in unsigned short value
+ 108:./bsp/core_cm0.c ****  *
+ 109:./bsp/core_cm0.c ****  * @param   value  value to reverse
+ 110:./bsp/core_cm0.c ****  * @return         reversed value
+ 111:./bsp/core_cm0.c ****  *
+ 112:./bsp/core_cm0.c ****  * Reverse byte order in unsigned short value
+ 113:./bsp/core_cm0.c ****  */
+ 114:./bsp/core_cm0.c **** __ASM uint32_t __REV16(uint16_t value)
+ 115:./bsp/core_cm0.c **** {
+ 116:./bsp/core_cm0.c ****   rev16 r0, r0
+ 117:./bsp/core_cm0.c ****   bx lr
+ 118:./bsp/core_cm0.c **** }
+ 119:./bsp/core_cm0.c **** 
+ 120:./bsp/core_cm0.c **** /**
+ 121:./bsp/core_cm0.c ****  * @brief  Reverse byte order in signed short value with sign extension to integer
+ 122:./bsp/core_cm0.c ****  *
+ 123:./bsp/core_cm0.c ****  * @param   value  value to reverse
+ 124:./bsp/core_cm0.c ****  * @return         reversed value
+ 125:./bsp/core_cm0.c ****  *
+ 126:./bsp/core_cm0.c ****  * Reverse byte order in signed short value with sign extension to integer
+ 127:./bsp/core_cm0.c ****  */
+ 128:./bsp/core_cm0.c **** __ASM int32_t __REVSH(int16_t value)
+ 129:./bsp/core_cm0.c **** {
+ 130:./bsp/core_cm0.c ****   revsh r0, r0
+ 131:./bsp/core_cm0.c ****   bx lr
+ 132:./bsp/core_cm0.c **** }
+ 133:./bsp/core_cm0.c **** 
+ 134:./bsp/core_cm0.c **** 
+ 135:./bsp/core_cm0.c **** #if (__ARMCC_VERSION < 400000)
+ 136:./bsp/core_cm0.c **** 
+ 137:./bsp/core_cm0.c **** 
+ 138:./bsp/core_cm0.c **** /**
+ 139:./bsp/core_cm0.c ****  * @brief  Return the Priority Mask value
+ 140:./bsp/core_cm0.c ****  *
+ 141:./bsp/core_cm0.c ****  * @return PriMask
+ 142:./bsp/core_cm0.c ****  *
+ 143:./bsp/core_cm0.c ****  * Return state of the priority mask bit from the priority mask register
+ 144:./bsp/core_cm0.c ****  */
+ 145:./bsp/core_cm0.c **** __ASM uint32_t __get_PRIMASK(void)
+ 146:./bsp/core_cm0.c **** {
+ 147:./bsp/core_cm0.c ****   mrs r0, primask
+ 148:./bsp/core_cm0.c ****   bx lr
+ 149:./bsp/core_cm0.c **** }
+ 150:./bsp/core_cm0.c **** 
+ 151:./bsp/core_cm0.c **** /**
+ 152:./bsp/core_cm0.c ****  * @brief  Set the Priority Mask value
+ 153:./bsp/core_cm0.c ****  *
+ 154:./bsp/core_cm0.c ****  * @param  priMask  PriMask
+ 155:./bsp/core_cm0.c ****  *
+ 156:./bsp/core_cm0.c ****  * Set the priority mask bit in the priority mask register
+ 157:./bsp/core_cm0.c ****  */
+ 158:./bsp/core_cm0.c **** __ASM void __set_PRIMASK(uint32_t priMask)
+ 159:./bsp/core_cm0.c **** {
+ 160:./bsp/core_cm0.c ****   msr primask, r0
+ 161:./bsp/core_cm0.c ****   bx lr
+ 162:./bsp/core_cm0.c **** }
+ 163:./bsp/core_cm0.c **** 
+ 164:./bsp/core_cm0.c **** /**
+ 165:./bsp/core_cm0.c ****  * @brief  Return the Control Register value
+ 166:./bsp/core_cm0.c ****  * 
+ 167:./bsp/core_cm0.c ****  * @return Control value
+ 168:./bsp/core_cm0.c ****  *
+ 169:./bsp/core_cm0.c ****  * Return the content of the control register
+ 170:./bsp/core_cm0.c ****  */
+ 171:./bsp/core_cm0.c **** __ASM uint32_t __get_CONTROL(void)
+ 172:./bsp/core_cm0.c **** {
+ 173:./bsp/core_cm0.c ****   mrs r0, control
+ 174:./bsp/core_cm0.c ****   bx lr
+ 175:./bsp/core_cm0.c **** }
+ 176:./bsp/core_cm0.c **** 
+ 177:./bsp/core_cm0.c **** /**
+ 178:./bsp/core_cm0.c ****  * @brief  Set the Control Register value
+ 179:./bsp/core_cm0.c ****  *
+ 180:./bsp/core_cm0.c ****  * @param  control  Control value
+ 181:./bsp/core_cm0.c ****  *
+ 182:./bsp/core_cm0.c ****  * Set the control register
+ 183:./bsp/core_cm0.c ****  */
+ 184:./bsp/core_cm0.c **** __ASM void __set_CONTROL(uint32_t control)
+ 185:./bsp/core_cm0.c **** {
+ 186:./bsp/core_cm0.c ****   msr control, r0
+ 187:./bsp/core_cm0.c ****   bx lr
+ 188:./bsp/core_cm0.c **** }
+ 189:./bsp/core_cm0.c **** 
+ 190:./bsp/core_cm0.c **** #endif /* __ARMCC_VERSION  */ 
+ 191:./bsp/core_cm0.c **** 
+ 192:./bsp/core_cm0.c **** 
+ 193:./bsp/core_cm0.c **** 
+ 194:./bsp/core_cm0.c **** #elif (defined (__ICCARM__)) /*------------------ ICC Compiler -------------------*/
+ 195:./bsp/core_cm0.c **** /* IAR iccarm specific functions */
+ 196:./bsp/core_cm0.c **** #pragma diag_suppress=Pe940
+ 197:./bsp/core_cm0.c **** 
+ 198:./bsp/core_cm0.c **** /**
+ 199:./bsp/core_cm0.c ****  * @brief  Return the Process Stack Pointer
+ 200:./bsp/core_cm0.c ****  *
+ 201:./bsp/core_cm0.c ****  * @return ProcessStackPointer
+ 202:./bsp/core_cm0.c ****  *
+ 203:./bsp/core_cm0.c ****  * Return the actual process stack pointer
+ 204:./bsp/core_cm0.c ****  */
+ 205:./bsp/core_cm0.c **** uint32_t __get_PSP(void)
+ 206:./bsp/core_cm0.c **** {
+ 207:./bsp/core_cm0.c ****   __ASM("mrs r0, psp");
+ 208:./bsp/core_cm0.c ****   __ASM("bx lr");
+ 209:./bsp/core_cm0.c **** }
+ 210:./bsp/core_cm0.c **** 
+ 211:./bsp/core_cm0.c **** /**
+ 212:./bsp/core_cm0.c ****  * @brief  Set the Process Stack Pointer
+ 213:./bsp/core_cm0.c ****  *
+ 214:./bsp/core_cm0.c ****  * @param  topOfProcStack  Process Stack Pointer
+ 215:./bsp/core_cm0.c ****  *
+ 216:./bsp/core_cm0.c ****  * Assign the value ProcessStackPointer to the MSP 
+ 217:./bsp/core_cm0.c ****  * (process stack pointer) Cortex processor register
+ 218:./bsp/core_cm0.c ****  */
+ 219:./bsp/core_cm0.c **** void __set_PSP(uint32_t topOfProcStack)
+ 220:./bsp/core_cm0.c **** {
+ 221:./bsp/core_cm0.c ****   __ASM("msr psp, r0");
+ 222:./bsp/core_cm0.c ****   __ASM("bx lr");
+ 223:./bsp/core_cm0.c **** }
+ 224:./bsp/core_cm0.c **** 
+ 225:./bsp/core_cm0.c **** /**
+ 226:./bsp/core_cm0.c ****  * @brief  Return the Main Stack Pointer
+ 227:./bsp/core_cm0.c ****  *
+ 228:./bsp/core_cm0.c ****  * @return Main Stack Pointer
+ 229:./bsp/core_cm0.c ****  *
+ 230:./bsp/core_cm0.c ****  * Return the current value of the MSP (main stack pointer)
+ 231:./bsp/core_cm0.c ****  * Cortex processor register
+ 232:./bsp/core_cm0.c ****  */
+ 233:./bsp/core_cm0.c **** uint32_t __get_MSP(void)
+ 234:./bsp/core_cm0.c **** {
+ 235:./bsp/core_cm0.c ****   __ASM("mrs r0, msp");
+ 236:./bsp/core_cm0.c ****   __ASM("bx lr");
+ 237:./bsp/core_cm0.c **** }
+ 238:./bsp/core_cm0.c **** 
+ 239:./bsp/core_cm0.c **** /**
+ 240:./bsp/core_cm0.c ****  * @brief  Set the Main Stack Pointer
+ 241:./bsp/core_cm0.c ****  *
+ 242:./bsp/core_cm0.c ****  * @param  topOfMainStack  Main Stack Pointer
+ 243:./bsp/core_cm0.c ****  *
+ 244:./bsp/core_cm0.c ****  * Assign the value mainStackPointer to the MSP 
+ 245:./bsp/core_cm0.c ****  * (main stack pointer) Cortex processor register
+ 246:./bsp/core_cm0.c ****  */
+ 247:./bsp/core_cm0.c **** void __set_MSP(uint32_t topOfMainStack)
+ 248:./bsp/core_cm0.c **** {
+ 249:./bsp/core_cm0.c ****   __ASM("msr msp, r0");
+ 250:./bsp/core_cm0.c ****   __ASM("bx lr");
+ 251:./bsp/core_cm0.c **** }
+ 252:./bsp/core_cm0.c **** 
+ 253:./bsp/core_cm0.c **** /**
+ 254:./bsp/core_cm0.c ****  * @brief  Reverse byte order in unsigned short value
+ 255:./bsp/core_cm0.c ****  *
+ 256:./bsp/core_cm0.c ****  * @param  value  value to reverse
+ 257:./bsp/core_cm0.c ****  * @return        reversed value
+ 258:./bsp/core_cm0.c ****  *
+ 259:./bsp/core_cm0.c ****  * Reverse byte order in unsigned short value
+ 260:./bsp/core_cm0.c ****  */
+ 261:./bsp/core_cm0.c **** uint32_t __REV16(uint16_t value)
+ 262:./bsp/core_cm0.c **** {
+ 263:./bsp/core_cm0.c ****   __ASM("rev16 r0, r0");
+ 264:./bsp/core_cm0.c ****   __ASM("bx lr");
+ 265:./bsp/core_cm0.c **** }
+ 266:./bsp/core_cm0.c **** 
+ 267:./bsp/core_cm0.c **** 
+ 268:./bsp/core_cm0.c **** #pragma diag_default=Pe940
+ 269:./bsp/core_cm0.c **** 
+ 270:./bsp/core_cm0.c **** 
+ 271:./bsp/core_cm0.c **** #elif (defined (__GNUC__)) /*------------------ GNU Compiler ---------------------*/
+ 272:./bsp/core_cm0.c **** /* GNU gcc specific functions */
+ 273:./bsp/core_cm0.c **** 
+ 274:./bsp/core_cm0.c **** /**
+ 275:./bsp/core_cm0.c ****  * @brief  Return the Process Stack Pointer
+ 276:./bsp/core_cm0.c ****  *
+ 277:./bsp/core_cm0.c ****  * @return ProcessStackPointer
+ 278:./bsp/core_cm0.c ****  *
+ 279:./bsp/core_cm0.c ****  * Return the actual process stack pointer
+ 280:./bsp/core_cm0.c ****  */
+ 281:./bsp/core_cm0.c **** uint32_t __get_PSP(void) __attribute__( ( naked ) );
+ 282:./bsp/core_cm0.c **** uint32_t __get_PSP(void)
+ 283:./bsp/core_cm0.c **** {
+  28              		.loc 1 283 0
+  29              		.cfi_startproc
+  30              		@ Naked Function: prologue and epilogue provided by programmer.
+  31              		@ args = 0, pretend = 0, frame = 0
+  32              		@ frame_needed = 0, uses_anonymous_args = 0
+  33              	.LVL0:
+ 284:./bsp/core_cm0.c ****   uint32_t result=0;
+ 285:./bsp/core_cm0.c **** 
+ 286:./bsp/core_cm0.c ****   __ASM volatile ("MRS %0, psp\n\t" 
+  34              		.loc 1 286 0
+  35              		.syntax divided
+  36              	@ 286 "./bsp/core_cm0.c" 1
+  37 0000 EFF30980 		MRS r0, psp
+  38 0004 001C     		MOV r0, r0 
+  39 0006 7047     		BX  lr     
+  40              		
+  41              	@ 0 "" 2
+  42              	.LVL1:
+ 287:./bsp/core_cm0.c ****                   "MOV r0, %0 \n\t"
+ 288:./bsp/core_cm0.c ****                   "BX  lr     \n\t"  : "=r" (result) );
+ 289:./bsp/core_cm0.c ****   return(result);
+ 290:./bsp/core_cm0.c **** }
+  43              		.loc 1 290 0
+  44              		.thumb
+  45              		.syntax unified
+  46              		.cfi_endproc
+  47              	.LFE0:
+  49              		.section	.text.__set_PSP,"ax",%progbits
+  50              		.align	1
+  51              		.global	__set_PSP
+  52              		.code	16
+  53              		.thumb_func
+  55              	__set_PSP:
+  56              	.LFB1:
+ 291:./bsp/core_cm0.c **** 
+ 292:./bsp/core_cm0.c **** /**
+ 293:./bsp/core_cm0.c ****  * @brief  Set the Process Stack Pointer
+ 294:./bsp/core_cm0.c ****  *
+ 295:./bsp/core_cm0.c ****  * @param  topOfProcStack  Process Stack Pointer
+ 296:./bsp/core_cm0.c ****  *
+ 297:./bsp/core_cm0.c ****  * Assign the value ProcessStackPointer to the MSP 
+ 298:./bsp/core_cm0.c ****  * (process stack pointer) Cortex processor register
+ 299:./bsp/core_cm0.c ****  */
+ 300:./bsp/core_cm0.c **** void __set_PSP(uint32_t topOfProcStack) __attribute__( ( naked ) );
+ 301:./bsp/core_cm0.c **** void __set_PSP(uint32_t topOfProcStack)
+ 302:./bsp/core_cm0.c **** {
+  57              		.loc 1 302 0
+  58              		.cfi_startproc
+  59              		@ Naked Function: prologue and epilogue provided by programmer.
+  60              		@ args = 0, pretend = 0, frame = 0
+  61              		@ frame_needed = 0, uses_anonymous_args = 0
+  62              	.LVL2:
+ 303:./bsp/core_cm0.c ****   __ASM volatile ("MSR psp, %0\n\t"
+  63              		.loc 1 303 0
+  64              		.syntax divided
+  65              	@ 303 "./bsp/core_cm0.c" 1
+  66 0000 80F30988 		MSR psp, r0
+  67 0004 7047     		BX  lr     
+  68              		
+  69              	@ 0 "" 2
+ 304:./bsp/core_cm0.c ****                   "BX  lr     \n\t" : : "r" (topOfProcStack) );
+ 305:./bsp/core_cm0.c **** }
+  70              		.loc 1 305 0
+  71              		.thumb
+  72              		.syntax unified
+  73              		.cfi_endproc
+  74              	.LFE1:
+  76              		.section	.text.__get_MSP,"ax",%progbits
+  77              		.align	1
+  78              		.global	__get_MSP
+  79              		.code	16
+  80              		.thumb_func
+  82              	__get_MSP:
+  83              	.LFB2:
+ 306:./bsp/core_cm0.c **** 
+ 307:./bsp/core_cm0.c **** /**
+ 308:./bsp/core_cm0.c ****  * @brief  Return the Main Stack Pointer
+ 309:./bsp/core_cm0.c ****  *
+ 310:./bsp/core_cm0.c ****  * @return Main Stack Pointer
+ 311:./bsp/core_cm0.c ****  *
+ 312:./bsp/core_cm0.c ****  * Return the current value of the MSP (main stack pointer)
+ 313:./bsp/core_cm0.c ****  * Cortex processor register
+ 314:./bsp/core_cm0.c ****  */
+ 315:./bsp/core_cm0.c **** uint32_t __get_MSP(void) __attribute__( ( naked ) );
+ 316:./bsp/core_cm0.c **** uint32_t __get_MSP(void)
+ 317:./bsp/core_cm0.c **** {
+  84              		.loc 1 317 0
+  85              		.cfi_startproc
+  86              		@ Naked Function: prologue and epilogue provided by programmer.
+  87              		@ args = 0, pretend = 0, frame = 0
+  88              		@ frame_needed = 0, uses_anonymous_args = 0
+  89              	.LVL3:
+ 318:./bsp/core_cm0.c ****   uint32_t result=0;
+ 319:./bsp/core_cm0.c **** 
+ 320:./bsp/core_cm0.c ****   __ASM volatile ("MRS %0, msp\n\t" 
+  90              		.loc 1 320 0
+  91              		.syntax divided
+  92              	@ 320 "./bsp/core_cm0.c" 1
+  93 0000 EFF30880 		MRS r0, msp
+  94 0004 001C     		MOV r0, r0 
+  95 0006 7047     		BX  lr     
+  96              		
+  97              	@ 0 "" 2
+  98              	.LVL4:
+ 321:./bsp/core_cm0.c ****                   "MOV r0, %0 \n\t"
+ 322:./bsp/core_cm0.c ****                   "BX  lr     \n\t"  : "=r" (result) );
+ 323:./bsp/core_cm0.c ****   return(result);
+ 324:./bsp/core_cm0.c **** }
+  99              		.loc 1 324 0
+ 100              		.thumb
+ 101              		.syntax unified
+ 102              		.cfi_endproc
+ 103              	.LFE2:
+ 105              		.section	.text.__set_MSP,"ax",%progbits
+ 106              		.align	1
+ 107              		.global	__set_MSP
+ 108              		.code	16
+ 109              		.thumb_func
+ 111              	__set_MSP:
+ 112              	.LFB3:
+ 325:./bsp/core_cm0.c **** 
+ 326:./bsp/core_cm0.c **** /**
+ 327:./bsp/core_cm0.c ****  * @brief  Set the Main Stack Pointer
+ 328:./bsp/core_cm0.c ****  *
+ 329:./bsp/core_cm0.c ****  * @param  topOfMainStack  Main Stack Pointer
+ 330:./bsp/core_cm0.c ****  *
+ 331:./bsp/core_cm0.c ****  * Assign the value mainStackPointer to the MSP 
+ 332:./bsp/core_cm0.c ****  * (main stack pointer) Cortex processor register
+ 333:./bsp/core_cm0.c ****  */
+ 334:./bsp/core_cm0.c **** void __set_MSP(uint32_t topOfMainStack) __attribute__( ( naked ) );
+ 335:./bsp/core_cm0.c **** void __set_MSP(uint32_t topOfMainStack)
+ 336:./bsp/core_cm0.c **** {
+ 113              		.loc 1 336 0
+ 114              		.cfi_startproc
+ 115              		@ Naked Function: prologue and epilogue provided by programmer.
+ 116              		@ args = 0, pretend = 0, frame = 0
+ 117              		@ frame_needed = 0, uses_anonymous_args = 0
+ 118              	.LVL5:
+ 337:./bsp/core_cm0.c ****   __ASM volatile ("MSR msp, %0\n\t"
+ 119              		.loc 1 337 0
+ 120              		.syntax divided
+ 121              	@ 337 "./bsp/core_cm0.c" 1
+ 122 0000 80F30888 		MSR msp, r0
+ 123 0004 7047     		BX  lr     
+ 124              		
+ 125              	@ 0 "" 2
+ 338:./bsp/core_cm0.c ****                   "BX  lr     \n\t" : : "r" (topOfMainStack) );
+ 339:./bsp/core_cm0.c **** }
+ 126              		.loc 1 339 0
+ 127              		.thumb
+ 128              		.syntax unified
+ 129              		.cfi_endproc
+ 130              	.LFE3:
+ 132              		.section	.text.__get_PRIMASK,"ax",%progbits
+ 133              		.align	1
+ 134              		.global	__get_PRIMASK
+ 135              		.code	16
+ 136              		.thumb_func
+ 138              	__get_PRIMASK:
+ 139              	.LFB4:
+ 340:./bsp/core_cm0.c **** 
+ 341:./bsp/core_cm0.c **** 
+ 342:./bsp/core_cm0.c **** /**
+ 343:./bsp/core_cm0.c ****  * @brief  Return the Priority Mask value
+ 344:./bsp/core_cm0.c ****  *
+ 345:./bsp/core_cm0.c ****  * @return PriMask
+ 346:./bsp/core_cm0.c ****  *
+ 347:./bsp/core_cm0.c ****  * Return state of the priority mask bit from the priority mask register
+ 348:./bsp/core_cm0.c ****  */
+ 349:./bsp/core_cm0.c **** uint32_t __get_PRIMASK(void)
+ 350:./bsp/core_cm0.c **** {
+ 140              		.loc 1 350 0
+ 141              		.cfi_startproc
+ 142              		@ args = 0, pretend = 0, frame = 0
+ 143              		@ frame_needed = 0, uses_anonymous_args = 0
+ 144              		@ link register save eliminated.
+ 145              	.LVL6:
+ 351:./bsp/core_cm0.c ****   uint32_t result=0;
+ 352:./bsp/core_cm0.c **** 
+ 353:./bsp/core_cm0.c ****   __ASM volatile ("MRS %0, primask" : "=r" (result) );
+ 146              		.loc 1 353 0
+ 147              		.syntax divided
+ 148              	@ 353 "./bsp/core_cm0.c" 1
+ 149 0000 EFF31080 		MRS r0, primask
+ 150              	@ 0 "" 2
+ 151              	.LVL7:
+ 354:./bsp/core_cm0.c ****   return(result);
+ 355:./bsp/core_cm0.c **** }
+ 152              		.loc 1 355 0
+ 153              		.thumb
+ 154              		.syntax unified
+ 155              		@ sp needed
+ 156 0004 7047     		bx	lr
+ 157              		.cfi_endproc
+ 158              	.LFE4:
+ 160              		.section	.text.__set_PRIMASK,"ax",%progbits
+ 161              		.align	1
+ 162              		.global	__set_PRIMASK
+ 163              		.code	16
+ 164              		.thumb_func
+ 166              	__set_PRIMASK:
+ 167              	.LFB5:
+ 356:./bsp/core_cm0.c **** 
+ 357:./bsp/core_cm0.c **** /**
+ 358:./bsp/core_cm0.c ****  * @brief  Set the Priority Mask value
+ 359:./bsp/core_cm0.c ****  *
+ 360:./bsp/core_cm0.c ****  * @param  priMask  PriMask
+ 361:./bsp/core_cm0.c ****  *
+ 362:./bsp/core_cm0.c ****  * Set the priority mask bit in the priority mask register
+ 363:./bsp/core_cm0.c ****  */
+ 364:./bsp/core_cm0.c **** void __set_PRIMASK(uint32_t priMask)
+ 365:./bsp/core_cm0.c **** {
+ 168              		.loc 1 365 0
+ 169              		.cfi_startproc
+ 170              		@ args = 0, pretend = 0, frame = 0
+ 171              		@ frame_needed = 0, uses_anonymous_args = 0
+ 172              		@ link register save eliminated.
+ 173              	.LVL8:
+ 366:./bsp/core_cm0.c ****   __ASM volatile ("MSR primask, %0" : : "r" (priMask) );
+ 174              		.loc 1 366 0
+ 175              		.syntax divided
+ 176              	@ 366 "./bsp/core_cm0.c" 1
+ 177 0000 80F31088 		MSR primask, r0
+ 178              	@ 0 "" 2
+ 367:./bsp/core_cm0.c **** }
+ 179              		.loc 1 367 0
+ 180              		.thumb
+ 181              		.syntax unified
+ 182              		@ sp needed
+ 183 0004 7047     		bx	lr
+ 184              		.cfi_endproc
+ 185              	.LFE5:
+ 187              		.section	.text.__get_CONTROL,"ax",%progbits
+ 188              		.align	1
+ 189              		.global	__get_CONTROL
+ 190              		.code	16
+ 191              		.thumb_func
+ 193              	__get_CONTROL:
+ 194              	.LFB6:
+ 368:./bsp/core_cm0.c **** 
+ 369:./bsp/core_cm0.c **** /**
+ 370:./bsp/core_cm0.c ****  * @brief  Return the Control Register value
+ 371:./bsp/core_cm0.c **** * 
+ 372:./bsp/core_cm0.c **** *  @return Control value
+ 373:./bsp/core_cm0.c ****  *
+ 374:./bsp/core_cm0.c ****  * Return the content of the control register
+ 375:./bsp/core_cm0.c ****  */
+ 376:./bsp/core_cm0.c **** uint32_t __get_CONTROL(void)
+ 377:./bsp/core_cm0.c **** {
+ 195              		.loc 1 377 0
+ 196              		.cfi_startproc
+ 197              		@ args = 0, pretend = 0, frame = 0
+ 198              		@ frame_needed = 0, uses_anonymous_args = 0
+ 199              		@ link register save eliminated.
+ 200              	.LVL9:
+ 378:./bsp/core_cm0.c ****   uint32_t result=0;
+ 379:./bsp/core_cm0.c **** 
+ 380:./bsp/core_cm0.c ****   __ASM volatile ("MRS %0, control" : "=r" (result) );
+ 201              		.loc 1 380 0
+ 202              		.syntax divided
+ 203              	@ 380 "./bsp/core_cm0.c" 1
+ 204 0000 EFF31480 		MRS r0, control
+ 205              	@ 0 "" 2
+ 206              	.LVL10:
+ 381:./bsp/core_cm0.c ****   return(result);
+ 382:./bsp/core_cm0.c **** }
+ 207              		.loc 1 382 0
+ 208              		.thumb
+ 209              		.syntax unified
+ 210              		@ sp needed
+ 211 0004 7047     		bx	lr
+ 212              		.cfi_endproc
+ 213              	.LFE6:
+ 215              		.section	.text.__set_CONTROL,"ax",%progbits
+ 216              		.align	1
+ 217              		.global	__set_CONTROL
+ 218              		.code	16
+ 219              		.thumb_func
+ 221              	__set_CONTROL:
+ 222              	.LFB7:
+ 383:./bsp/core_cm0.c **** 
+ 384:./bsp/core_cm0.c **** /**
+ 385:./bsp/core_cm0.c ****  * @brief  Set the Control Register value
+ 386:./bsp/core_cm0.c ****  *
+ 387:./bsp/core_cm0.c ****  * @param  control  Control value
+ 388:./bsp/core_cm0.c ****  *
+ 389:./bsp/core_cm0.c ****  * Set the control register
+ 390:./bsp/core_cm0.c ****  */
+ 391:./bsp/core_cm0.c **** void __set_CONTROL(uint32_t control)
+ 392:./bsp/core_cm0.c **** {
+ 223              		.loc 1 392 0
+ 224              		.cfi_startproc
+ 225              		@ args = 0, pretend = 0, frame = 0
+ 226              		@ frame_needed = 0, uses_anonymous_args = 0
+ 227              		@ link register save eliminated.
+ 228              	.LVL11:
+ 393:./bsp/core_cm0.c ****   __ASM volatile ("MSR control, %0" : : "r" (control) );
+ 229              		.loc 1 393 0
+ 230              		.syntax divided
+ 231              	@ 393 "./bsp/core_cm0.c" 1
+ 232 0000 80F31488 		MSR control, r0
+ 233              	@ 0 "" 2
+ 394:./bsp/core_cm0.c **** }
+ 234              		.loc 1 394 0
+ 235              		.thumb
+ 236              		.syntax unified
+ 237              		@ sp needed
+ 238 0004 7047     		bx	lr
+ 239              		.cfi_endproc
+ 240              	.LFE7:
+ 242              		.section	.text.__REV,"ax",%progbits
+ 243              		.align	1
+ 244              		.global	__REV
+ 245              		.code	16
+ 246              		.thumb_func
+ 248              	__REV:
+ 249              	.LFB8:
+ 395:./bsp/core_cm0.c **** 
+ 396:./bsp/core_cm0.c **** 
+ 397:./bsp/core_cm0.c **** /**
+ 398:./bsp/core_cm0.c ****  * @brief  Reverse byte order in integer value
+ 399:./bsp/core_cm0.c ****  *
+ 400:./bsp/core_cm0.c ****  * @param  value  value to reverse
+ 401:./bsp/core_cm0.c ****  * @return        reversed value
+ 402:./bsp/core_cm0.c ****  *
+ 403:./bsp/core_cm0.c ****  * Reverse byte order in integer value
+ 404:./bsp/core_cm0.c ****  */
+ 405:./bsp/core_cm0.c **** uint32_t __REV(uint32_t value)
+ 406:./bsp/core_cm0.c **** {
+ 250              		.loc 1 406 0
+ 251              		.cfi_startproc
+ 252              		@ args = 0, pretend = 0, frame = 0
+ 253              		@ frame_needed = 0, uses_anonymous_args = 0
+ 254              		@ link register save eliminated.
+ 255              	.LVL12:
+ 407:./bsp/core_cm0.c ****   uint32_t result=0;
+ 408:./bsp/core_cm0.c ****   
+ 409:./bsp/core_cm0.c ****   __ASM volatile ("rev %0, %1" : "=r" (result) : "r" (value) );
+ 256              		.loc 1 409 0
+ 257              		.syntax divided
+ 258              	@ 409 "./bsp/core_cm0.c" 1
+ 259 0000 00BA     		rev r0, r0
+ 260              	@ 0 "" 2
+ 261              	.LVL13:
+ 410:./bsp/core_cm0.c ****   return(result);
+ 411:./bsp/core_cm0.c **** }
+ 262              		.loc 1 411 0
+ 263              		.thumb
+ 264              		.syntax unified
+ 265              		@ sp needed
+ 266 0002 7047     		bx	lr
+ 267              		.cfi_endproc
+ 268              	.LFE8:
+ 270              		.section	.text.__REV16,"ax",%progbits
+ 271              		.align	1
+ 272              		.global	__REV16
+ 273              		.code	16
+ 274              		.thumb_func
+ 276              	__REV16:
+ 277              	.LFB9:
+ 412:./bsp/core_cm0.c **** 
+ 413:./bsp/core_cm0.c **** /**
+ 414:./bsp/core_cm0.c ****  * @brief  Reverse byte order in unsigned short value
+ 415:./bsp/core_cm0.c ****  *
+ 416:./bsp/core_cm0.c ****  * @param  value  value to reverse
+ 417:./bsp/core_cm0.c ****  * @return        reversed value
+ 418:./bsp/core_cm0.c ****  *
+ 419:./bsp/core_cm0.c ****  * Reverse byte order in unsigned short value
+ 420:./bsp/core_cm0.c ****  */
+ 421:./bsp/core_cm0.c **** uint32_t __REV16(uint16_t value)
+ 422:./bsp/core_cm0.c **** {
+ 278              		.loc 1 422 0
+ 279              		.cfi_startproc
+ 280              		@ args = 0, pretend = 0, frame = 0
+ 281              		@ frame_needed = 0, uses_anonymous_args = 0
+ 282              		@ link register save eliminated.
+ 283              	.LVL14:
+ 423:./bsp/core_cm0.c ****   uint32_t result=0;
+ 424:./bsp/core_cm0.c ****   
+ 425:./bsp/core_cm0.c ****   __ASM volatile ("rev16 %0, %1" : "=r" (result) : "r" (value) );
+ 284              		.loc 1 425 0
+ 285              		.syntax divided
+ 286              	@ 425 "./bsp/core_cm0.c" 1
+ 287 0000 40BA     		rev16 r0, r0
+ 288              	@ 0 "" 2
+ 289              	.LVL15:
+ 426:./bsp/core_cm0.c ****   return(result);
+ 427:./bsp/core_cm0.c **** }
+ 290              		.loc 1 427 0
+ 291              		.thumb
+ 292              		.syntax unified
+ 293              		@ sp needed
+ 294 0002 7047     		bx	lr
+ 295              		.cfi_endproc
+ 296              	.LFE9:
+ 298              		.section	.text.__REVSH,"ax",%progbits
+ 299              		.align	1
+ 300              		.global	__REVSH
+ 301              		.code	16
+ 302              		.thumb_func
+ 304              	__REVSH:
+ 305              	.LFB10:
+ 428:./bsp/core_cm0.c **** 
+ 429:./bsp/core_cm0.c **** /**
+ 430:./bsp/core_cm0.c ****  * @brief  Reverse byte order in signed short value with sign extension to integer
+ 431:./bsp/core_cm0.c ****  *
+ 432:./bsp/core_cm0.c ****  * @param  value  value to reverse
+ 433:./bsp/core_cm0.c ****  * @return        reversed value
+ 434:./bsp/core_cm0.c ****  *
+ 435:./bsp/core_cm0.c ****  * Reverse byte order in signed short value with sign extension to integer
+ 436:./bsp/core_cm0.c ****  */
+ 437:./bsp/core_cm0.c **** int32_t __REVSH(int16_t value)
+ 438:./bsp/core_cm0.c **** {
+ 306              		.loc 1 438 0
+ 307              		.cfi_startproc
+ 308              		@ args = 0, pretend = 0, frame = 0
+ 309              		@ frame_needed = 0, uses_anonymous_args = 0
+ 310              		@ link register save eliminated.
+ 311              	.LVL16:
+ 439:./bsp/core_cm0.c ****   uint32_t result=0;
+ 440:./bsp/core_cm0.c ****   
+ 441:./bsp/core_cm0.c ****   __ASM volatile ("revsh %0, %1" : "=r" (result) : "r" (value) );
+ 312              		.loc 1 441 0
+ 313              		.syntax divided
+ 314              	@ 441 "./bsp/core_cm0.c" 1
+ 315 0000 C0BA     		revsh r0, r0
+ 316              	@ 0 "" 2
+ 317              	.LVL17:
+ 442:./bsp/core_cm0.c ****   return(result);
+ 443:./bsp/core_cm0.c **** }
+ 318              		.loc 1 443 0
+ 319              		.thumb
+ 320              		.syntax unified
+ 321              		@ sp needed
+ 322 0002 7047     		bx	lr
+ 323              		.cfi_endproc
+ 324              	.LFE10:
+ 326              		.text
+ 327              	.Letext0:
+ 328              		.file 2 "d:\\wingcc\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 329              		.file 3 "d:\\wingcc\\arm-none-eabi\\include\\sys\\_stdint.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 core_cm0.c
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:20     .text.__get_PSP:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:25     .text.__get_PSP:00000000 __get_PSP
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:50     .text.__set_PSP:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:55     .text.__set_PSP:00000000 __set_PSP
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:77     .text.__get_MSP:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:82     .text.__get_MSP:00000000 __get_MSP
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:106    .text.__set_MSP:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:111    .text.__set_MSP:00000000 __set_MSP
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:133    .text.__get_PRIMASK:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:138    .text.__get_PRIMASK:00000000 __get_PRIMASK
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:161    .text.__set_PRIMASK:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:166    .text.__set_PRIMASK:00000000 __set_PRIMASK
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:188    .text.__get_CONTROL:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:193    .text.__get_CONTROL:00000000 __get_CONTROL
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:216    .text.__set_CONTROL:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:221    .text.__set_CONTROL:00000000 __set_CONTROL
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:243    .text.__REV:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:248    .text.__REV:00000000 __REV
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:271    .text.__REV16:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:276    .text.__REV16:00000000 __REV16
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:299    .text.__REVSH:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccgCdVYf.s:304    .text.__REVSH:00000000 __REVSH
+                     .debug_frame:00000010 $d
+
+NO UNDEFINED SYMBOLS

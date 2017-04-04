@@ -1,0 +1,1655 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 4
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"dataV.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.global	__aeabi_idiv
+  20              		.section	.text.jz_cmd,"ax",%progbits
+  21              		.align	1
+  22              		.global	jz_cmd
+  23              		.code	16
+  24              		.thumb_func
+  26              	jz_cmd:
+  27              	.LFB8:
+  28              		.file 1 "./data/dataV.c"
+   1:./data/dataV.c **** /*
+   2:./data/dataV.c ****  * dataV.c
+   3:./data/dataV.c ****  *
+   4:./data/dataV.c ****  *  Created on: 2016年7月24日
+   5:./data/dataV.c ****  *      Author: beyond
+   6:./data/dataV.c ****  *
+   7:./data/dataV.c ****  *  20161108 增加了温度补偿，重新编写了220V、380V查表算法的真值表
+   8:./data/dataV.c ****  */
+   9:./data/dataV.c **** 
+  10:./data/dataV.c **** #include "data.h"
+  11:./data/dataV.c **** #include "pcommand.h"
+  12:./data/dataV.c **** #include "protocol.h"
+  13:./data/dataV.c **** #include "user.h"
+  14:./data/dataV.c **** 
+  15:./data/dataV.c **** 
+  16:./data/dataV.c **** typedef struct{
+  17:./data/dataV.c ****     uint16  Vout;   // 实际电压值
+  18:./data/dataV.c ****     uint16  Vin;    // AD采集值
+  19:./data/dataV.c **** }TDatalist;
+  20:./data/dataV.c **** 
+  21:./data/dataV.c **** 
+  22:./data/dataV.c **** #define VJZ_V     120
+  23:./data/dataV.c **** #define VDATALIST_220              4
+  24:./data/dataV.c **** const TDatalist CVDataList[13] =
+  25:./data/dataV.c **** {
+  26:./data/dataV.c **** 	{260,  1697},   //0
+  27:./data/dataV.c **** 	{250,  1600},   //1
+  28:./data/dataV.c **** 	{240,  1505},   //2
+  29:./data/dataV.c **** 	{230,  1414},   //3
+  30:./data/dataV.c **** 	{220,  1329},   //4
+  31:./data/dataV.c **** 	{210,  1233},   //5
+  32:./data/dataV.c **** 	{200,  1138},   //6
+  33:./data/dataV.c **** 	{190,  1053},   //7
+  34:./data/dataV.c **** 	{180,   961},   //8
+  35:./data/dataV.c **** 	{170,   880},   //9
+  36:./data/dataV.c **** 	{160,   794},   //10
+  37:./data/dataV.c **** 	{140,   637},   //11
+  38:./data/dataV.c **** 	{100,   355},   //12
+  39:./data/dataV.c **** };
+  40:./data/dataV.c **** 
+  41:./data/dataV.c **** #define WVDATALIST_380              4
+  42:./data/dataV.c **** const TDatalist WVDataList[] =
+  43:./data/dataV.c **** {
+  44:./data/dataV.c **** 	{449,   546*4},   //0  
+  45:./data/dataV.c **** 	{432,   515*4},   //1  
+  46:./data/dataV.c **** 	{415,   484*4},   //2  
+  47:./data/dataV.c **** 	{397,   456*4},   //3  
+  48:./data/dataV.c **** 	{380,   425*4},   //4  
+  49:./data/dataV.c **** 	{363,   396*4},   //5  
+  50:./data/dataV.c **** 	{345,   370*4},   //6  
+  51:./data/dataV.c **** 	{328,   341*4},   //7  
+  52:./data/dataV.c **** 	{311,   315*4},   //8  
+  53:./data/dataV.c **** 	{294,   289*4},   //9  
+  54:./data/dataV.c **** 	{276,   261*4},   //10 
+  55:./data/dataV.c **** 	{242,   210*4},   //11 
+  56:./data/dataV.c **** 	{173,   120*4},   //12 
+  57:./data/dataV.c **** };
+  58:./data/dataV.c **** 
+  59:./data/dataV.c **** /*
+  60:./data/dataV.c ****  * 10V ~ 60V 直流查表表格
+  61:./data/dataV.c ****  */
+  62:./data/dataV.c **** const TDatalist VDDataList[] =
+  63:./data/dataV.c **** {
+  64:./data/dataV.c ****     {400, 797},
+  65:./data/dataV.c ****     {240, 395},
+  66:./data/dataV.c ****     {100, 82},
+  67:./data/dataV.c **** };
+  68:./data/dataV.c **** 
+  69:./data/dataV.c **** typedef struct{  //温度补偿系数
+  70:./data/dataV.c ****     int16   wd;      // 温度
+  71:./data/dataV.c ****     uint16  wVJZ;    // 220V 温度补偿
+  72:./data/dataV.c ****     uint16  wWVJZ;   // 380V 温度补偿
+  73:./data/dataV.c ****     uint16  wDVJZ;   // 24V  温度补偿
+  74:./data/dataV.c **** }TWDlist;
+  75:./data/dataV.c **** 
+  76:./data/dataV.c **** const
+  77:./data/dataV.c **** TWDlist WDlist[]={
+  78:./data/dataV.c **** 		{-10, 1267  , 1179, 1116 },
+  79:./data/dataV.c **** 		{  0, 1182  , 1119, 1082 },
+  80:./data/dataV.c **** 		{ 10, 1111  , 1054, 1041 },
+  81:./data/dataV.c **** 		{ 20, 1024  , 1000, 1000 },
+  82:./data/dataV.c **** 		{ 30, 943	,  931,  938 },
+  83:./data/dataV.c **** 		{ 40, 853	,  847,  875 },
+  84:./data/dataV.c **** };
+  85:./data/dataV.c **** 
+  86:./data/dataV.c **** static
+  87:./data/dataV.c **** int wJZ,wVJZ, wDVJZ;  // 220V 380V 温度补偿值
+  88:./data/dataV.c **** 
+  89:./data/dataV.c **** #define DataList   CVDataList
+  90:./data/dataV.c **** #define WVDataList WVDataList
+  91:./data/dataV.c **** 
+  92:./data/dataV.c **** /*
+  93:./data/dataV.c ****  * 根据实际温度计算温度补偿值
+  94:./data/dataV.c ****  */
+  95:./data/dataV.c **** void createWJZ(int wV)
+  96:./data/dataV.c **** {
+  97:./data/dataV.c **** 	int i;
+  98:./data/dataV.c **** 	wJZ  = 1024;
+  99:./data/dataV.c **** 	wVJZ = 1000;
+ 100:./data/dataV.c **** 	wDVJZ = 1000;
+ 101:./data/dataV.c **** 	if( 0 == pUsrCfg->WDJZen ) return;//温度校正关闭
+ 102:./data/dataV.c **** 	for (i = 1; i < 6; i++) {
+ 103:./data/dataV.c **** 		if (wV < WDlist[i].wd) {
+ 104:./data/dataV.c **** 			int t = WDlist[i].wd - wV;
+ 105:./data/dataV.c **** 
+ 106:./data/dataV.c **** 			wJZ = WDlist[i].wVJZ
+ 107:./data/dataV.c **** 					+ (WDlist[i - 1].wVJZ - WDlist[i].wVJZ) * t / 10;
+ 108:./data/dataV.c **** 			wVJZ = WDlist[i].wWVJZ
+ 109:./data/dataV.c **** 					+ (WDlist[i - 1].wWVJZ - WDlist[i].wWVJZ) * t / 10;
+ 110:./data/dataV.c **** 			wDVJZ = WDlist[i].wDVJZ
+ 111:./data/dataV.c **** 					+ (WDlist[i - 1].wDVJZ - WDlist[i].wDVJZ) * t / 10;
+ 112:./data/dataV.c **** 			break;
+ 113:./data/dataV.c **** 		} else if (wV == WDlist[i].wd) {
+ 114:./data/dataV.c **** 			wJZ   = WDlist[i].wVJZ;;
+ 115:./data/dataV.c **** 			wVJZ  = WDlist[i].wWVJZ;
+ 116:./data/dataV.c **** 			wDVJZ = WDlist[i].wDVJZ;
+ 117:./data/dataV.c **** 		}
+ 118:./data/dataV.c **** 	}
+ 119:./data/dataV.c **** }
+ 120:./data/dataV.c **** 
+ 121:./data/dataV.c **** 
+ 122:./data/dataV.c **** int GetWJZValue( int tmp )
+ 123:./data/dataV.c **** {
+ 124:./data/dataV.c **** #if DEBUG
+ 125:./data/dataV.c **** 	return tmp;
+ 126:./data/dataV.c **** #else
+ 127:./data/dataV.c **** 	if( wJZ==1024 )
+ 128:./data/dataV.c **** 	{
+ 129:./data/dataV.c **** 		return tmp;
+ 130:./data/dataV.c **** 	}else
+ 131:./data/dataV.c **** 	{
+ 132:./data/dataV.c **** 		return tmp * 1024 / wJZ;
+ 133:./data/dataV.c **** 	}
+ 134:./data/dataV.c **** #endif
+ 135:./data/dataV.c **** }
+ 136:./data/dataV.c **** 
+ 137:./data/dataV.c **** /*
+ 138:./data/dataV.c ****  * 通过采集的数据，计算380V电压值
+ 139:./data/dataV.c ****  */
+ 140:./data/dataV.c **** int GetValueWV( int Value, int Vjz )
+ 141:./data/dataV.c **** {
+ 142:./data/dataV.c ****     TDatalist list1, list2;
+ 143:./data/dataV.c ****     int i;
+ 144:./data/dataV.c **** 
+ 145:./data/dataV.c ****     Value = Value * Vjz / wVJZ;
+ 146:./data/dataV.c ****     for(i=1; i<ARRAY_SIZE( WVDataList ); i++)
+ 147:./data/dataV.c ****     {
+ 148:./data/dataV.c ****         if(  Value >= WVDataList[i].Vin )
+ 149:./data/dataV.c ****         {
+ 150:./data/dataV.c ****             list1 = WVDataList[i-1];
+ 151:./data/dataV.c ****             list2 = WVDataList[i];
+ 152:./data/dataV.c ****             int32 a;
+ 153:./data/dataV.c ****             a = (Value - list2.Vin) * ( list1.Vout - list2.Vout ) / ( list1.Vin - list2.Vin ) + lis
+ 154:./data/dataV.c ****             return a;
+ 155:./data/dataV.c ****         }
+ 156:./data/dataV.c ****     }
+ 157:./data/dataV.c ****     return 0;
+ 158:./data/dataV.c **** }
+ 159:./data/dataV.c **** 
+ 160:./data/dataV.c **** /*
+ 161:./data/dataV.c ****  * 计算
+ 162:./data/dataV.c ****  */
+ 163:./data/dataV.c **** int GetValueWV_JZ( int Value )
+ 164:./data/dataV.c **** {
+ 165:./data/dataV.c ****     TDatalist list1, list2;
+ 166:./data/dataV.c ****     int i;
+ 167:./data/dataV.c **** 
+ 168:./data/dataV.c ****     for(i=1; i<ARRAY_SIZE( WVDataList ); i++)
+ 169:./data/dataV.c ****     {
+ 170:./data/dataV.c ****         if(  Value >= WVDataList[i].Vout )
+ 171:./data/dataV.c ****         {
+ 172:./data/dataV.c ****             list1 = WVDataList[i-1];
+ 173:./data/dataV.c ****             list2 = WVDataList[i];
+ 174:./data/dataV.c ****             int32 a;
+ 175:./data/dataV.c ****             a = (Value - list2.Vout) * ( list1.Vin - list2.Vin ) / ( list1.Vout - list2.Vout ) + li
+ 176:./data/dataV.c ****             return a;
+ 177:./data/dataV.c ****         }
+ 178:./data/dataV.c ****     }
+ 179:./data/dataV.c ****     return 0;
+ 180:./data/dataV.c **** }
+ 181:./data/dataV.c **** 
+ 182:./data/dataV.c **** /*
+ 183:./data/dataV.c ****  * 通过采集的数据，计算24V电压值
+ 184:./data/dataV.c ****  */
+ 185:./data/dataV.c **** int GetValueVD( int Value, int Vjz )
+ 186:./data/dataV.c **** {
+ 187:./data/dataV.c ****     Value = Value * Vjz / wDVJZ;
+ 188:./data/dataV.c ****     if( Value > VDDataList[1].Vin )
+ 189:./data/dataV.c ****     {
+ 190:./data/dataV.c ****         Value = ( (Value - VDDataList[1].Vin) * ( VDDataList[0].Vout - VDDataList[1].Vout ) * 10 + 
+ 191:./data/dataV.c ****             / ( VDDataList[0].Vin - VDDataList[1].Vin ) / 10 + VDDataList[1].Vout;
+ 192:./data/dataV.c ****     }else
+ 193:./data/dataV.c ****     {
+ 194:./data/dataV.c ****         Value = ((Value - VDDataList[2].Vin) * ( VDDataList[1].Vout - VDDataList[2].Vout ) * 10 + 5
+ 195:./data/dataV.c ****             / ( VDDataList[1].Vin - VDDataList[2].Vin ) / 10 + VDDataList[2].Vout;
+ 196:./data/dataV.c ****     }
+ 197:./data/dataV.c ****     if( Value > 500 )
+ 198:./data/dataV.c ****         Value = 500;
+ 199:./data/dataV.c **** 
+ 200:./data/dataV.c ****     if( Value < 8 )
+ 201:./data/dataV.c ****         Value = 0;
+ 202:./data/dataV.c ****     return Value;
+ 203:./data/dataV.c **** }
+ 204:./data/dataV.c **** 
+ 205:./data/dataV.c **** 
+ 206:./data/dataV.c **** /*
+ 207:./data/dataV.c ****  * 通过采集的数据，计算220V电压值
+ 208:./data/dataV.c ****  */
+ 209:./data/dataV.c **** int GetValueV( int Vtime, int Vjz )
+ 210:./data/dataV.c **** {
+ 211:./data/dataV.c ****     TDatalist list1, list2;
+ 212:./data/dataV.c ****     int i;
+ 213:./data/dataV.c ****     Vtime = Vtime * Vjz  / wJZ;
+ 214:./data/dataV.c ****     for(i=1; i<ARRAY_SIZE( DataList ); i++)
+ 215:./data/dataV.c ****     {
+ 216:./data/dataV.c ****         if(  Vtime >= DataList[i].Vin )
+ 217:./data/dataV.c ****         {
+ 218:./data/dataV.c ****             list1 = DataList[i-1];
+ 219:./data/dataV.c ****             list2 = DataList[i];
+ 220:./data/dataV.c ****             int32 a;
+ 221:./data/dataV.c ****             a = ((Vtime - list2.Vin)* 20 /(list1.Vin - list2.Vin) + 1 )/2  + list2.Vout;
+ 222:./data/dataV.c ****             return a;
+ 223:./data/dataV.c ****         }
+ 224:./data/dataV.c ****     }
+ 225:./data/dataV.c ****     return 0;
+ 226:./data/dataV.c **** }
+ 227:./data/dataV.c **** 
+ 228:./data/dataV.c **** int GetValueV_JZ( int Value )
+ 229:./data/dataV.c **** {
+ 230:./data/dataV.c ****     TDatalist list1, list2;
+ 231:./data/dataV.c ****     int i;
+ 232:./data/dataV.c **** 
+ 233:./data/dataV.c ****     for(i=1; i<ARRAY_SIZE( DataList ); i++)
+ 234:./data/dataV.c ****     {
+ 235:./data/dataV.c ****         if(  Value >= DataList[i].Vout )
+ 236:./data/dataV.c ****         {
+ 237:./data/dataV.c ****             list1 = DataList[i-1];
+ 238:./data/dataV.c ****             list2 = DataList[i];
+ 239:./data/dataV.c ****             int32 a;
+ 240:./data/dataV.c ****             a = (Value - list2.Vout) * ( list1.Vin - list2.Vin ) / ( list1.Vout - list2.Vout ) + li
+ 241:./data/dataV.c ****             return a;
+ 242:./data/dataV.c ****         }
+ 243:./data/dataV.c ****     }
+ 244:./data/dataV.c ****     return 0;
+ 245:./data/dataV.c **** }
+ 246:./data/dataV.c **** 
+ 247:./data/dataV.c **** 
+ 248:./data/dataV.c **** void UserVJZ( int16 value )
+ 249:./data/dataV.c **** {
+ 250:./data/dataV.c ****     int i;
+ 251:./data/dataV.c ****     for(i=0; i<MAX_DATA_SIZE; i++)
+ 252:./data/dataV.c ****     {
+ 253:./data/dataV.c ****         switch( data[i].type )
+ 254:./data/dataV.c ****         {
+ 255:./data/dataV.c ****             case eTTwv:
+ 256:./data/dataV.c ****             	if( value == 0 ){
+ 257:./data/dataV.c ****             		value = 380;
+ 258:./data/dataV.c ****             	}
+ 259:./data/dataV.c ****                 if( value > 350 && value < 450 && data[i].tmp > 300 )
+ 260:./data/dataV.c ****                 {
+ 261:./data/dataV.c ****                     pUsrCfg->JZ[i] = GetValueWV_JZ(value ) * wVJZ / data[i].tmp ;
+ 262:./data/dataV.c ****                     pr_debug("%d jzWV %d: %d\n", i, value, data[i].tmp);
+ 263:./data/dataV.c ****                 }
+ 264:./data/dataV.c ****                 break;
+ 265:./data/dataV.c ****             case eTTv:
+ 266:./data/dataV.c ****             	if( value == 0 ){
+ 267:./data/dataV.c ****             		value = 220;
+ 268:./data/dataV.c ****             	}
+ 269:./data/dataV.c ****                 if( value > 180 && value < 256 && data[i].tmp > 180 )
+ 270:./data/dataV.c ****                 {
+ 271:./data/dataV.c ****                     pUsrCfg->JZ[i] = GetValueV_JZ( value ) * wJZ / data[i].tmp;
+ 272:./data/dataV.c ****                     pr_debug("%d jzV %d: %d\t%d\n", i, value, data[i].tmp, pUsrCfg->JZ[i]);
+ 273:./data/dataV.c ****                 }
+ 274:./data/dataV.c ****                 break;
+ 275:./data/dataV.c ****         }
+ 276:./data/dataV.c ****     }
+ 277:./data/dataV.c ****     UsrWrite();
+ 278:./data/dataV.c **** }
+ 279:./data/dataV.c **** 
+ 280:./data/dataV.c **** void jz_cmd( int args, char **argv );
+ 281:./data/dataV.c **** void jz_cmd( int args, char **argv )
+ 282:./data/dataV.c **** {
+  29              		.loc 1 282 0
+  30              		.cfi_startproc
+  31              		@ args = 0, pretend = 0, frame = 16
+  32              		@ frame_needed = 0, uses_anonymous_args = 0
+  33              	.LVL0:
+  34 0000 8C22     		movs	r2, #140
+  35 0002 F0B5     		push	{r4, r5, r6, r7, lr}
+  36              	.LCFI0:
+  37              		.cfi_def_cfa_offset 20
+  38              		.cfi_offset 4, -20
+  39              		.cfi_offset 5, -16
+  40              		.cfi_offset 6, -12
+  41              		.cfi_offset 7, -8
+  42              		.cfi_offset 14, -4
+ 283:./data/dataV.c ****     int i;
+ 284:./data/dataV.c ****     for(i=0; i<MAX_DATA_SIZE; i++)
+  43              		.loc 1 284 0
+  44 0004 0024     		movs	r4, #0
+ 285:./data/dataV.c ****     {
+ 286:./data/dataV.c ****         switch( data[i].type )
+ 287:./data/dataV.c ****         {
+ 288:./data/dataV.c ****             case TT_VD:
+ 289:./data/dataV.c ****                 if( data[i].tmp > 100 )
+ 290:./data/dataV.c ****                 {
+ 291:./data/dataV.c ****                     pUsrCfg->JZ[i] = VDDataList[1].Vin * wDVJZ / data[i].tmp ;
+  45              		.loc 1 291 0
+  46 0006 234B     		ldr	r3, .L12
+  47 0008 FF32     		adds	r2, r2, #255
+  48 000a 1F68     		ldr	r7, [r3]
+  49 000c 224B     		ldr	r3, .L12+4
+ 282:./data/dataV.c ****     int i;
+  50              		.loc 1 282 0
+  51 000e 85B0     		sub	sp, sp, #20
+  52              	.LCFI1:
+  53              		.cfi_def_cfa_offset 40
+  54 0010 1968     		ldr	r1, [r3]
+  55              	.LVL1:
+  56 0012 224D     		ldr	r5, .L12+8
+  57 0014 5143     		muls	r1, r2
+  58 0016 224A     		ldr	r2, .L12+12
+  59 0018 0191     		str	r1, [sp, #4]
+  60 001a 5968     		ldr	r1, [r3, #4]
+  61 001c 9B68     		ldr	r3, [r3, #8]
+  62 001e 5143     		muls	r1, r2
+  63 0020 204A     		ldr	r2, .L12+16
+  64 0022 0291     		str	r1, [sp, #8]
+  65 0024 5A43     		muls	r2, r3
+  66 0026 0392     		str	r2, [sp, #12]
+  67              	.LVL2:
+  68              	.L8:
+ 286:./data/dataV.c ****         {
+  69              		.loc 1 286 0
+  70 0028 687E     		ldrb	r0, [r5, #25]
+  71 002a 0138     		subs	r0, r0, #1
+  72 002c 0528     		cmp	r0, #5
+  73 002e 29D8     		bhi	.L2
+  74 0030 FFF7FEFF 		bl	__gnu_thumb1_case_uqi
+  75              	.L4:
+  76 0034 18       		.byte	(.L3-.L4)/2
+  77 0035 1F       		.byte	(.L5-.L4)/2
+  78 0036 28       		.byte	(.L2-.L4)/2
+  79 0037 0A       		.byte	(.L6-.L4)/2
+  80 0038 03       		.byte	(.L7-.L4)/2
+  81 0039 1F       		.byte	(.L5-.L4)/2
+  82              		.p2align 1
+  83              	.L7:
+ 289:./data/dataV.c ****                 {
+  84              		.loc 1 289 0
+  85 003a 2988     		ldrh	r1, [r5]
+  86 003c 6429     		cmp	r1, #100
+  87 003e 21D9     		bls	.L2
+  88              		.loc 1 291 0
+  89 0040 261D     		adds	r6, r4, #4
+  90 0042 7600     		lsls	r6, r6, #1
+  91 0044 0198     		ldr	r0, [sp, #4]
+  92 0046 05E0     		b	.L10
+  93              	.L6:
+ 292:./data/dataV.c ****                 }
+ 293:./data/dataV.c ****                 break;
+ 294:./data/dataV.c ****             case TT_WV:
+ 295:./data/dataV.c ****                 if( data[i].tmp > 200 )
+  94              		.loc 1 295 0
+  95 0048 2988     		ldrh	r1, [r5]
+  96 004a C829     		cmp	r1, #200
+  97 004c 1AD9     		bls	.L2
+ 296:./data/dataV.c ****                 {
+ 297:./data/dataV.c ****                     pUsrCfg->JZ[i] = WVDataList[WVDATALIST_380].Vin * wVJZ / data[i].tmp ;
+  98              		.loc 1 297 0
+  99 004e 261D     		adds	r6, r4, #4
+ 100 0050 0298     		ldr	r0, [sp, #8]
+ 101 0052 7600     		lsls	r6, r6, #1
+ 102              	.L10:
+ 103 0054 FFF7FEFF 		bl	__aeabi_idiv
+ 104              	.LVL3:
+ 105 0058 BE19     		adds	r6, r7, r6
+ 106 005a 80B2     		uxth	r0, r0
+ 107 005c F071     		strb	r0, [r6, #7]
+ 108 005e 000A     		lsrs	r0, r0, #8
+ 109 0060 3072     		strb	r0, [r6, #8]
+ 110 0062 0FE0     		b	.L2
+ 111              	.L3:
+ 298:./data/dataV.c ****                 }
+ 299:./data/dataV.c ****                 break;
+ 300:./data/dataV.c ****             case TT_V:
+ 301:./data/dataV.c ****                 if( data[i].tmp > 200 )
+ 112              		.loc 1 301 0
+ 113 0064 2988     		ldrh	r1, [r5]
+ 114 0066 C829     		cmp	r1, #200
+ 115 0068 0CD9     		bls	.L2
+ 302:./data/dataV.c ****                 {
+ 303:./data/dataV.c ****                     pUsrCfg->JZ[i] = DataList[VDATALIST_220].Vin * wJZ / data[i].tmp;
+ 116              		.loc 1 303 0
+ 117 006a 261D     		adds	r6, r4, #4
+ 118 006c 7600     		lsls	r6, r6, #1
+ 119 006e 0398     		ldr	r0, [sp, #12]
+ 120 0070 F0E7     		b	.L10
+ 121              	.L5:
+ 304:./data/dataV.c ****                 }
+ 305:./data/dataV.c ****                 break;
+ 306:./data/dataV.c ****             case TT_ID:
+ 307:./data/dataV.c ****             case TT_I:
+ 308:./data/dataV.c ****                 if( data[i].tmp > 100 )
+ 122              		.loc 1 308 0
+ 123 0072 2A88     		ldrh	r2, [r5]
+ 124 0074 642A     		cmp	r2, #100
+ 125 0076 05D9     		bls	.L2
+ 309:./data/dataV.c ****                     pUsrCfg->JZ[i] = data[i].tmp;
+ 126              		.loc 1 309 0
+ 127 0078 231D     		adds	r3, r4, #4
+ 128 007a 5B00     		lsls	r3, r3, #1
+ 129 007c FB18     		adds	r3, r7, r3
+ 130 007e DA71     		strb	r2, [r3, #7]
+ 131 0080 120A     		lsrs	r2, r2, #8
+ 132 0082 1A72     		strb	r2, [r3, #8]
+ 133              	.L2:
+ 284:./data/dataV.c ****     {
+ 134              		.loc 1 284 0 discriminator 2
+ 135 0084 0134     		adds	r4, r4, #1
+ 136              	.LVL4:
+ 137 0086 2035     		adds	r5, r5, #32
+ 138 0088 082C     		cmp	r4, #8
+ 139 008a CDD1     		bne	.L8
+ 310:./data/dataV.c ****                 break;
+ 311:./data/dataV.c ****         }
+ 312:./data/dataV.c ****     }
+ 313:./data/dataV.c ****     UsrWrite();
+ 140              		.loc 1 313 0
+ 141 008c FFF7FEFF 		bl	UsrWrite
+ 142              	.LVL5:
+ 314:./data/dataV.c **** }
+ 143              		.loc 1 314 0
+ 144 0090 05B0     		add	sp, sp, #20
+ 145              		@ sp needed
+ 146              	.LVL6:
+ 147 0092 F0BD     		pop	{r4, r5, r6, r7, pc}
+ 148              	.L13:
+ 149              		.align	2
+ 150              	.L12:
+ 151 0094 00000000 		.word	pUsrCfg
+ 152 0098 00000000 		.word	.LANCHOR0
+ 153 009c 02000000 		.word	data+2
+ 154 00a0 A4060000 		.word	1700
+ 155 00a4 31050000 		.word	1329
+ 156              		.cfi_endproc
+ 157              	.LFE8:
+ 159              		.section	.text.createWJZ,"ax",%progbits
+ 160              		.align	1
+ 161              		.global	createWJZ
+ 162              		.code	16
+ 163              		.thumb_func
+ 165              	createWJZ:
+ 166              	.LFB0:
+  96:./data/dataV.c **** 	int i;
+ 167              		.loc 1 96 0
+ 168              		.cfi_startproc
+ 169              		@ args = 0, pretend = 0, frame = 16
+ 170              		@ frame_needed = 0, uses_anonymous_args = 0
+ 171              	.LVL7:
+  98:./data/dataV.c **** 	wVJZ = 1000;
+ 172              		.loc 1 98 0
+ 173 0000 8023     		movs	r3, #128
+  99:./data/dataV.c **** 	wDVJZ = 1000;
+ 174              		.loc 1 99 0
+ 175 0002 FA22     		movs	r2, #250
+  96:./data/dataV.c **** 	int i;
+ 176              		.loc 1 96 0
+ 177 0004 F0B5     		push	{r4, r5, r6, r7, lr}
+ 178              	.LCFI2:
+ 179              		.cfi_def_cfa_offset 20
+ 180              		.cfi_offset 4, -20
+ 181              		.cfi_offset 5, -16
+ 182              		.cfi_offset 6, -12
+ 183              		.cfi_offset 7, -8
+ 184              		.cfi_offset 14, -4
+ 101:./data/dataV.c **** 	for (i = 1; i < 6; i++) {
+ 185              		.loc 1 101 0
+ 186 0006 304C     		ldr	r4, .L42
+  98:./data/dataV.c **** 	wVJZ = 1000;
+ 187              		.loc 1 98 0
+ 188 0008 3049     		ldr	r1, .L42+4
+ 101:./data/dataV.c **** 	for (i = 1; i < 6; i++) {
+ 189              		.loc 1 101 0
+ 190 000a 2468     		ldr	r4, [r4]
+  99:./data/dataV.c **** 	wDVJZ = 1000;
+ 191              		.loc 1 99 0
+ 192 000c 9200     		lsls	r2, r2, #2
+ 101:./data/dataV.c **** 	for (i = 1; i < 6; i++) {
+ 193              		.loc 1 101 0
+ 194 000e A479     		ldrb	r4, [r4, #6]
+  96:./data/dataV.c **** 	int i;
+ 195              		.loc 1 96 0
+ 196 0010 85B0     		sub	sp, sp, #20
+ 197              	.LCFI3:
+ 198              		.cfi_def_cfa_offset 40
+  98:./data/dataV.c **** 	wVJZ = 1000;
+ 199              		.loc 1 98 0
+ 200 0012 DB00     		lsls	r3, r3, #3
+ 201 0014 8B60     		str	r3, [r1, #8]
+  99:./data/dataV.c **** 	wDVJZ = 1000;
+ 202              		.loc 1 99 0
+ 203 0016 4A60     		str	r2, [r1, #4]
+ 100:./data/dataV.c **** 	if( 0 == pUsrCfg->WDJZen ) return;//温度校正关闭
+ 204              		.loc 1 100 0
+ 205 0018 0A60     		str	r2, [r1]
+ 206 001a 0091     		str	r1, [sp]
+ 101:./data/dataV.c **** 	for (i = 1; i < 6; i++) {
+ 207              		.loc 1 101 0
+ 208 001c A107     		lsls	r1, r4, #30
+ 209 001e 50D5     		bpl	.L14
+ 210 0020 0021     		movs	r1, #0
+ 211 0022 2B4E     		ldr	r6, .L42+8
+ 212 0024 0D00     		movs	r5, r1
+ 213 0026 3700     		movs	r7, r6
+ 214 0028 9C46     		mov	ip, r3
+ 215 002a 0124     		movs	r4, #1
+ 216 002c 0837     		adds	r7, r7, #8
+ 217 002e 0191     		str	r1, [sp, #4]
+ 218 0030 0292     		str	r2, [sp, #8]
+ 219 0032 0396     		str	r6, [sp, #12]
+ 220              	.L21:
+ 221              	.LVL8:
+ 103:./data/dataV.c **** 			int t = WDlist[i].wd - wV;
+ 222              		.loc 1 103 0
+ 223 0034 0026     		movs	r6, #0
+ 224 0036 BB5F     		ldrsh	r3, [r7, r6]
+ 225 0038 8342     		cmp	r3, r0
+ 226 003a 25DD     		ble	.L17
+ 227              	.LBB2:
+ 104:./data/dataV.c **** 
+ 228              		.loc 1 104 0
+ 229 003c 1D1A     		subs	r5, r3, r0
+ 230              	.LVL9:
+ 106:./data/dataV.c **** 					+ (WDlist[i - 1].wVJZ - WDlist[i].wVJZ) * t / 10;
+ 231              		.loc 1 106 0
+ 232 003e 039A     		ldr	r2, [sp, #12]
+ 107:./data/dataV.c **** 			wVJZ = WDlist[i].wWVJZ
+ 233              		.loc 1 107 0
+ 234 0040 631E     		subs	r3, r4, #1
+ 235 0042 DB00     		lsls	r3, r3, #3
+ 106:./data/dataV.c **** 					+ (WDlist[i - 1].wVJZ - WDlist[i].wVJZ) * t / 10;
+ 236              		.loc 1 106 0
+ 237 0044 E400     		lsls	r4, r4, #3
+ 238              	.LVL10:
+ 107:./data/dataV.c **** 			wVJZ = WDlist[i].wWVJZ
+ 239              		.loc 1 107 0
+ 240 0046 D618     		adds	r6, r2, r3
+ 106:./data/dataV.c **** 					+ (WDlist[i - 1].wVJZ - WDlist[i].wVJZ) * t / 10;
+ 241              		.loc 1 106 0
+ 242 0048 1419     		adds	r4, r2, r4
+ 107:./data/dataV.c **** 			wVJZ = WDlist[i].wWVJZ
+ 243              		.loc 1 107 0
+ 244 004a 6788     		ldrh	r7, [r4, #2]
+ 106:./data/dataV.c **** 					+ (WDlist[i - 1].wVJZ - WDlist[i].wVJZ) * t / 10;
+ 245              		.loc 1 106 0
+ 246 004c 7088     		ldrh	r0, [r6, #2]
+ 247              	.LVL11:
+ 248 004e 0A21     		movs	r1, #10
+ 249 0050 C01B     		subs	r0, r0, r7
+ 250 0052 6843     		muls	r0, r5
+ 251 0054 FFF7FEFF 		bl	__aeabi_idiv
+ 252              	.LVL12:
+ 253 0058 009B     		ldr	r3, [sp]
+ 254 005a C719     		adds	r7, r0, r7
+ 255 005c 9F60     		str	r7, [r3, #8]
+ 108:./data/dataV.c **** 					+ (WDlist[i - 1].wWVJZ - WDlist[i].wWVJZ) * t / 10;
+ 256              		.loc 1 108 0
+ 257 005e B088     		ldrh	r0, [r6, #4]
+ 109:./data/dataV.c **** 			wDVJZ = WDlist[i].wDVJZ
+ 258              		.loc 1 109 0
+ 259 0060 A788     		ldrh	r7, [r4, #4]
+ 108:./data/dataV.c **** 					+ (WDlist[i - 1].wWVJZ - WDlist[i].wWVJZ) * t / 10;
+ 260              		.loc 1 108 0
+ 261 0062 0A21     		movs	r1, #10
+ 262 0064 C01B     		subs	r0, r0, r7
+ 263 0066 6843     		muls	r0, r5
+ 264 0068 FFF7FEFF 		bl	__aeabi_idiv
+ 265              	.LVL13:
+ 111:./data/dataV.c **** 			break;
+ 266              		.loc 1 111 0
+ 267 006c E488     		ldrh	r4, [r4, #6]
+ 108:./data/dataV.c **** 					+ (WDlist[i - 1].wWVJZ - WDlist[i].wWVJZ) * t / 10;
+ 268              		.loc 1 108 0
+ 269 006e C719     		adds	r7, r0, r7
+ 110:./data/dataV.c **** 					+ (WDlist[i - 1].wDVJZ - WDlist[i].wDVJZ) * t / 10;
+ 270              		.loc 1 110 0
+ 271 0070 F088     		ldrh	r0, [r6, #6]
+ 108:./data/dataV.c **** 					+ (WDlist[i - 1].wWVJZ - WDlist[i].wWVJZ) * t / 10;
+ 272              		.loc 1 108 0
+ 273 0072 009B     		ldr	r3, [sp]
+ 110:./data/dataV.c **** 					+ (WDlist[i - 1].wDVJZ - WDlist[i].wDVJZ) * t / 10;
+ 274              		.loc 1 110 0
+ 275 0074 001B     		subs	r0, r0, r4
+ 108:./data/dataV.c **** 					+ (WDlist[i - 1].wWVJZ - WDlist[i].wWVJZ) * t / 10;
+ 276              		.loc 1 108 0
+ 277 0076 5F60     		str	r7, [r3, #4]
+ 110:./data/dataV.c **** 					+ (WDlist[i - 1].wDVJZ - WDlist[i].wDVJZ) * t / 10;
+ 278              		.loc 1 110 0
+ 279 0078 6843     		muls	r0, r5
+ 280 007a 0A21     		movs	r1, #10
+ 281 007c FFF7FEFF 		bl	__aeabi_idiv
+ 282              	.LVL14:
+ 283 0080 009B     		ldr	r3, [sp]
+ 284 0082 0419     		adds	r4, r0, r4
+ 285 0084 1C60     		str	r4, [r3]
+ 112:./data/dataV.c **** 		} else if (wV == WDlist[i].wd) {
+ 286              		.loc 1 112 0
+ 287 0086 1CE0     		b	.L14
+ 288              	.LVL15:
+ 289              	.L17:
+ 290              	.LBE2:
+ 113:./data/dataV.c **** 			wJZ   = WDlist[i].wVJZ;;
+ 291              		.loc 1 113 0
+ 292 0088 8342     		cmp	r3, r0
+ 293 008a 07D1     		bne	.L20
+ 116:./data/dataV.c **** 		}
+ 294              		.loc 1 116 0
+ 295 008c 0121     		movs	r1, #1
+ 296 008e 0D00     		movs	r5, r1
+ 114:./data/dataV.c **** 			wVJZ  = WDlist[i].wWVJZ;
+ 297              		.loc 1 114 0
+ 298 0090 7B88     		ldrh	r3, [r7, #2]
+ 116:./data/dataV.c **** 		}
+ 299              		.loc 1 116 0
+ 300 0092 FA88     		ldrh	r2, [r7, #6]
+ 114:./data/dataV.c **** 			wVJZ  = WDlist[i].wWVJZ;
+ 301              		.loc 1 114 0
+ 302 0094 9C46     		mov	ip, r3
+ 115:./data/dataV.c **** 			wDVJZ = WDlist[i].wDVJZ;
+ 303              		.loc 1 115 0
+ 304 0096 BB88     		ldrh	r3, [r7, #4]
+ 116:./data/dataV.c **** 		}
+ 305              		.loc 1 116 0
+ 306 0098 0191     		str	r1, [sp, #4]
+ 115:./data/dataV.c **** 			wDVJZ = WDlist[i].wDVJZ;
+ 307              		.loc 1 115 0
+ 308 009a 0293     		str	r3, [sp, #8]
+ 309              	.L20:
+ 102:./data/dataV.c **** 		if (wV < WDlist[i].wd) {
+ 310              		.loc 1 102 0 discriminator 2
+ 311 009c 0134     		adds	r4, r4, #1
+ 312              	.LVL16:
+ 313 009e 0837     		adds	r7, r7, #8
+ 314 00a0 062C     		cmp	r4, #6
+ 315 00a2 C7D1     		bne	.L21
+ 316 00a4 002D     		cmp	r5, #0
+ 317 00a6 02D0     		beq	.L22
+ 318 00a8 6046     		mov	r0, ip
+ 319              	.LVL17:
+ 320 00aa 084B     		ldr	r3, .L42+4
+ 321 00ac 9860     		str	r0, [r3, #8]
+ 322              	.L22:
+ 323 00ae 019B     		ldr	r3, [sp, #4]
+ 324 00b0 002B     		cmp	r3, #0
+ 325 00b2 02D0     		beq	.L23
+ 326 00b4 054B     		ldr	r3, .L42+4
+ 327 00b6 0298     		ldr	r0, [sp, #8]
+ 328 00b8 5860     		str	r0, [r3, #4]
+ 329              	.L23:
+ 330 00ba 0029     		cmp	r1, #0
+ 331 00bc 01D0     		beq	.L14
+ 332 00be 034B     		ldr	r3, .L42+4
+ 333 00c0 1A60     		str	r2, [r3]
+ 334              	.LVL18:
+ 335              	.L14:
+ 119:./data/dataV.c **** 
+ 336              		.loc 1 119 0
+ 337 00c2 05B0     		add	sp, sp, #20
+ 338              		@ sp needed
+ 339 00c4 F0BD     		pop	{r4, r5, r6, r7, pc}
+ 340              	.L43:
+ 341 00c6 C046     		.align	2
+ 342              	.L42:
+ 343 00c8 00000000 		.word	pUsrCfg
+ 344 00cc 00000000 		.word	.LANCHOR0
+ 345 00d0 00000000 		.word	.LANCHOR1
+ 346              		.cfi_endproc
+ 347              	.LFE0:
+ 349              		.section	.text.GetWJZValue,"ax",%progbits
+ 350              		.align	1
+ 351              		.global	GetWJZValue
+ 352              		.code	16
+ 353              		.thumb_func
+ 355              	GetWJZValue:
+ 356              	.LFB1:
+ 123:./data/dataV.c **** #if DEBUG
+ 357              		.loc 1 123 0
+ 358              		.cfi_startproc
+ 359              		@ args = 0, pretend = 0, frame = 0
+ 360              		@ frame_needed = 0, uses_anonymous_args = 0
+ 361              	.LVL19:
+ 127:./data/dataV.c **** 	{
+ 362              		.loc 1 127 0
+ 363 0000 054A     		ldr	r2, .L47
+ 123:./data/dataV.c **** #if DEBUG
+ 364              		.loc 1 123 0
+ 365 0002 10B5     		push	{r4, lr}
+ 366              	.LCFI4:
+ 367              		.cfi_def_cfa_offset 8
+ 368              		.cfi_offset 4, -8
+ 369              		.cfi_offset 14, -4
+ 127:./data/dataV.c **** 	{
+ 370              		.loc 1 127 0
+ 371 0004 9168     		ldr	r1, [r2, #8]
+ 372 0006 8022     		movs	r2, #128
+ 373 0008 D200     		lsls	r2, r2, #3
+ 374 000a 9142     		cmp	r1, r2
+ 375 000c 02D0     		beq	.L45
+ 132:./data/dataV.c **** 	}
+ 376              		.loc 1 132 0
+ 377 000e 8002     		lsls	r0, r0, #10
+ 378              	.LVL20:
+ 379 0010 FFF7FEFF 		bl	__aeabi_idiv
+ 380              	.LVL21:
+ 381              	.L45:
+ 135:./data/dataV.c **** 
+ 382              		.loc 1 135 0
+ 383              		@ sp needed
+ 384 0014 10BD     		pop	{r4, pc}
+ 385              	.L48:
+ 386 0016 C046     		.align	2
+ 387              	.L47:
+ 388 0018 00000000 		.word	.LANCHOR0
+ 389              		.cfi_endproc
+ 390              	.LFE1:
+ 392              		.section	.text.GetValueWV,"ax",%progbits
+ 393              		.align	1
+ 394              		.global	GetValueWV
+ 395              		.code	16
+ 396              		.thumb_func
+ 398              	GetValueWV:
+ 399              	.LFB2:
+ 141:./data/dataV.c ****     TDatalist list1, list2;
+ 400              		.loc 1 141 0
+ 401              		.cfi_startproc
+ 402              		@ args = 0, pretend = 0, frame = 0
+ 403              		@ frame_needed = 0, uses_anonymous_args = 0
+ 404              	.LVL22:
+ 145:./data/dataV.c ****     for(i=1; i<ARRAY_SIZE( WVDataList ); i++)
+ 405              		.loc 1 145 0
+ 406 0000 104B     		ldr	r3, .L54
+ 407 0002 4843     		muls	r0, r1
+ 408              	.LVL23:
+ 141:./data/dataV.c ****     TDatalist list1, list2;
+ 409              		.loc 1 141 0
+ 410 0004 10B5     		push	{r4, lr}
+ 411              	.LCFI5:
+ 412              		.cfi_def_cfa_offset 8
+ 413              		.cfi_offset 4, -8
+ 414              		.cfi_offset 14, -4
+ 145:./data/dataV.c ****     for(i=1; i<ARRAY_SIZE( WVDataList ); i++)
+ 415              		.loc 1 145 0
+ 416 0006 5968     		ldr	r1, [r3, #4]
+ 417              	.LVL24:
+ 418 0008 FFF7FEFF 		bl	__aeabi_idiv
+ 419              	.LVL25:
+ 146:./data/dataV.c ****     {
+ 420              		.loc 1 146 0
+ 421 000c 0123     		movs	r3, #1
+ 148:./data/dataV.c ****         {
+ 422              		.loc 1 148 0
+ 423 000e 0E4A     		ldr	r2, .L54+4
+ 424 0010 3032     		adds	r2, r2, #48
+ 425              	.LVL26:
+ 426              	.L52:
+ 427 0012 9C00     		lsls	r4, r3, #2
+ 428 0014 1419     		adds	r4, r2, r4
+ 429 0016 6188     		ldrh	r1, [r4, #2]
+ 430 0018 8842     		cmp	r0, r1
+ 431 001a 0DDB     		blt	.L50
+ 432              	.LBB3:
+ 150:./data/dataV.c ****             list2 = WVDataList[i];
+ 433              		.loc 1 150 0
+ 434 001c 013B     		subs	r3, r3, #1
+ 435              	.LVL27:
+ 436 001e 9B00     		lsls	r3, r3, #2
+ 437              	.LVL28:
+ 438 0020 D318     		adds	r3, r2, r3
+ 439              	.LVL29:
+ 153:./data/dataV.c ****             return a;
+ 440              		.loc 1 153 0
+ 441 0022 2488     		ldrh	r4, [r4]
+ 442              	.LVL30:
+ 443 0024 1A88     		ldrh	r2, [r3]
+ 444 0026 5B88     		ldrh	r3, [r3, #2]
+ 445              	.LVL31:
+ 446 0028 121B     		subs	r2, r2, r4
+ 447              	.LVL32:
+ 448 002a 401A     		subs	r0, r0, r1
+ 449              	.LVL33:
+ 450 002c 5043     		muls	r0, r2
+ 451 002e 591A     		subs	r1, r3, r1
+ 452              	.LVL34:
+ 453 0030 FFF7FEFF 		bl	__aeabi_idiv
+ 454              	.LVL35:
+ 455 0034 0019     		adds	r0, r0, r4
+ 154:./data/dataV.c ****         }
+ 456              		.loc 1 154 0
+ 457 0036 03E0     		b	.L51
+ 458              	.LVL36:
+ 459              	.L50:
+ 460              	.LBE3:
+ 146:./data/dataV.c ****     {
+ 461              		.loc 1 146 0 discriminator 2
+ 462 0038 0133     		adds	r3, r3, #1
+ 463              	.LVL37:
+ 464 003a 0D2B     		cmp	r3, #13
+ 465 003c E9D1     		bne	.L52
+ 157:./data/dataV.c **** }
+ 466              		.loc 1 157 0
+ 467 003e 0020     		movs	r0, #0
+ 468              	.LVL38:
+ 469              	.L51:
+ 158:./data/dataV.c **** 
+ 470              		.loc 1 158 0
+ 471              		@ sp needed
+ 472 0040 10BD     		pop	{r4, pc}
+ 473              	.L55:
+ 474 0042 C046     		.align	2
+ 475              	.L54:
+ 476 0044 00000000 		.word	.LANCHOR0
+ 477 0048 00000000 		.word	.LANCHOR1
+ 478              		.cfi_endproc
+ 479              	.LFE2:
+ 481              		.section	.text.GetValueWV_JZ,"ax",%progbits
+ 482              		.align	1
+ 483              		.global	GetValueWV_JZ
+ 484              		.code	16
+ 485              		.thumb_func
+ 487              	GetValueWV_JZ:
+ 488              	.LFB3:
+ 164:./data/dataV.c ****     TDatalist list1, list2;
+ 489              		.loc 1 164 0
+ 490              		.cfi_startproc
+ 491              		@ args = 0, pretend = 0, frame = 0
+ 492              		@ frame_needed = 0, uses_anonymous_args = 0
+ 493              	.LVL39:
+ 168:./data/dataV.c ****     {
+ 494              		.loc 1 168 0
+ 495 0000 0123     		movs	r3, #1
+ 164:./data/dataV.c ****     TDatalist list1, list2;
+ 496              		.loc 1 164 0
+ 497 0002 70B5     		push	{r4, r5, r6, lr}
+ 498              	.LCFI6:
+ 499              		.cfi_def_cfa_offset 16
+ 500              		.cfi_offset 4, -16
+ 501              		.cfi_offset 5, -12
+ 502              		.cfi_offset 6, -8
+ 503              		.cfi_offset 14, -4
+ 170:./data/dataV.c ****         {
+ 504              		.loc 1 170 0
+ 505 0004 0D4C     		ldr	r4, .L61
+ 506              	.LVL40:
+ 507              	.L59:
+ 508 0006 2100     		movs	r1, r4
+ 509 0008 9A00     		lsls	r2, r3, #2
+ 510 000a 3031     		adds	r1, r1, #48
+ 511 000c 555A     		ldrh	r5, [r2, r1]
+ 512 000e 8542     		cmp	r5, r0
+ 513 0010 0EDC     		bgt	.L57
+ 514              	.LBB4:
+ 172:./data/dataV.c ****             list2 = WVDataList[i];
+ 515              		.loc 1 172 0
+ 516 0012 013B     		subs	r3, r3, #1
+ 517              	.LVL41:
+ 518 0014 9B00     		lsls	r3, r3, #2
+ 519              	.LVL42:
+ 520 0016 CB18     		adds	r3, r1, r3
+ 521              	.LVL43:
+ 173:./data/dataV.c ****             int32 a;
+ 522              		.loc 1 173 0
+ 523 0018 8A18     		adds	r2, r1, r2
+ 524              	.LVL44:
+ 175:./data/dataV.c ****             return a;
+ 525              		.loc 1 175 0
+ 526 001a 5488     		ldrh	r4, [r2, #2]
+ 527 001c 5A88     		ldrh	r2, [r3, #2]
+ 528              	.LVL45:
+ 529 001e 1B88     		ldrh	r3, [r3]
+ 530              	.LVL46:
+ 531 0020 121B     		subs	r2, r2, r4
+ 532              	.LVL47:
+ 533 0022 401B     		subs	r0, r0, r5
+ 534              	.LVL48:
+ 535 0024 5043     		muls	r0, r2
+ 536 0026 591B     		subs	r1, r3, r5
+ 537 0028 FFF7FEFF 		bl	__aeabi_idiv
+ 538              	.LVL49:
+ 539 002c 0019     		adds	r0, r0, r4
+ 176:./data/dataV.c ****         }
+ 540              		.loc 1 176 0
+ 541 002e 03E0     		b	.L58
+ 542              	.LVL50:
+ 543              	.L57:
+ 544              	.LBE4:
+ 168:./data/dataV.c ****     {
+ 545              		.loc 1 168 0 discriminator 2
+ 546 0030 0133     		adds	r3, r3, #1
+ 547              	.LVL51:
+ 548 0032 0D2B     		cmp	r3, #13
+ 549 0034 E7D1     		bne	.L59
+ 179:./data/dataV.c **** }
+ 550              		.loc 1 179 0
+ 551 0036 0020     		movs	r0, #0
+ 552              	.LVL52:
+ 553              	.L58:
+ 180:./data/dataV.c **** 
+ 554              		.loc 1 180 0
+ 555              		@ sp needed
+ 556 0038 70BD     		pop	{r4, r5, r6, pc}
+ 557              	.L62:
+ 558 003a C046     		.align	2
+ 559              	.L61:
+ 560 003c 00000000 		.word	.LANCHOR1
+ 561              		.cfi_endproc
+ 562              	.LFE3:
+ 564              		.section	.text.GetValueVD,"ax",%progbits
+ 565              		.align	1
+ 566              		.global	GetValueVD
+ 567              		.code	16
+ 568              		.thumb_func
+ 570              	GetValueVD:
+ 571              	.LFB4:
+ 186:./data/dataV.c ****     Value = Value * Vjz / wDVJZ;
+ 572              		.loc 1 186 0
+ 573              		.cfi_startproc
+ 574              		@ args = 0, pretend = 0, frame = 0
+ 575              		@ frame_needed = 0, uses_anonymous_args = 0
+ 576              	.LVL53:
+ 187:./data/dataV.c ****     if( Value > VDDataList[1].Vin )
+ 577              		.loc 1 187 0
+ 578 0000 144B     		ldr	r3, .L70
+ 579 0002 4843     		muls	r0, r1
+ 580              	.LVL54:
+ 186:./data/dataV.c ****     Value = Value * Vjz / wDVJZ;
+ 581              		.loc 1 186 0
+ 582 0004 10B5     		push	{r4, lr}
+ 583              	.LCFI7:
+ 584              		.cfi_def_cfa_offset 8
+ 585              		.cfi_offset 4, -8
+ 586              		.cfi_offset 14, -4
+ 187:./data/dataV.c ****     if( Value > VDDataList[1].Vin )
+ 587              		.loc 1 187 0
+ 588 0006 1968     		ldr	r1, [r3]
+ 589              	.LVL55:
+ 590 0008 FFF7FEFF 		bl	__aeabi_idiv
+ 591              	.LVL56:
+ 188:./data/dataV.c ****     {
+ 592              		.loc 1 188 0
+ 593 000c 8C22     		movs	r2, #140
+ 594 000e FF32     		adds	r2, r2, #255
+ 595 0010 0A23     		movs	r3, #10
+ 596 0012 9042     		cmp	r0, r2
+ 597 0014 0ADD     		ble	.L64
+ 191:./data/dataV.c ****     }else
+ 598              		.loc 1 191 0
+ 599 0016 8C38     		subs	r0, r0, #140
+ 600              	.LVL57:
+ 601 0018 EB3A     		subs	r2, r2, #235
+ 602 001a FF38     		subs	r0, r0, #255
+ 603              	.LVL58:
+ 604 001c 5043     		muls	r0, r2
+ 605              	.LVL59:
+ 606 001e 5843     		muls	r0, r3
+ 607 0020 0D49     		ldr	r1, .L70+4
+ 608 0022 0530     		adds	r0, r0, #5
+ 609 0024 FFF7FEFF 		bl	__aeabi_idiv
+ 610              	.LVL60:
+ 190:./data/dataV.c ****             / ( VDDataList[0].Vin - VDDataList[1].Vin ) / 10 + VDDataList[1].Vout;
+ 611              		.loc 1 190 0
+ 612 0028 F030     		adds	r0, r0, #240
+ 613              	.LVL61:
+ 614 002a 08E0     		b	.L65
+ 615              	.L64:
+ 195:./data/dataV.c ****     }
+ 616              		.loc 1 195 0
+ 617 002c 8C22     		movs	r2, #140
+ 618 002e 5238     		subs	r0, r0, #82
+ 619              	.LVL62:
+ 620 0030 5043     		muls	r0, r2
+ 621              	.LVL63:
+ 622 0032 5843     		muls	r0, r3
+ 623 0034 0949     		ldr	r1, .L70+8
+ 624 0036 0530     		adds	r0, r0, #5
+ 625 0038 FFF7FEFF 		bl	__aeabi_idiv
+ 626              	.LVL64:
+ 194:./data/dataV.c ****             / ( VDDataList[1].Vin - VDDataList[2].Vin ) / 10 + VDDataList[2].Vout;
+ 627              		.loc 1 194 0
+ 628 003c 6430     		adds	r0, r0, #100
+ 629              	.LVL65:
+ 630              	.L65:
+ 197:./data/dataV.c ****         Value = 500;
+ 631              		.loc 1 197 0
+ 632 003e FA23     		movs	r3, #250
+ 633 0040 5B00     		lsls	r3, r3, #1
+ 634 0042 9842     		cmp	r0, r3
+ 635 0044 03DC     		bgt	.L68
+ 200:./data/dataV.c ****         Value = 0;
+ 636              		.loc 1 200 0
+ 637 0046 0728     		cmp	r0, #7
+ 638 0048 02DC     		bgt	.L67
+ 201:./data/dataV.c ****     return Value;
+ 639              		.loc 1 201 0
+ 640 004a 0020     		movs	r0, #0
+ 641              	.LVL66:
+ 642 004c 00E0     		b	.L67
+ 643              	.LVL67:
+ 644              	.L68:
+ 198:./data/dataV.c **** 
+ 645              		.loc 1 198 0
+ 646 004e 1800     		movs	r0, r3
+ 647              	.LVL68:
+ 648              	.L67:
+ 203:./data/dataV.c **** 
+ 649              		.loc 1 203 0
+ 650              		@ sp needed
+ 651 0050 10BD     		pop	{r4, pc}
+ 652              	.L71:
+ 653 0052 C046     		.align	2
+ 654              	.L70:
+ 655 0054 00000000 		.word	.LANCHOR0
+ 656 0058 B40F0000 		.word	4020
+ 657 005c 3A0C0000 		.word	3130
+ 658              		.cfi_endproc
+ 659              	.LFE4:
+ 661              		.section	.text.GetValueV,"ax",%progbits
+ 662              		.align	1
+ 663              		.global	GetValueV
+ 664              		.code	16
+ 665              		.thumb_func
+ 667              	GetValueV:
+ 668              	.LFB5:
+ 210:./data/dataV.c ****     TDatalist list1, list2;
+ 669              		.loc 1 210 0
+ 670              		.cfi_startproc
+ 671              		@ args = 0, pretend = 0, frame = 0
+ 672              		@ frame_needed = 0, uses_anonymous_args = 0
+ 673              	.LVL69:
+ 213:./data/dataV.c ****     for(i=1; i<ARRAY_SIZE( DataList ); i++)
+ 674              		.loc 1 213 0
+ 675 0000 114B     		ldr	r3, .L77
+ 676 0002 4843     		muls	r0, r1
+ 677              	.LVL70:
+ 210:./data/dataV.c ****     TDatalist list1, list2;
+ 678              		.loc 1 210 0
+ 679 0004 70B5     		push	{r4, r5, r6, lr}
+ 680              	.LCFI8:
+ 681              		.cfi_def_cfa_offset 16
+ 682              		.cfi_offset 4, -16
+ 683              		.cfi_offset 5, -12
+ 684              		.cfi_offset 6, -8
+ 685              		.cfi_offset 14, -4
+ 213:./data/dataV.c ****     for(i=1; i<ARRAY_SIZE( DataList ); i++)
+ 686              		.loc 1 213 0
+ 687 0006 9968     		ldr	r1, [r3, #8]
+ 688              	.LVL71:
+ 689 0008 FFF7FEFF 		bl	__aeabi_idiv
+ 690              	.LVL72:
+ 214:./data/dataV.c ****     {
+ 691              		.loc 1 214 0
+ 692 000c 0123     		movs	r3, #1
+ 216:./data/dataV.c ****         {
+ 693              		.loc 1 216 0
+ 694 000e 0F4A     		ldr	r2, .L77+4
+ 695 0010 6432     		adds	r2, r2, #100
+ 696              	.LVL73:
+ 697              	.L75:
+ 698 0012 9C00     		lsls	r4, r3, #2
+ 699 0014 1419     		adds	r4, r2, r4
+ 700 0016 6188     		ldrh	r1, [r4, #2]
+ 701 0018 8842     		cmp	r0, r1
+ 702 001a 10DB     		blt	.L73
+ 703              	.LVL74:
+ 704              	.LBB5:
+ 221:./data/dataV.c ****             return a;
+ 705              		.loc 1 221 0
+ 706 001c 1425     		movs	r5, #20
+ 218:./data/dataV.c ****             list2 = DataList[i];
+ 707              		.loc 1 218 0
+ 708 001e 013B     		subs	r3, r3, #1
+ 709              	.LVL75:
+ 710 0020 9B00     		lsls	r3, r3, #2
+ 711              	.LVL76:
+ 712 0022 D318     		adds	r3, r2, r3
+ 221:./data/dataV.c ****             return a;
+ 713              		.loc 1 221 0
+ 714 0024 5B88     		ldrh	r3, [r3, #2]
+ 715 0026 401A     		subs	r0, r0, r1
+ 716              	.LVL77:
+ 717 0028 6843     		muls	r0, r5
+ 718 002a 591A     		subs	r1, r3, r1
+ 719 002c FFF7FEFF 		bl	__aeabi_idiv
+ 720              	.LVL78:
+ 721 0030 0130     		adds	r0, r0, #1
+ 722 0032 C30F     		lsrs	r3, r0, #31
+ 723 0034 1818     		adds	r0, r3, r0
+ 724 0036 2388     		ldrh	r3, [r4]
+ 725              	.LVL79:
+ 726 0038 4010     		asrs	r0, r0, #1
+ 727 003a C018     		adds	r0, r0, r3
+ 222:./data/dataV.c ****         }
+ 728              		.loc 1 222 0
+ 729 003c 03E0     		b	.L74
+ 730              	.LVL80:
+ 731              	.L73:
+ 732              	.LBE5:
+ 214:./data/dataV.c ****     {
+ 733              		.loc 1 214 0 discriminator 2
+ 734 003e 0133     		adds	r3, r3, #1
+ 735              	.LVL81:
+ 736 0040 0D2B     		cmp	r3, #13
+ 737 0042 E6D1     		bne	.L75
+ 225:./data/dataV.c **** }
+ 738              		.loc 1 225 0
+ 739 0044 0020     		movs	r0, #0
+ 740              	.LVL82:
+ 741              	.L74:
+ 226:./data/dataV.c **** 
+ 742              		.loc 1 226 0
+ 743              		@ sp needed
+ 744 0046 70BD     		pop	{r4, r5, r6, pc}
+ 745              	.L78:
+ 746              		.align	2
+ 747              	.L77:
+ 748 0048 00000000 		.word	.LANCHOR0
+ 749 004c 00000000 		.word	.LANCHOR1
+ 750              		.cfi_endproc
+ 751              	.LFE5:
+ 753              		.section	.text.GetValueV_JZ,"ax",%progbits
+ 754              		.align	1
+ 755              		.global	GetValueV_JZ
+ 756              		.code	16
+ 757              		.thumb_func
+ 759              	GetValueV_JZ:
+ 760              	.LFB6:
+ 229:./data/dataV.c ****     TDatalist list1, list2;
+ 761              		.loc 1 229 0
+ 762              		.cfi_startproc
+ 763              		@ args = 0, pretend = 0, frame = 0
+ 764              		@ frame_needed = 0, uses_anonymous_args = 0
+ 765              	.LVL83:
+ 233:./data/dataV.c ****     {
+ 766              		.loc 1 233 0
+ 767 0000 0123     		movs	r3, #1
+ 229:./data/dataV.c ****     TDatalist list1, list2;
+ 768              		.loc 1 229 0
+ 769 0002 70B5     		push	{r4, r5, r6, lr}
+ 770              	.LCFI9:
+ 771              		.cfi_def_cfa_offset 16
+ 772              		.cfi_offset 4, -16
+ 773              		.cfi_offset 5, -12
+ 774              		.cfi_offset 6, -8
+ 775              		.cfi_offset 14, -4
+ 235:./data/dataV.c ****         {
+ 776              		.loc 1 235 0
+ 777 0004 0D4C     		ldr	r4, .L84
+ 778              	.LVL84:
+ 779              	.L82:
+ 780 0006 2100     		movs	r1, r4
+ 781 0008 9A00     		lsls	r2, r3, #2
+ 782 000a 6431     		adds	r1, r1, #100
+ 783 000c 555A     		ldrh	r5, [r2, r1]
+ 784 000e 8542     		cmp	r5, r0
+ 785 0010 0EDC     		bgt	.L80
+ 786              	.LBB6:
+ 237:./data/dataV.c ****             list2 = DataList[i];
+ 787              		.loc 1 237 0
+ 788 0012 013B     		subs	r3, r3, #1
+ 789              	.LVL85:
+ 790 0014 9B00     		lsls	r3, r3, #2
+ 791              	.LVL86:
+ 792 0016 CB18     		adds	r3, r1, r3
+ 793              	.LVL87:
+ 238:./data/dataV.c ****             int32 a;
+ 794              		.loc 1 238 0
+ 795 0018 8A18     		adds	r2, r1, r2
+ 796              	.LVL88:
+ 240:./data/dataV.c ****             return a;
+ 797              		.loc 1 240 0
+ 798 001a 5488     		ldrh	r4, [r2, #2]
+ 799 001c 5A88     		ldrh	r2, [r3, #2]
+ 800              	.LVL89:
+ 801 001e 1B88     		ldrh	r3, [r3]
+ 802              	.LVL90:
+ 803 0020 121B     		subs	r2, r2, r4
+ 804              	.LVL91:
+ 805 0022 401B     		subs	r0, r0, r5
+ 806              	.LVL92:
+ 807 0024 5043     		muls	r0, r2
+ 808 0026 591B     		subs	r1, r3, r5
+ 809 0028 FFF7FEFF 		bl	__aeabi_idiv
+ 810              	.LVL93:
+ 811 002c 0019     		adds	r0, r0, r4
+ 241:./data/dataV.c ****         }
+ 812              		.loc 1 241 0
+ 813 002e 03E0     		b	.L81
+ 814              	.LVL94:
+ 815              	.L80:
+ 816              	.LBE6:
+ 233:./data/dataV.c ****     {
+ 817              		.loc 1 233 0 discriminator 2
+ 818 0030 0133     		adds	r3, r3, #1
+ 819              	.LVL95:
+ 820 0032 0D2B     		cmp	r3, #13
+ 821 0034 E7D1     		bne	.L82
+ 244:./data/dataV.c **** }
+ 822              		.loc 1 244 0
+ 823 0036 0020     		movs	r0, #0
+ 824              	.LVL96:
+ 825              	.L81:
+ 245:./data/dataV.c **** 
+ 826              		.loc 1 245 0
+ 827              		@ sp needed
+ 828 0038 70BD     		pop	{r4, r5, r6, pc}
+ 829              	.L85:
+ 830 003a C046     		.align	2
+ 831              	.L84:
+ 832 003c 00000000 		.word	.LANCHOR1
+ 833              		.cfi_endproc
+ 834              	.LFE6:
+ 836              		.section	.text.UserVJZ,"ax",%progbits
+ 837              		.align	1
+ 838              		.global	UserVJZ
+ 839              		.code	16
+ 840              		.thumb_func
+ 842              	UserVJZ:
+ 843              	.LFB7:
+ 249:./data/dataV.c ****     int i;
+ 844              		.loc 1 249 0
+ 845              		.cfi_startproc
+ 846              		@ args = 0, pretend = 0, frame = 16
+ 847              		@ frame_needed = 0, uses_anonymous_args = 0
+ 848              	.LVL97:
+ 849 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+ 850              	.LCFI10:
+ 851              		.cfi_def_cfa_offset 20
+ 852              		.cfi_offset 4, -20
+ 853              		.cfi_offset 5, -16
+ 854              		.cfi_offset 6, -12
+ 855              		.cfi_offset 7, -8
+ 856              		.cfi_offset 14, -4
+ 857 0002 0400     		movs	r4, r0
+ 858              	.LVL98:
+ 251:./data/dataV.c ****     {
+ 859              		.loc 1 251 0
+ 860 0004 0025     		movs	r5, #0
+ 261:./data/dataV.c ****                     pr_debug("%d jzWV %d: %d\n", i, value, data[i].tmp);
+ 861              		.loc 1 261 0
+ 862 0006 264B     		ldr	r3, .L95
+ 249:./data/dataV.c ****     int i;
+ 863              		.loc 1 249 0
+ 864 0008 85B0     		sub	sp, sp, #20
+ 865              	.LCFI11:
+ 866              		.cfi_def_cfa_offset 40
+ 261:./data/dataV.c ****                     pr_debug("%d jzWV %d: %d\n", i, value, data[i].tmp);
+ 867              		.loc 1 261 0
+ 868 000a 1B68     		ldr	r3, [r3]
+ 869 000c 254E     		ldr	r6, .L95+4
+ 870 000e 0093     		str	r3, [sp]
+ 871 0010 254B     		ldr	r3, .L95+8
+ 872 0012 5A68     		ldr	r2, [r3, #4]
+ 271:./data/dataV.c ****                     pr_debug("%d jzV %d: %d\t%d\n", i, value, data[i].tmp, pUsrCfg->JZ[i]);
+ 873              		.loc 1 271 0
+ 874 0014 9B68     		ldr	r3, [r3, #8]
+ 261:./data/dataV.c ****                     pr_debug("%d jzWV %d: %d\n", i, value, data[i].tmp);
+ 875              		.loc 1 261 0
+ 876 0016 0192     		str	r2, [sp, #4]
+ 271:./data/dataV.c ****                     pr_debug("%d jzV %d: %d\t%d\n", i, value, data[i].tmp, pUsrCfg->JZ[i]);
+ 877              		.loc 1 271 0
+ 878 0018 0293     		str	r3, [sp, #8]
+ 879              	.LVL99:
+ 880              	.L92:
+ 253:./data/dataV.c ****         {
+ 881              		.loc 1 253 0
+ 882 001a 737E     		ldrb	r3, [r6, #25]
+ 883 001c 012B     		cmp	r3, #1
+ 884 001e 18D0     		beq	.L88
+ 885 0020 042B     		cmp	r3, #4
+ 886 0022 34D1     		bne	.L87
+ 256:./data/dataV.c ****             		value = 380;
+ 887              		.loc 1 256 0
+ 888 0024 002C     		cmp	r4, #0
+ 889 0026 01D1     		bne	.L90
+ 257:./data/dataV.c ****             	}
+ 890              		.loc 1 257 0
+ 891 0028 7D34     		adds	r4, r4, #125
+ 892              	.LVL100:
+ 893 002a FF34     		adds	r4, r4, #255
+ 894              	.L90:
+ 895              	.LVL101:
+ 259:./data/dataV.c ****                 {
+ 896              		.loc 1 259 0
+ 897 002c 2300     		movs	r3, r4
+ 898 002e 603B     		subs	r3, r3, #96
+ 899 0030 FF3B     		subs	r3, r3, #255
+ 900 0032 9BB2     		uxth	r3, r3
+ 901 0034 622B     		cmp	r3, #98
+ 902 0036 2AD8     		bhi	.L87
+ 259:./data/dataV.c ****                 {
+ 903              		.loc 1 259 0 is_stmt 0 discriminator 1
+ 904 0038 9623     		movs	r3, #150
+ 905 003a 3788     		ldrh	r7, [r6]
+ 906 003c 5B00     		lsls	r3, r3, #1
+ 907 003e 9F42     		cmp	r7, r3
+ 908 0040 25D9     		bls	.L87
+ 261:./data/dataV.c ****                     pr_debug("%d jzWV %d: %d\n", i, value, data[i].tmp);
+ 909              		.loc 1 261 0 is_stmt 1
+ 910 0042 2000     		movs	r0, r4
+ 911 0044 FFF7FEFF 		bl	GetValueWV_JZ
+ 912              	.LVL102:
+ 913 0048 2B1D     		adds	r3, r5, #4
+ 914 004a 5B00     		lsls	r3, r3, #1
+ 915 004c 0393     		str	r3, [sp, #12]
+ 916 004e 019B     		ldr	r3, [sp, #4]
+ 917 0050 11E0     		b	.L94
+ 918              	.L88:
+ 266:./data/dataV.c ****             		value = 220;
+ 919              		.loc 1 266 0
+ 920 0052 002C     		cmp	r4, #0
+ 921 0054 00D1     		bne	.L91
+ 267:./data/dataV.c ****             	}
+ 922              		.loc 1 267 0
+ 923 0056 DC34     		adds	r4, r4, #220
+ 924              	.LVL103:
+ 925              	.L91:
+ 269:./data/dataV.c ****                 {
+ 926              		.loc 1 269 0
+ 927 0058 2300     		movs	r3, r4
+ 928 005a B53B     		subs	r3, r3, #181
+ 929 005c 9BB2     		uxth	r3, r3
+ 930 005e 4A2B     		cmp	r3, #74
+ 931 0060 15D8     		bhi	.L87
+ 269:./data/dataV.c ****                 {
+ 932              		.loc 1 269 0 is_stmt 0 discriminator 1
+ 933 0062 3788     		ldrh	r7, [r6]
+ 934 0064 B42F     		cmp	r7, #180
+ 935 0066 12D9     		bls	.L87
+ 271:./data/dataV.c ****                     pr_debug("%d jzV %d: %d\t%d\n", i, value, data[i].tmp, pUsrCfg->JZ[i]);
+ 936              		.loc 1 271 0 is_stmt 1
+ 937 0068 2000     		movs	r0, r4
+ 938 006a FFF7FEFF 		bl	GetValueV_JZ
+ 939              	.LVL104:
+ 940 006e 2B1D     		adds	r3, r5, #4
+ 941 0070 5B00     		lsls	r3, r3, #1
+ 942 0072 0393     		str	r3, [sp, #12]
+ 943 0074 029B     		ldr	r3, [sp, #8]
+ 944              	.L94:
+ 945 0076 5843     		muls	r0, r3
+ 946 0078 3900     		movs	r1, r7
+ 947 007a FFF7FEFF 		bl	__aeabi_idiv
+ 948              	.LVL105:
+ 949 007e 009A     		ldr	r2, [sp]
+ 950 0080 039B     		ldr	r3, [sp, #12]
+ 951 0082 9446     		mov	ip, r2
+ 952 0084 80B2     		uxth	r0, r0
+ 953 0086 6344     		add	r3, r3, ip
+ 954 0088 D871     		strb	r0, [r3, #7]
+ 955 008a 000A     		lsrs	r0, r0, #8
+ 956 008c 1872     		strb	r0, [r3, #8]
+ 957              	.L87:
+ 251:./data/dataV.c ****     {
+ 958              		.loc 1 251 0 discriminator 2
+ 959 008e 0135     		adds	r5, r5, #1
+ 960              	.LVL106:
+ 961 0090 2036     		adds	r6, r6, #32
+ 962 0092 082D     		cmp	r5, #8
+ 963 0094 C1D1     		bne	.L92
+ 277:./data/dataV.c **** }
+ 964              		.loc 1 277 0
+ 965 0096 FFF7FEFF 		bl	UsrWrite
+ 966              	.LVL107:
+ 278:./data/dataV.c **** 
+ 967              		.loc 1 278 0
+ 968 009a 05B0     		add	sp, sp, #20
+ 969              		@ sp needed
+ 970              	.LVL108:
+ 971              	.LVL109:
+ 972 009c F0BD     		pop	{r4, r5, r6, r7, pc}
+ 973              	.L96:
+ 974 009e C046     		.align	2
+ 975              	.L95:
+ 976 00a0 00000000 		.word	pUsrCfg
+ 977 00a4 02000000 		.word	data+2
+ 978 00a8 00000000 		.word	.LANCHOR0
+ 979              		.cfi_endproc
+ 980              	.LFE7:
+ 982              		.section	.text.jzV_cmd,"ax",%progbits
+ 983              		.align	1
+ 984              		.code	16
+ 985              		.thumb_func
+ 987              	jzV_cmd:
+ 988              	.LFB9:
+ 315:./data/dataV.c **** PSHELL_CMD( jz, jz_cmd, "jz" );
+ 316:./data/dataV.c **** 
+ 317:./data/dataV.c **** static void jzV_cmd( int args, char **argv )
+ 318:./data/dataV.c **** {
+ 989              		.loc 1 318 0
+ 990              		.cfi_startproc
+ 991              		@ args = 0, pretend = 0, frame = 0
+ 992              		@ frame_needed = 0, uses_anonymous_args = 0
+ 993              	.LVL110:
+ 994 0000 10B5     		push	{r4, lr}
+ 995              	.LCFI12:
+ 996              		.cfi_def_cfa_offset 8
+ 997              		.cfi_offset 4, -8
+ 998              		.cfi_offset 14, -4
+ 319:./data/dataV.c ****     int a;
+ 320:./data/dataV.c ****     if( args >= 2 )
+ 999              		.loc 1 320 0
+ 1000 0002 0128     		cmp	r0, #1
+ 1001 0004 05DD     		ble	.L97
+ 1002              	.LVL111:
+ 1003              	.LBB9:
+ 1004              	.LBB10:
+ 321:./data/dataV.c ****     {
+ 322:./data/dataV.c ****         a = atoi( argv[1] );
+ 1005              		.loc 1 322 0
+ 1006 0006 4868     		ldr	r0, [r1, #4]
+ 1007              	.LVL112:
+ 1008 0008 FFF7FEFF 		bl	OS_atoi
+ 1009              	.LVL113:
+ 323:./data/dataV.c ****         pr_debug("jzV %d\n", a);
+ 324:./data/dataV.c ****         UserVJZ( a );
+ 1010              		.loc 1 324 0
+ 1011 000c 00B2     		sxth	r0, r0
+ 1012              	.LVL114:
+ 1013 000e FFF7FEFF 		bl	UserVJZ
+ 1014              	.LVL115:
+ 1015              	.L97:
+ 1016              	.LBE10:
+ 1017              	.LBE9:
+ 325:./data/dataV.c ****     }
+ 326:./data/dataV.c **** }
+ 1018              		.loc 1 326 0
+ 1019              		@ sp needed
+ 1020 0012 10BD     		pop	{r4, pc}
+ 1021              		.cfi_endproc
+ 1022              	.LFE9:
+ 1024              		.global	cmd_jzV
+ 1025              		.global	cmd_jz
+ 1026              		.global	WDlist
+ 1027              		.global	VDDataList
+ 1028              		.global	WVDataList
+ 1029              		.global	CVDataList
+ 1030              		.section	.rodata
+ 1031              		.align	1
+ 1032              		.set	.LANCHOR1,. + 0
+ 1035              	WDlist:
+ 1036 0000 F6FF     		.short	-10
+ 1037 0002 F304     		.short	1267
+ 1038 0004 9B04     		.short	1179
+ 1039 0006 5C04     		.short	1116
+ 1040 0008 0000     		.short	0
+ 1041 000a 9E04     		.short	1182
+ 1042 000c 5F04     		.short	1119
+ 1043 000e 3A04     		.short	1082
+ 1044 0010 0A00     		.short	10
+ 1045 0012 5704     		.short	1111
+ 1046 0014 1E04     		.short	1054
+ 1047 0016 1104     		.short	1041
+ 1048 0018 1400     		.short	20
+ 1049 001a 0004     		.short	1024
+ 1050 001c E803     		.short	1000
+ 1051 001e E803     		.short	1000
+ 1052 0020 1E00     		.short	30
+ 1053 0022 AF03     		.short	943
+ 1054 0024 A303     		.short	931
+ 1055 0026 AA03     		.short	938
+ 1056 0028 2800     		.short	40
+ 1057 002a 5503     		.short	853
+ 1058 002c 4F03     		.short	847
+ 1059 002e 6B03     		.short	875
+ 1062              	WVDataList:
+ 1063 0030 C101     		.short	449
+ 1064 0032 8808     		.short	2184
+ 1065 0034 B001     		.short	432
+ 1066 0036 0C08     		.short	2060
+ 1067 0038 9F01     		.short	415
+ 1068 003a 9007     		.short	1936
+ 1069 003c 8D01     		.short	397
+ 1070 003e 2007     		.short	1824
+ 1071 0040 7C01     		.short	380
+ 1072 0042 A406     		.short	1700
+ 1073 0044 6B01     		.short	363
+ 1074 0046 3006     		.short	1584
+ 1075 0048 5901     		.short	345
+ 1076 004a C805     		.short	1480
+ 1077 004c 4801     		.short	328
+ 1078 004e 5405     		.short	1364
+ 1079 0050 3701     		.short	311
+ 1080 0052 EC04     		.short	1260
+ 1081 0054 2601     		.short	294
+ 1082 0056 8404     		.short	1156
+ 1083 0058 1401     		.short	276
+ 1084 005a 1404     		.short	1044
+ 1085 005c F200     		.short	242
+ 1086 005e 4803     		.short	840
+ 1087 0060 AD00     		.short	173
+ 1088 0062 E001     		.short	480
+ 1091              	CVDataList:
+ 1092 0064 0401     		.short	260
+ 1093 0066 A106     		.short	1697
+ 1094 0068 FA00     		.short	250
+ 1095 006a 4006     		.short	1600
+ 1096 006c F000     		.short	240
+ 1097 006e E105     		.short	1505
+ 1098 0070 E600     		.short	230
+ 1099 0072 8605     		.short	1414
+ 1100 0074 DC00     		.short	220
+ 1101 0076 3105     		.short	1329
+ 1102 0078 D200     		.short	210
+ 1103 007a D104     		.short	1233
+ 1104 007c C800     		.short	200
+ 1105 007e 7204     		.short	1138
+ 1106 0080 BE00     		.short	190
+ 1107 0082 1D04     		.short	1053
+ 1108 0084 B400     		.short	180
+ 1109 0086 C103     		.short	961
+ 1110 0088 AA00     		.short	170
+ 1111 008a 7003     		.short	880
+ 1112 008c A000     		.short	160
+ 1113 008e 1A03     		.short	794
+ 1114 0090 8C00     		.short	140
+ 1115 0092 7D02     		.short	637
+ 1116 0094 6400     		.short	100
+ 1117 0096 6301     		.short	355
+ 1120              	help_jzV:
+ 1121 0098 6A7A5620 		.ascii	"jzV V\000"
+ 1121      5600
+ 1124              	name_jzV:
+ 1125 009e 6A7A5600 		.ascii	"jzV\000"
+ 1128              	help_jz:
+ 1129 00a2 6A7A00   		.ascii	"jz\000"
+ 1132              	name_jz:
+ 1133 00a5 6A7A00   		.ascii	"jz\000"
+ 1136              	VDDataList:
+ 1137 00a8 9001     		.short	400
+ 1138 00aa 1D03     		.short	797
+ 1139 00ac F000     		.short	240
+ 1140 00ae 8B01     		.short	395
+ 1141 00b0 6400     		.short	100
+ 1142 00b2 5200     		.short	82
+ 1143              		.section	.shell,"aw",%progbits
+ 1144              		.align	2
+ 1147              	cmd_jzV:
+ 1148 0000 9E000000 		.word	name_jzV
+ 1149 0004 00000000 		.word	jzV_cmd
+ 1150 0008 98000000 		.word	help_jzV
+ 1153              	cmd_jz:
+ 1154 000c A5000000 		.word	name_jz
+ 1155 0010 00000000 		.word	jz_cmd
+ 1156 0014 A2000000 		.word	help_jz
+ 1157              		.bss
+ 1158              		.align	2
+ 1159              		.set	.LANCHOR0,. + 0
+ 1162              	wDVJZ:
+ 1163 0000 00000000 		.space	4
+ 1166              	wVJZ:
+ 1167 0004 00000000 		.space	4
+ 1170              	wJZ:
+ 1171 0008 00000000 		.space	4
+ 1172              		.text
+ 1173              	.Letext0:
+ 1174              		.file 2 "./bsp/mytype.h"
+ 1175              		.file 3 "./data/data.h"
+ 1176              		.file 4 "../mylib_t/pcommand.h"
+ 1177              		.file 5 "../mylib_t/data_def.h"
+ 1178              		.file 6 "./data/user.h"
+ 1179              		.file 7 "../mylib_t/OSstdlib.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 dataV.c
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:21     .text.jz_cmd:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:26     .text.jz_cmd:00000000 jz_cmd
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:76     .text.jz_cmd:00000034 $d
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:82     .text.jz_cmd:0000003a $t
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:151    .text.jz_cmd:00000094 $d
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:160    .text.createWJZ:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:165    .text.createWJZ:00000000 createWJZ
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:343    .text.createWJZ:000000c8 $d
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:350    .text.GetWJZValue:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:355    .text.GetWJZValue:00000000 GetWJZValue
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:388    .text.GetWJZValue:00000018 $d
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:393    .text.GetValueWV:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:398    .text.GetValueWV:00000000 GetValueWV
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:476    .text.GetValueWV:00000044 $d
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:482    .text.GetValueWV_JZ:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:487    .text.GetValueWV_JZ:00000000 GetValueWV_JZ
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:560    .text.GetValueWV_JZ:0000003c $d
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:565    .text.GetValueVD:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:570    .text.GetValueVD:00000000 GetValueVD
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:655    .text.GetValueVD:00000054 $d
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:662    .text.GetValueV:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:667    .text.GetValueV:00000000 GetValueV
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:748    .text.GetValueV:00000048 $d
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:754    .text.GetValueV_JZ:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:759    .text.GetValueV_JZ:00000000 GetValueV_JZ
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:832    .text.GetValueV_JZ:0000003c $d
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:837    .text.UserVJZ:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:842    .text.UserVJZ:00000000 UserVJZ
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:976    .text.UserVJZ:000000a0 $d
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:983    .text.jzV_cmd:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:987    .text.jzV_cmd:00000000 jzV_cmd
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:1147   .shell:00000000 cmd_jzV
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:1153   .shell:0000000c cmd_jz
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:1035   .rodata:00000000 WDlist
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:1136   .rodata:000000a8 VDDataList
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:1062   .rodata:00000030 WVDataList
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:1091   .rodata:00000064 CVDataList
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:1031   .rodata:00000000 $d
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:1120   .rodata:00000098 help_jzV
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:1124   .rodata:0000009e name_jzV
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:1128   .rodata:000000a2 help_jz
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:1132   .rodata:000000a5 name_jz
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:1144   .shell:00000000 $d
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:1158   .bss:00000000 $d
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:1162   .bss:00000000 wDVJZ
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:1166   .bss:00000004 wVJZ
+C:\Users\beyond\AppData\Local\Temp\ccazuK7B.s:1170   .bss:00000008 wJZ
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+__aeabi_idiv
+__gnu_thumb1_case_uqi
+UsrWrite
+pUsrCfg
+data
+OS_atoi

@@ -1,0 +1,331 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 4
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"shell.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.shell,"ax",%progbits
+  20              		.align	1
+  21              		.global	shell
+  22              		.code	16
+  23              		.thumb_func
+  25              	shell:
+  26              	.LFB61:
+  27              		.file 1 "./app/shell.c"
+   1:./app/shell.c **** 
+   2:./app/shell.c **** #define COMMAND_GLOBAL
+   3:./app/shell.c **** #include "mytype.h"
+   4:./app/shell.c **** #include "pcommand.h"
+   5:./app/shell.c **** #include <string.h>
+   6:./app/shell.c **** #include "app_cfg.h"
+   7:./app/shell.c **** #include "microOS.h"
+   8:./app/shell.c **** #include "bsp.h"
+   9:./app/shell.c **** 
+  10:./app/shell.c **** 
+  11:./app/shell.c **** 
+  12:./app/shell.c **** #define NUL		0x00	//
+  13:./app/shell.c **** #define SOH 	0x01	//01H 数据块开始
+  14:./app/shell.c **** #define STX		0x02	//正文开始
+  15:./app/shell.c **** #define ETX		0x03	//正文结束
+  16:./app/shell.c **** #define EOT 	0x04	//04H 发送结束
+  17:./app/shell.c **** #define ENQ 	0x05 	//请求
+  18:./app/shell.c **** #define ACK 	0x06 	//06H 认可响应
+  19:./app/shell.c **** #define BEL		0x07	//响铃
+  20:./app/shell.c **** #define BS		0x08	// 退格
+  21:./app/shell.c **** #define HT		0x09	// 水平制表符
+  22:./app/shell.c **** #define FF		0x0C	//换页键
+  23:./app/shell.c **** #define CR		0x0D	// 回车键
+  24:./app/shell.c **** #define SO		0x0E	// 不用切换
+  25:./app/shell.c **** #define SI		0x0F	// 启用切换
+  26:./app/shell.c **** #define DLE 	0x10	//10H 中止数据连接
+  27:./app/shell.c **** #define X_ON 	0x11	//11H 数据传送启动 当通信双方的速度不一致时，
+  28:./app/shell.c **** 						//可采用该字符来调节通信速度，比如接收方速度
+  29:./app/shell.c **** 						//太慢而导致接收缓冲器满时，
+  30:./app/shell.c **** 						//发送“X-off”给发送方，使发送方暂停发送数据。
+  31:./app/shell.c **** 						//相当于RS232接口的DSR,CTS等信号。
+  32:./app/shell.c **** #define X_OFF 	0x13	//13H 数据传送停止
+  33:./app/shell.c **** #define NAK 	0x15	//15H 不认可响应 对于CRC校验的协议软件，本信号用字母“C”（43H）代替。
+  34:./app/shell.c **** #define SYN 	0x16	//16H 同步
+  35:./app/shell.c **** #define ETB		0x17	//传输块结束
+  36:./app/shell.c **** //#define CAN 	0x18	//18H 撤销传送取消
+  37:./app/shell.c **** #define ESC		0x1B	//
+  38:./app/shell.c **** #define DEL		0x7F	//删除
+  39:./app/shell.c **** 
+  40:./app/shell.c **** #define EXIT_SHELL   0xFFAA   //退出shell
+  41:./app/shell.c **** 
+  42:./app/shell.c **** #define SHELL_EN
+  43:./app/shell.c **** 
+  44:./app/shell.c **** 
+  45:./app/shell.c **** #ifdef SHELL_EN
+  46:./app/shell.c **** 
+  47:./app/shell.c **** static char str[64] ;
+  48:./app/shell.c **** static int  cnt = 0;
+  49:./app/shell.c **** 
+  50:./app/shell.c **** 
+  51:./app/shell.c **** void shell(int);
+  52:./app/shell.c **** 
+  53:./app/shell.c **** #undef PutChar
+  54:./app/shell.c **** uint8 Uart_SendBuff( uint8 *buff, int size );
+  55:./app/shell.c **** static inline
+  56:./app/shell.c **** void PutChar(uint8 dat )
+  57:./app/shell.c **** {
+  58:./app/shell.c **** 	Uart_SendBuff(&dat, 1 );
+  59:./app/shell.c **** }
+  60:./app/shell.c **** 
+  61:./app/shell.c **** 
+  62:./app/shell.c **** static uint8 GetKey( uint8 dat )
+  63:./app/shell.c **** {
+  64:./app/shell.c ****     if( cnt < sizeof(str) )
+  65:./app/shell.c ****     {
+  66:./app/shell.c ****         char temp = dat;
+  67:./app/shell.c ****         switch(temp)
+  68:./app/shell.c ****         {
+  69:./app/shell.c ****             case 0:
+  70:./app/shell.c ****                 break;
+  71:./app/shell.c ****             case '\r':
+  72:./app/shell.c ****                 goto GetKey_end;
+  73:./app/shell.c ****             case BS:
+  74:./app/shell.c ****                 if(cnt)
+  75:./app/shell.c ****                 {
+  76:./app/shell.c ****                     cnt--;
+  77:./app/shell.c ****                     PutChar(temp);
+  78:./app/shell.c ****                     PutChar(' ');
+  79:./app/shell.c ****                     PutChar(temp);
+  80:./app/shell.c ****                 }
+  81:./app/shell.c ****                 break;
+  82:./app/shell.c ****             default:
+  83:./app/shell.c ****                 if(temp >= ' ')
+  84:./app/shell.c ****                 {
+  85:./app/shell.c ****                     str[cnt++] = temp;
+  86:./app/shell.c ****                     PutChar(temp);
+  87:./app/shell.c ****                 }
+  88:./app/shell.c ****                 break;
+  89:./app/shell.c ****         }
+  90:./app/shell.c ****     }else
+  91:./app/shell.c ****     {
+  92:./app/shell.c **** GetKey_end:
+  93:./app/shell.c ****         str[cnt] = '\0';
+  94:./app/shell.c ****         PutChar('\n');
+  95:./app/shell.c ****         cnt = 0;
+  96:./app/shell.c ****         return(TRUE);
+  97:./app/shell.c ****     }
+  98:./app/shell.c ****     return(FALSE);
+  99:./app/shell.c **** }
+ 100:./app/shell.c **** 
+ 101:./app/shell.c **** void shell(int ch)
+ 102:./app/shell.c **** {
+  28              		.loc 1 102 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 8
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              	.LVL0:
+  33 0000 37B5     		push	{r0, r1, r2, r4, r5, lr}
+  34              	.LCFI0:
+  35              		.cfi_def_cfa_offset 24
+  36              		.cfi_offset 0, -24
+  37              		.cfi_offset 1, -20
+  38              		.cfi_offset 2, -16
+  39              		.cfi_offset 4, -12
+  40              		.cfi_offset 5, -8
+  41              		.cfi_offset 14, -4
+ 103:./app/shell.c ****     if(ch < 0 )
+  42              		.loc 1 103 0
+  43 0002 0028     		cmp	r0, #0
+  44 0004 3DDB     		blt	.L1
+  45              	.LVL1:
+  46              	.LBB15:
+  47              	.LBB16:
+  64:./app/shell.c ****     {
+  48              		.loc 1 64 0
+  49 0006 1F49     		ldr	r1, .L19
+  50 0008 0B68     		ldr	r3, [r1]
+  51 000a 0D00     		movs	r5, r1
+  52 000c 3F2B     		cmp	r3, #63
+  53 000e 27D8     		bhi	.L3
+  54              	.LBE16:
+  55              	.LBE15:
+ 104:./app/shell.c ****         return;
+ 105:./app/shell.c **** 
+ 106:./app/shell.c ****     if(GetKey(ch))
+  56              		.loc 1 106 0
+  57 0010 C4B2     		uxtb	r4, r0
+  58              	.LVL2:
+  59              	.LBB27:
+  60              	.LBB26:
+  61              	.LBB17:
+  67:./app/shell.c ****         {
+  62              		.loc 1 67 0
+  63 0012 082C     		cmp	r4, #8
+  64 0014 04D0     		beq	.L5
+  65 0016 0D2C     		cmp	r4, #13
+  66 0018 22D0     		beq	.L3
+  67 001a 002C     		cmp	r4, #0
+  68 001c 13D1     		bne	.L16
+  69 001e 30E0     		b	.L1
+  70              	.L5:
+  74:./app/shell.c ****                 {
+  71              		.loc 1 74 0
+  72 0020 002B     		cmp	r3, #0
+  73 0022 2ED0     		beq	.L1
+  76:./app/shell.c ****                     PutChar(temp);
+  74              		.loc 1 76 0
+  75 0024 5A1E     		subs	r2, r3, #1
+  76 0026 6B46     		mov	r3, sp
+  77 0028 0A60     		str	r2, [r1]
+  78 002a 581D     		adds	r0, r3, #5
+  79              	.LVL3:
+  80              	.LBB18:
+  81              	.LBB19:
+  58:./app/shell.c **** }
+  82              		.loc 1 58 0
+  83 002c 0121     		movs	r1, #1
+  84 002e 0470     		strb	r4, [r0]
+  85              	.LVL4:
+  86 0030 FFF7FEFF 		bl	Uart_SendBuff
+  87              	.LVL5:
+  88 0034 2023     		movs	r3, #32
+  89 0036 01A8     		add	r0, sp, #4
+  90              	.LBE19:
+  91              	.LBE18:
+  92              	.LBB20:
+  93              	.LBB21:
+  94 0038 0121     		movs	r1, #1
+  95 003a 0370     		strb	r3, [r0]
+  96              	.LVL6:
+  97 003c FFF7FEFF 		bl	Uart_SendBuff
+  98              	.LVL7:
+  99 0040 6B46     		mov	r3, sp
+ 100 0042 D81C     		adds	r0, r3, #3
+ 101 0044 07E0     		b	.L17
+ 102              	.LVL8:
+ 103              	.L16:
+ 104              	.LBE21:
+ 105              	.LBE20:
+  83:./app/shell.c ****                 {
+ 106              		.loc 1 83 0
+ 107 0046 1F2C     		cmp	r4, #31
+ 108 0048 1BD9     		bls	.L1
+  85:./app/shell.c ****                     PutChar(temp);
+ 109              		.loc 1 85 0
+ 110 004a 5A1C     		adds	r2, r3, #1
+ 111 004c CB18     		adds	r3, r1, r3
+ 112 004e 1C71     		strb	r4, [r3, #4]
+ 113 0050 6B46     		mov	r3, sp
+ 114 0052 0A60     		str	r2, [r1]
+ 115 0054 981D     		adds	r0, r3, #6
+ 116              	.LVL9:
+ 117              	.L17:
+ 118 0056 0470     		strb	r4, [r0]
+ 119              	.LVL10:
+ 120              	.LBB22:
+ 121              	.LBB23:
+  58:./app/shell.c **** }
+ 122              		.loc 1 58 0
+ 123 0058 0121     		movs	r1, #1
+ 124 005a FFF7FEFF 		bl	Uart_SendBuff
+ 125              	.LVL11:
+ 126 005e 10E0     		b	.L1
+ 127              	.LVL12:
+ 128              	.L3:
+ 129              	.LBE23:
+ 130              	.LBE22:
+ 131              	.LBE17:
+  93:./app/shell.c ****         PutChar('\n');
+ 132              		.loc 1 93 0
+ 133 0060 0024     		movs	r4, #0
+ 134 0062 EB18     		adds	r3, r5, r3
+ 135 0064 1C71     		strb	r4, [r3, #4]
+ 136 0066 6B46     		mov	r3, sp
+ 137 0068 D81D     		adds	r0, r3, #7
+ 138              	.LVL13:
+ 139 006a 0A23     		movs	r3, #10
+ 140              	.LBB24:
+ 141              	.LBB25:
+  58:./app/shell.c **** }
+ 142              		.loc 1 58 0
+ 143 006c 0121     		movs	r1, #1
+ 144 006e 0370     		strb	r3, [r0]
+ 145              	.LVL14:
+ 146 0070 FFF7FEFF 		bl	Uart_SendBuff
+ 147              	.LVL15:
+ 148              	.LBE25:
+ 149              	.LBE24:
+  95:./app/shell.c ****         return(TRUE);
+ 150              		.loc 1 95 0
+ 151 0074 2800     		movs	r0, r5
+ 152 0076 10C0     		stmia	r0!, {r4}
+ 153              	.LVL16:
+ 154              	.LBE26:
+ 155              	.LBE27:
+ 107:./app/shell.c ****     {
+ 108:./app/shell.c ****         PCMD_string(str);
+ 156              		.loc 1 108 0
+ 157 0078 FFF7FEFF 		bl	PCMD_string
+ 158              	.LVL17:
+ 109:./app/shell.c ****         TRACE("cmd>");
+ 159              		.loc 1 109 0
+ 160 007c 0248     		ldr	r0, .L19+4
+ 161 007e FFF7FEFF 		bl	dbg_print
+ 162              	.LVL18:
+ 163              	.L1:
+ 110:./app/shell.c ****     }
+ 111:./app/shell.c **** }
+ 164              		.loc 1 111 0
+ 165              		@ sp needed
+ 166 0082 37BD     		pop	{r0, r1, r2, r4, r5, pc}
+ 167              	.L20:
+ 168              		.align	2
+ 169              	.L19:
+ 170 0084 00000000 		.word	.LANCHOR0
+ 171 0088 00000000 		.word	.LC1
+ 172              		.cfi_endproc
+ 173              	.LFE61:
+ 175              		.section	.rodata.str1.1,"aMS",%progbits,1
+ 176              	.LC1:
+ 177 0000 636D643E 		.ascii	"cmd>\000"
+ 177      00
+ 178              		.bss
+ 179              		.align	2
+ 180              		.set	.LANCHOR0,. + 0
+ 183              	cnt:
+ 184 0000 00000000 		.space	4
+ 187              	str:
+ 188 0004 00000000 		.space	64
+ 188      00000000 
+ 188      00000000 
+ 188      00000000 
+ 188      00000000 
+ 189              		.text
+ 190              	.Letext0:
+ 191              		.file 2 "d:\\wingcc\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 192              		.file 3 "d:\\wingcc\\arm-none-eabi\\include\\sys\\_stdint.h"
+ 193              		.file 4 "./bsp/mytype.h"
+ 194              		.file 5 "../mylib_t/pcommand.h"
+ 195              		.file 6 "./app/app_cfg.h"
+ 196              		.file 7 "./bsp/system_NUC131.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 shell.c
+C:\Users\beyond\AppData\Local\Temp\cckBLxYi.s:20     .text.shell:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cckBLxYi.s:25     .text.shell:00000000 shell
+C:\Users\beyond\AppData\Local\Temp\cckBLxYi.s:170    .text.shell:00000084 $d
+C:\Users\beyond\AppData\Local\Temp\cckBLxYi.s:179    .bss:00000000 $d
+C:\Users\beyond\AppData\Local\Temp\cckBLxYi.s:183    .bss:00000000 cnt
+C:\Users\beyond\AppData\Local\Temp\cckBLxYi.s:187    .bss:00000004 str
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+Uart_SendBuff
+PCMD_string
+dbg_print

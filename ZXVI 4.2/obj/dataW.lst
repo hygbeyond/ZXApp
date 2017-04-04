@@ -1,0 +1,483 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 4
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"dataW.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.global	__aeabi_idiv
+  20              		.global	__aeabi_uidiv
+  21              		.section	.text.JZPtValue,"ax",%progbits
+  22              		.align	1
+  23              		.global	JZPtValue
+  24              		.code	16
+  25              		.thumb_func
+  27              	JZPtValue:
+  28              	.LFB2:
+  29              		.file 1 "./data/dataW.c"
+   1:./data/dataW.c **** /*
+   2:./data/dataW.c ****  * dataW.c
+   3:./data/dataW.c ****  *
+   4:./data/dataW.c ****  *  Created on: 2016年7月24日
+   5:./data/dataW.c ****  *      Author: beyond
+   6:./data/dataW.c ****  */
+   7:./data/dataW.c **** 
+   8:./data/dataW.c **** 
+   9:./data/dataW.c **** #include "data.h"
+  10:./data/dataW.c **** #include "user.h"
+  11:./data/dataW.c **** #include "protocol.h"
+  12:./data/dataW.c **** 
+  13:./data/dataW.c **** typedef struct Tpt100list
+  14:./data/dataW.c **** {
+  15:./data/dataW.c ****     int16  count;
+  16:./data/dataW.c ****     uint16 value;
+  17:./data/dataW.c **** }Tpt100list;
+  18:./data/dataW.c **** 
+  19:./data/dataW.c **** const Tpt100list PROGMEM ptlist[] =
+  20:./data/dataW.c **** {
+  21:./data/dataW.c ****     {-10,1518},
+  22:./data/dataW.c ****     {  0,1459},
+  23:./data/dataW.c ****     { 10,1406},
+  24:./data/dataW.c ****     { 20,1356},
+  25:./data/dataW.c ****     { 30,1320},
+  26:./data/dataW.c ****     { 40,1244},
+  27:./data/dataW.c ****     { 50,1191},
+  28:./data/dataW.c ****     { 60,1138},
+  29:./data/dataW.c ****     { 70,1085},
+  30:./data/dataW.c ****     { 80,1032},
+  31:./data/dataW.c ****     { 90,979 },
+  32:./data/dataW.c ****     {100,926 },
+  33:./data/dataW.c **** };
+  34:./data/dataW.c **** 
+  35:./data/dataW.c **** /*
+  36:./data/dataW.c ****  * 根据电阻值计算Pt100温度值
+  37:./data/dataW.c ****  * 通过查表法计算
+  38:./data/dataW.c ****  */
+  39:./data/dataW.c **** static int16 GetWvalue( uint16 value )
+  40:./data/dataW.c **** {
+  41:./data/dataW.c ****     int i;
+  42:./data/dataW.c ****     int16 wL;
+  43:./data/dataW.c ****     uint16 aL,aH;
+  44:./data/dataW.c ****     int32 tmp;
+  45:./data/dataW.c ****     for( i=1; i<ARRAY_SIZE( ptlist ); i++)
+  46:./data/dataW.c ****     {
+  47:./data/dataW.c ****         if( value > ptlist[i].value )
+  48:./data/dataW.c ****         {
+  49:./data/dataW.c ****             wL = ptlist[i-1].count ;
+  50:./data/dataW.c ****             aL = ptlist[i-1].value ;
+  51:./data/dataW.c ****             aH = ptlist[i].value ;
+  52:./data/dataW.c ****             tmp = (value-aL)*10/(aH-aL) + wL;
+  53:./data/dataW.c **** //            tmp  = value-aL;
+  54:./data/dataW.c **** //            tmp *= 10;
+  55:./data/dataW.c **** //            tmp /= (aH- aL );
+  56:./data/dataW.c **** //            tmp += wL;
+  57:./data/dataW.c ****             return (int16)tmp;
+  58:./data/dataW.c ****         }else if( value == ptlist[i].value )
+  59:./data/dataW.c ****         	return ptlist[i].count;
+  60:./data/dataW.c ****     }
+  61:./data/dataW.c ****     return 0;
+  62:./data/dataW.c **** }
+  63:./data/dataW.c **** 
+  64:./data/dataW.c **** /*
+  65:./data/dataW.c ****  * 根据温度值读取Pt100电阻值
+  66:./data/dataW.c ****  */
+  67:./data/dataW.c **** static uint16 GetPtValue( int16 value )
+  68:./data/dataW.c **** {
+  69:./data/dataW.c ****     int i;
+  70:./data/dataW.c ****     int32 tmp;
+  71:./data/dataW.c ****     for( i=1; i<ARRAY_SIZE( ptlist ); i++)
+  72:./data/dataW.c ****     {
+  73:./data/dataW.c ****         if( value <= ptlist[i].count )
+  74:./data/dataW.c ****         {/* V = (V2-V1)*(ax - a1) / (a2-a1) + V1 */
+  75:./data/dataW.c ****             tmp = (ptlist[i].value - ptlist[i-1].value );
+  76:./data/dataW.c ****             tmp *= value - ptlist[i-1].count;
+  77:./data/dataW.c ****             tmp /= ptlist[i].count - ptlist[i-1].count;
+  78:./data/dataW.c ****             tmp += ptlist[i-1].value;
+  79:./data/dataW.c ****             return (int16)tmp;
+  80:./data/dataW.c ****         }
+  81:./data/dataW.c ****     }
+  82:./data/dataW.c ****     return 0;
+  83:./data/dataW.c **** }
+  84:./data/dataW.c **** 
+  85:./data/dataW.c **** uint16 JZPtValue( int16 value, uint16 dat )
+  86:./data/dataW.c **** {
+  30              		.loc 1 86 0
+  31              		.cfi_startproc
+  32              		@ args = 0, pretend = 0, frame = 0
+  33              		@ frame_needed = 0, uses_anonymous_args = 0
+  34              	.LVL0:
+  35 0000 70B5     		push	{r4, r5, r6, lr}
+  36              	.LCFI0:
+  37              		.cfi_def_cfa_offset 16
+  38              		.cfi_offset 4, -16
+  39              		.cfi_offset 5, -12
+  40              		.cfi_offset 6, -8
+  41              		.cfi_offset 14, -4
+  42              	.LBB4:
+  43              	.LBB5:
+  71:./data/dataW.c ****     {
+  44              		.loc 1 71 0
+  45 0002 0123     		movs	r3, #1
+  46              	.LBE5:
+  47              	.LBE4:
+  48              		.loc 1 86 0
+  49 0004 0C00     		movs	r4, r1
+  50              	.LBB7:
+  51              	.LBB6:
+  73:./data/dataW.c ****         {/* V = (V2-V1)*(ax - a1) / (a2-a1) + V1 */
+  52              		.loc 1 73 0
+  53 0006 0F4E     		ldr	r6, .L7
+  54              	.LVL1:
+  55              	.L4:
+  56 0008 9A00     		lsls	r2, r3, #2
+  57 000a 915F     		ldrsh	r1, [r2, r6]
+  58 000c 8842     		cmp	r0, r1
+  59 000e 0FDC     		bgt	.L2
+  75:./data/dataW.c ****             tmp *= value - ptlist[i-1].count;
+  60              		.loc 1 75 0
+  61 0010 013B     		subs	r3, r3, #1
+  62              	.LVL2:
+  63 0012 9B00     		lsls	r3, r3, #2
+  64              	.LVL3:
+  65 0014 F518     		adds	r5, r6, r3
+  66 0016 B218     		adds	r2, r6, r2
+  67 0018 6D88     		ldrh	r5, [r5, #2]
+  76:./data/dataW.c ****             tmp /= ptlist[i].count - ptlist[i-1].count;
+  68              		.loc 1 76 0
+  69 001a 9B5F     		ldrsh	r3, [r3, r6]
+  75:./data/dataW.c ****             tmp *= value - ptlist[i-1].count;
+  70              		.loc 1 75 0
+  71 001c 5288     		ldrh	r2, [r2, #2]
+  76:./data/dataW.c ****             tmp /= ptlist[i].count - ptlist[i-1].count;
+  72              		.loc 1 76 0
+  73 001e C01A     		subs	r0, r0, r3
+  74              	.LVL4:
+  75:./data/dataW.c ****             tmp *= value - ptlist[i-1].count;
+  75              		.loc 1 75 0
+  76 0020 521B     		subs	r2, r2, r5
+  77              	.LVL5:
+  76:./data/dataW.c ****             tmp /= ptlist[i].count - ptlist[i-1].count;
+  78              		.loc 1 76 0
+  79 0022 5043     		muls	r0, r2
+  80              	.LVL6:
+  77:./data/dataW.c ****             tmp += ptlist[i-1].value;
+  81              		.loc 1 77 0
+  82 0024 C91A     		subs	r1, r1, r3
+  83 0026 FFF7FEFF 		bl	__aeabi_idiv
+  84              	.LVL7:
+  79:./data/dataW.c ****         }
+  85              		.loc 1 79 0
+  86 002a 2818     		adds	r0, r5, r0
+  87              	.LVL8:
+  88 002c 80B2     		uxth	r0, r0
+  89              	.LVL9:
+  90 002e 03E0     		b	.L3
+  91              	.LVL10:
+  92              	.L2:
+  71:./data/dataW.c ****     {
+  93              		.loc 1 71 0
+  94 0030 0133     		adds	r3, r3, #1
+  95              	.LVL11:
+  96 0032 0C2B     		cmp	r3, #12
+  97 0034 E8D1     		bne	.L4
+  82:./data/dataW.c **** }
+  98              		.loc 1 82 0
+  99 0036 0020     		movs	r0, #0
+ 100              	.LVL12:
+ 101              	.L3:
+ 102              	.LBE6:
+ 103              	.LBE7:
+  87:./data/dataW.c ****     uint32 tmp;
+  88:./data/dataW.c ****     tmp = GetPtValue( value );
+  89:./data/dataW.c ****     tmp = tmp * 1024 / dat;
+  90:./data/dataW.c ****     return tmp;
+ 104              		.loc 1 90 0
+ 105 0038 2100     		movs	r1, r4
+  89:./data/dataW.c ****     return tmp;
+ 106              		.loc 1 89 0
+ 107 003a 8002     		lsls	r0, r0, #10
+ 108              	.LVL13:
+ 109              		.loc 1 90 0
+ 110 003c FFF7FEFF 		bl	__aeabi_uidiv
+ 111              	.LVL14:
+  91:./data/dataW.c **** }
+ 112              		.loc 1 91 0
+ 113              		@ sp needed
+  90:./data/dataW.c **** }
+ 114              		.loc 1 90 0
+ 115 0040 80B2     		uxth	r0, r0
+ 116              		.loc 1 91 0
+ 117 0042 70BD     		pop	{r4, r5, r6, pc}
+ 118              	.L8:
+ 119              		.align	2
+ 120              	.L7:
+ 121 0044 00000000 		.word	.LANCHOR0
+ 122              		.cfi_endproc
+ 123              	.LFE2:
+ 125              		.section	.text.WValue,"ax",%progbits
+ 126              		.align	1
+ 127              		.global	WValue
+ 128              		.code	16
+ 129              		.thumb_func
+ 131              	WValue:
+ 132              	.LFB3:
+  92:./data/dataW.c **** 
+  93:./data/dataW.c **** 
+  94:./data/dataW.c **** int WValue( uint16 value )
+  95:./data/dataW.c **** {
+ 133              		.loc 1 95 0
+ 134              		.cfi_startproc
+ 135              		@ args = 0, pretend = 0, frame = 0
+ 136              		@ frame_needed = 0, uses_anonymous_args = 0
+ 137              	.LVL15:
+ 138              	.LBB10:
+ 139              	.LBB11:
+  45:./data/dataW.c ****     {
+ 140              		.loc 1 45 0
+ 141 0000 0123     		movs	r3, #1
+ 142              	.LBE11:
+ 143              	.LBE10:
+ 144              		.loc 1 95 0
+ 145 0002 70B5     		push	{r4, r5, r6, lr}
+ 146              	.LCFI1:
+ 147              		.cfi_def_cfa_offset 16
+ 148              		.cfi_offset 4, -16
+ 149              		.cfi_offset 5, -12
+ 150              		.cfi_offset 6, -8
+ 151              		.cfi_offset 14, -4
+ 152              	.LBB13:
+ 153              	.LBB12:
+  47:./data/dataW.c ****         {
+ 154              		.loc 1 47 0
+ 155 0004 0E4D     		ldr	r5, .L15
+ 156              	.LVL16:
+ 157              	.L13:
+ 158 0006 9A00     		lsls	r2, r3, #2
+ 159 0008 A918     		adds	r1, r5, r2
+ 160 000a 4988     		ldrh	r1, [r1, #2]
+ 161 000c 8842     		cmp	r0, r1
+ 162 000e 0DD9     		bls	.L10
+  57:./data/dataW.c ****         }else if( value == ptlist[i].value )
+ 163              		.loc 1 57 0
+ 164 0010 0A22     		movs	r2, #10
+  49:./data/dataW.c ****             aL = ptlist[i-1].value ;
+ 165              		.loc 1 49 0
+ 166 0012 013B     		subs	r3, r3, #1
+ 167              	.LVL17:
+  50:./data/dataW.c ****             aH = ptlist[i].value ;
+ 168              		.loc 1 50 0
+ 169 0014 9C00     		lsls	r4, r3, #2
+ 170 0016 2B19     		adds	r3, r5, r4
+ 171              	.LVL18:
+  52:./data/dataW.c **** //            tmp  = value-aL;
+ 172              		.loc 1 52 0
+ 173 0018 5B88     		ldrh	r3, [r3, #2]
+ 174              	.LVL19:
+  57:./data/dataW.c ****         }else if( value == ptlist[i].value )
+ 175              		.loc 1 57 0
+ 176 001a C01A     		subs	r0, r0, r3
+ 177              	.LVL20:
+ 178 001c 5043     		muls	r0, r2
+ 179 001e C91A     		subs	r1, r1, r3
+ 180              	.LVL21:
+ 181 0020 FFF7FEFF 		bl	__aeabi_idiv
+ 182              	.LVL22:
+ 183 0024 635F     		ldrsh	r3, [r4, r5]
+ 184 0026 C018     		adds	r0, r0, r3
+ 185 0028 00B2     		sxth	r0, r0
+ 186 002a 07E0     		b	.L11
+ 187              	.LVL23:
+ 188              	.L10:
+  58:./data/dataW.c ****         	return ptlist[i].count;
+ 189              		.loc 1 58 0
+ 190 002c 8842     		cmp	r0, r1
+ 191 002e 01D1     		bne	.L12
+  59:./data/dataW.c ****     }
+ 192              		.loc 1 59 0
+ 193 0030 505F     		ldrsh	r0, [r2, r5]
+ 194              	.LVL24:
+ 195 0032 03E0     		b	.L11
+ 196              	.LVL25:
+ 197              	.L12:
+  45:./data/dataW.c ****     {
+ 198              		.loc 1 45 0
+ 199 0034 0133     		adds	r3, r3, #1
+ 200              	.LVL26:
+ 201 0036 0C2B     		cmp	r3, #12
+ 202 0038 E5D1     		bne	.L13
+  61:./data/dataW.c **** }
+ 203              		.loc 1 61 0
+ 204 003a 0020     		movs	r0, #0
+ 205              	.LVL27:
+ 206              	.L11:
+ 207              	.LBE12:
+ 208              	.LBE13:
+  96:./data/dataW.c ****     uint32 tmp = value;
+  97:./data/dataW.c ****     //tmp = tmp * pUsrCfg->WDCfg.jzH / 1024;
+  98:./data/dataW.c ****     return GetWvalue( tmp );
+  99:./data/dataW.c **** }
+ 209              		.loc 1 99 0
+ 210              		@ sp needed
+ 211 003c 70BD     		pop	{r4, r5, r6, pc}
+ 212              	.L16:
+ 213 003e C046     		.align	2
+ 214              	.L15:
+ 215 0040 00000000 		.word	.LANCHOR0
+ 216              		.cfi_endproc
+ 217              	.LFE3:
+ 219              		.section	.text.UserWDJZ,"ax",%progbits
+ 220              		.align	1
+ 221              		.global	UserWDJZ
+ 222              		.code	16
+ 223              		.thumb_func
+ 225              	UserWDJZ:
+ 226              	.LFB4:
+ 100:./data/dataW.c **** 
+ 101:./data/dataW.c **** 
+ 102:./data/dataW.c **** void UserWDJZ( int16 value )
+ 103:./data/dataW.c **** {
+ 227              		.loc 1 103 0
+ 228              		.cfi_startproc
+ 229              		@ args = 0, pretend = 0, frame = 0
+ 230              		@ frame_needed = 0, uses_anonymous_args = 0
+ 231              	.LVL28:
+ 104:./data/dataW.c ****     int i=7;
+ 105:./data/dataW.c ****     pr_debug("jz w  %d\n", value );
+ 106:./data/dataW.c ****     //for(i=0; i<MAX_POINT_COUNT; i++)
+ 107:./data/dataW.c ****     {
+ 108:./data/dataW.c ****         if( data[i].type == eTTw )
+ 232              		.loc 1 108 0
+ 233 0000 0E4B     		ldr	r3, .L22
+ 103:./data/dataW.c ****     int i=7;
+ 234              		.loc 1 103 0
+ 235 0002 10B5     		push	{r4, lr}
+ 236              	.LCFI2:
+ 237              		.cfi_def_cfa_offset 8
+ 238              		.cfi_offset 4, -8
+ 239              		.cfi_offset 14, -4
+ 240              		.loc 1 108 0
+ 241 0004 1A00     		movs	r2, r3
+ 242 0006 FB32     		adds	r2, r2, #251
+ 243 0008 1278     		ldrb	r2, [r2]
+ 244 000a 032A     		cmp	r2, #3
+ 245 000c 14D1     		bne	.L17
+ 246              	.LBB14:
+ 109:./data/dataW.c ****         {
+ 110:./data/dataW.c ****             uint16 ret = JZPtValue( value, data[i].tmp );
+ 247              		.loc 1 110 0
+ 248 000e E233     		adds	r3, r3, #226
+ 249 0010 1C88     		ldrh	r4, [r3]
+ 250 0012 2100     		movs	r1, r4
+ 251 0014 FFF7FEFF 		bl	JZPtValue
+ 252              	.LVL29:
+ 111:./data/dataW.c ****             pr_debug("W %d %d %d\n", i+1, data[i].tmp, ret );
+ 112:./data/dataW.c ****             if( ret && data[i].tmp > 200 && data[i].tmp < 700)
+ 253              		.loc 1 112 0
+ 254 0018 0028     		cmp	r0, #0
+ 255 001a 0DD0     		beq	.L17
+ 256              		.loc 1 112 0 is_stmt 0 discriminator 1
+ 257 001c F923     		movs	r3, #249
+ 258 001e C93C     		subs	r4, r4, #201
+ 259 0020 A4B2     		uxth	r4, r4
+ 260 0022 5B00     		lsls	r3, r3, #1
+ 261 0024 9C42     		cmp	r4, r3
+ 262 0026 07D8     		bhi	.L17
+ 113:./data/dataW.c ****             {
+ 114:./data/dataW.c ****                 pUsrCfg->WDCfg.jzH = ret;
+ 263              		.loc 1 114 0 is_stmt 1
+ 264 0028 054B     		ldr	r3, .L22+4
+ 265 002a 1B68     		ldr	r3, [r3]
+ 266 002c 2733     		adds	r3, r3, #39
+ 267 002e 1870     		strb	r0, [r3]
+ 268 0030 000A     		lsrs	r0, r0, #8
+ 269              	.LVL30:
+ 270 0032 5870     		strb	r0, [r3, #1]
+ 115:./data/dataW.c ****                 pr_debug("wd :%d\n", ret);
+ 116:./data/dataW.c ****                 UsrWrite();
+ 271              		.loc 1 116 0
+ 272 0034 FFF7FEFF 		bl	UsrWrite
+ 273              	.LVL31:
+ 274              	.L17:
+ 275              	.LBE14:
+ 117:./data/dataW.c ****                 return;
+ 118:./data/dataW.c ****             }
+ 119:./data/dataW.c ****         }
+ 120:./data/dataW.c ****     }
+ 121:./data/dataW.c **** }
+ 276              		.loc 1 121 0
+ 277              		@ sp needed
+ 278 0038 10BD     		pop	{r4, pc}
+ 279              	.L23:
+ 280 003a C046     		.align	2
+ 281              	.L22:
+ 282 003c 00000000 		.word	data
+ 283 0040 00000000 		.word	pUsrCfg
+ 284              		.cfi_endproc
+ 285              	.LFE4:
+ 287              		.global	ptlist
+ 288              		.section	.rodata
+ 289              		.align	1
+ 290              		.set	.LANCHOR0,. + 0
+ 293              	ptlist:
+ 294 0000 F6FF     		.short	-10
+ 295 0002 EE05     		.short	1518
+ 296 0004 0000     		.short	0
+ 297 0006 B305     		.short	1459
+ 298 0008 0A00     		.short	10
+ 299 000a 7E05     		.short	1406
+ 300 000c 1400     		.short	20
+ 301 000e 4C05     		.short	1356
+ 302 0010 1E00     		.short	30
+ 303 0012 2805     		.short	1320
+ 304 0014 2800     		.short	40
+ 305 0016 DC04     		.short	1244
+ 306 0018 3200     		.short	50
+ 307 001a A704     		.short	1191
+ 308 001c 3C00     		.short	60
+ 309 001e 7204     		.short	1138
+ 310 0020 4600     		.short	70
+ 311 0022 3D04     		.short	1085
+ 312 0024 5000     		.short	80
+ 313 0026 0804     		.short	1032
+ 314 0028 5A00     		.short	90
+ 315 002a D303     		.short	979
+ 316 002c 6400     		.short	100
+ 317 002e 9E03     		.short	926
+ 318              		.text
+ 319              	.Letext0:
+ 320              		.file 2 "./bsp/mytype.h"
+ 321              		.file 3 "./data/data.h"
+ 322              		.file 4 "./data/user.h"
+ 323              		.file 5 "../mylib_t/data_def.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 dataW.c
+C:\Users\beyond\AppData\Local\Temp\ccmZ6bKY.s:22     .text.JZPtValue:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccmZ6bKY.s:27     .text.JZPtValue:00000000 JZPtValue
+C:\Users\beyond\AppData\Local\Temp\ccmZ6bKY.s:121    .text.JZPtValue:00000044 $d
+C:\Users\beyond\AppData\Local\Temp\ccmZ6bKY.s:126    .text.WValue:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccmZ6bKY.s:131    .text.WValue:00000000 WValue
+C:\Users\beyond\AppData\Local\Temp\ccmZ6bKY.s:215    .text.WValue:00000040 $d
+C:\Users\beyond\AppData\Local\Temp\ccmZ6bKY.s:220    .text.UserWDJZ:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccmZ6bKY.s:225    .text.UserWDJZ:00000000 UserWDJZ
+C:\Users\beyond\AppData\Local\Temp\ccmZ6bKY.s:282    .text.UserWDJZ:0000003c $d
+C:\Users\beyond\AppData\Local\Temp\ccmZ6bKY.s:293    .rodata:00000000 ptlist
+C:\Users\beyond\AppData\Local\Temp\ccmZ6bKY.s:289    .rodata:00000000 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+__aeabi_idiv
+__aeabi_uidiv
+UsrWrite
+data
+pUsrCfg

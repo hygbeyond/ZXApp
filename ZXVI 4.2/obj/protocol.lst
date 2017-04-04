@@ -1,0 +1,2662 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 4
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"protocol.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.get_cmd,"ax",%progbits
+  20              		.align	1
+  21              		.code	16
+  22              		.thumb_func
+  24              	get_cmd:
+  25              	.LFB72:
+  26              		.file 1 "./data/protocol.c"
+   1:./data/protocol.c **** 
+   2:./data/protocol.c **** //protocol.c
+   3:./data/protocol.c **** //通信协议实现文件
+   4:./data/protocol.c **** #define PROTOCOL_GLOBALS
+   5:./data/protocol.c **** 
+   6:./data/protocol.c **** #include "mytype.h"
+   7:./data/protocol.c **** #include "../drive/nuc_can.h"
+   8:./data/protocol.c **** #include "protocol.h"
+   9:./data/protocol.c **** #include "MicroOS.h"
+  10:./data/protocol.c **** #include "data.h"
+  11:./data/protocol.c **** #include "user.h"
+  12:./data/protocol.c **** #include "crc16.h"
+  13:./data/protocol.c **** #include "app_cfg.h"
+  14:./data/protocol.c **** #include "bsp.h"
+  15:./data/protocol.c **** #include "hardware.h"
+  16:./data/protocol.c **** 
+  17:./data/protocol.c **** 
+  18:./data/protocol.c **** #define COMOFF()    
+  19:./data/protocol.c **** #define COMON()     
+  20:./data/protocol.c **** 
+  21:./data/protocol.c **** 
+  22:./data/protocol.c **** #undef  CAN_LOCK
+  23:./data/protocol.c **** #undef  CAN_UNLOCK
+  24:./data/protocol.c **** 
+  25:./data/protocol.c **** #define CAN_LOCK()         OSSemPend( Can_LockSem, 0 )
+  26:./data/protocol.c **** #define CAN_UNLOCK()       OSSemPost( Can_LockSem )
+  27:./data/protocol.c **** 
+  28:./data/protocol.c **** 
+  29:./data/protocol.c **** #define BUFFER_SIZE        8
+  30:./data/protocol.c **** 
+  31:./data/protocol.c **** static CAN_msg  can_buff[BUFFER_SIZE];
+  32:./data/protocol.c **** static uint8 in,out,cnt;
+  33:./data/protocol.c **** static uint8 TransAddr;
+  34:./data/protocol.c **** static uint8 TransTTAddr;
+  35:./data/protocol.c **** static uint8 CanTransEn;
+  36:./data/protocol.c **** static uint8 CanAutoDis;    //自动发送关闭
+  37:./data/protocol.c **** 
+  38:./data/protocol.c **** static CAN_msg Txmsg;
+  39:./data/protocol.c **** int SetAddress;
+  40:./data/protocol.c **** int ProCanError;
+  41:./data/protocol.c **** 
+  42:./data/protocol.c **** void Pro_Init(void )
+  43:./data/protocol.c **** {
+  44:./data/protocol.c ****     in = out = cnt = 0;
+  45:./data/protocol.c ****     Txmsg.cnt = 0;
+  46:./data/protocol.c ****     TransAddr = 0;
+  47:./data/protocol.c ****     CanTransEn = 0;
+  48:./data/protocol.c ****     ProCanError = 0;
+  49:./data/protocol.c ****     SetAddress = 0;
+  50:./data/protocol.c **** 
+  51:./data/protocol.c ****     TransTTAddr = 0;
+  52:./data/protocol.c ****     CanAutoDis  = 1;
+  53:./data/protocol.c **** }
+  54:./data/protocol.c **** 
+  55:./data/protocol.c **** static int Set_Crc( TProtocol *pPro )
+  56:./data/protocol.c **** {
+  57:./data/protocol.c ****     if( pPro == NULL )
+  58:./data/protocol.c ****         return 0;
+  59:./data/protocol.c **** 
+  60:./data/protocol.c ****     int size; 
+  61:./data/protocol.c ****     uint16 crc;
+  62:./data/protocol.c ****     pPro->T1 = TPROC_T1;
+  63:./data/protocol.c ****     pPro->T2 = TPROC_T2;
+  64:./data/protocol.c **** 
+  65:./data/protocol.c ****     size = pPro->Tcnt+3;
+  66:./data/protocol.c ****     crc  = modbus_crc( 0, &pPro->T1, size);
+  67:./data/protocol.c ****     pPro->buff[pPro->Tcnt]   = crc & 0xFF;
+  68:./data/protocol.c ****     pPro->buff[pPro->Tcnt+1] = crc>>8;
+  69:./data/protocol.c ****     return size+2;
+  70:./data/protocol.c **** }
+  71:./data/protocol.c **** 
+  72:./data/protocol.c **** uint8 BJ_Trans( uint8 addr )
+  73:./data/protocol.c **** {
+  74:./data/protocol.c ****     CAN_msg *pMSG;
+  75:./data/protocol.c ****     uint8 ret = 0;
+  76:./data/protocol.c ****     OS_SREG_VAR;
+  77:./data/protocol.c ****     if( CanTransEn == 0)
+  78:./data/protocol.c ****         return 0;
+  79:./data/protocol.c ****     OS_ENTER_CRITICAL();
+  80:./data/protocol.c ****     if( cnt < BUFFER_SIZE   )
+  81:./data/protocol.c ****     {
+  82:./data/protocol.c ****         cnt++;
+  83:./data/protocol.c ****         pMSG = &can_buff[in++];
+  84:./data/protocol.c ****         if( in >= BUFFER_SIZE )
+  85:./data/protocol.c ****             in = 0;
+  86:./data/protocol.c **** 
+  87:./data/protocol.c ****         pMSG->id = __ID( CAN_ID_DATA, TCMDDATA_BJ, addr+1, pUsrCfg->address);
+  88:./data/protocol.c ****         pMSG->cnt    = 4;
+  89:./data/protocol.c ****         pMSG->Dtype  = data[addr].type;
+  90:./data/protocol.c ****         pMSG->Dstate = DATA_BJ;
+  91:./data/protocol.c ****         pMSG->Dvalue = data[addr].value ;
+  92:./data/protocol.c **** 
+  93:./data/protocol.c ****         ret++;
+  94:./data/protocol.c ****     }
+  95:./data/protocol.c ****     OS_EXIT_CRITICAL();
+  96:./data/protocol.c ****     return ret;
+  97:./data/protocol.c **** }
+  98:./data/protocol.c **** 
+  99:./data/protocol.c **** 
+ 100:./data/protocol.c **** /*
+ 101:./data/protocol.c ****  * 发送故障或故障恢复
+ 102:./data/protocol.c ****  */
+ 103:./data/protocol.c **** uint8 GZ_Trans( uint8 addr, uint8 cmd, uint8 state )
+ 104:./data/protocol.c **** {
+ 105:./data/protocol.c ****     CAN_msg *pMSG;
+ 106:./data/protocol.c ****     uint8 ret = 0;
+ 107:./data/protocol.c ****     OS_SREG_VAR;
+ 108:./data/protocol.c ****     if( CanTransEn == 0)
+ 109:./data/protocol.c ****         return 0;
+ 110:./data/protocol.c ****     OS_ENTER_CRITICAL();
+ 111:./data/protocol.c ****     if( cnt < BUFFER_SIZE  )
+ 112:./data/protocol.c ****     {
+ 113:./data/protocol.c ****         cnt++;
+ 114:./data/protocol.c ****         pMSG = &can_buff[in++];
+ 115:./data/protocol.c ****         if( in >= BUFFER_SIZE )
+ 116:./data/protocol.c ****             in = 0;
+ 117:./data/protocol.c **** 
+ 118:./data/protocol.c ****         pMSG->id = __ID( CAN_ID_DATA, cmd, addr+1, pUsrCfg->address);
+ 119:./data/protocol.c ****         pMSG->cnt    = 4;
+ 120:./data/protocol.c ****         pMSG->Dtype  = data[addr].type;
+ 121:./data/protocol.c ****         pMSG->Dstate = state;
+ 122:./data/protocol.c ****         pMSG->Dvalue = data[addr].value;
+ 123:./data/protocol.c ****         ret++;
+ 124:./data/protocol.c ****     }
+ 125:./data/protocol.c ****     OS_EXIT_CRITICAL();
+ 126:./data/protocol.c ****     return ret;
+ 127:./data/protocol.c **** }
+ 128:./data/protocol.c **** 
+ 129:./data/protocol.c **** //extern uint8 TKstate;
+ 130:./data/protocol.c **** uint8 TK_Trans( uint8 cmd )
+ 131:./data/protocol.c **** {
+ 132:./data/protocol.c ****     CAN_msg *pMSG;
+ 133:./data/protocol.c ****     uint8 ret = 0;
+ 134:./data/protocol.c ****     TMKState *ps;
+ 135:./data/protocol.c ****     OS_SREG_VAR;
+ 136:./data/protocol.c ****     if( CanTransEn == 0)
+ 137:./data/protocol.c ****         return 0;
+ 138:./data/protocol.c ****     OS_ENTER_CRITICAL();
+ 139:./data/protocol.c ****     if( cnt < BUFFER_SIZE )
+ 140:./data/protocol.c ****     {
+ 141:./data/protocol.c ****         cnt++;
+ 142:./data/protocol.c ****         pMSG = &can_buff[in++];
+ 143:./data/protocol.c ****         if( in >= BUFFER_SIZE )
+ 144:./data/protocol.c ****             in = 0;
+ 145:./data/protocol.c **** 
+ 146:./data/protocol.c ****         ps = (TMKState*)pMSG->buff;
+ 147:./data/protocol.c **** 
+ 148:./data/protocol.c ****         pMSG->id    = __ID( CAN_ID_DATA, cmd, 1, pUsrCfg->address);
+ 149:./data/protocol.c ****         pMSG->cnt   = 8;
+ 150:./data/protocol.c **** 
+ 151:./data/protocol.c **** 		ps->TKtype   = pUsrCfg->type;
+ 152:./data/protocol.c **** 		ps->TTcnt    = pUsrCfg->count;
+ 153:./data/protocol.c **** 		ps->TKstate  = MKState.state;
+ 154:./data/protocol.c **** 		ps->TKstate2 = MKState.state2;
+ 155:./data/protocol.c **** 		ps->wValue   = wValue;
+ 156:./data/protocol.c **** 		ps->ZKaddr   = 0;
+ 157:./data/protocol.c **** 		ps->version  = MKVERSION;
+ 158:./data/protocol.c ****         ret++;
+ 159:./data/protocol.c ****     }
+ 160:./data/protocol.c ****     OS_EXIT_CRITICAL();
+ 161:./data/protocol.c ****     return ret;
+ 162:./data/protocol.c **** }
+ 163:./data/protocol.c **** 
+ 164:./data/protocol.c **** 
+ 165:./data/protocol.c **** void AutoTrans(void)
+ 166:./data/protocol.c **** {
+ 167:./data/protocol.c **** 	if( CanAutoDis ) return;
+ 168:./data/protocol.c ****     TK_Trans( TCMDDATA_TK );
+ 169:./data/protocol.c **** }
+ 170:./data/protocol.c **** 
+ 171:./data/protocol.c **** uint8 TT_Trans( uint8 addr )
+ 172:./data/protocol.c **** {
+ 173:./data/protocol.c ****     if( addr > pUsrCfg->count  )
+ 174:./data/protocol.c ****         return FALSE;
+ 175:./data/protocol.c **** 
+ 176:./data/protocol.c ****     CAN_msg *pMSG;
+ 177:./data/protocol.c ****     uint8 ret = 0;
+ 178:./data/protocol.c ****     OS_SREG_VAR;
+ 179:./data/protocol.c ****     if( CanTransEn == 0)
+ 180:./data/protocol.c ****         return 0;
+ 181:./data/protocol.c ****     OS_ENTER_CRITICAL();
+ 182:./data/protocol.c ****     if( cnt < BUFFER_SIZE )
+ 183:./data/protocol.c ****     {
+ 184:./data/protocol.c ****         cnt++;
+ 185:./data/protocol.c ****         pMSG = &can_buff[in++];
+ 186:./data/protocol.c ****         if( in >= BUFFER_SIZE )
+ 187:./data/protocol.c ****             in = 0; 
+ 188:./data/protocol.c ****         pMSG->id     = __ID( CAN_ID_DATA, TCMDDATA_TT, addr+1, pUsrCfg->address);
+ 189:./data/protocol.c ****         pMSG->cnt    = 4;
+ 190:./data/protocol.c ****         pMSG->Dtype  = data[addr].type;
+ 191:./data/protocol.c ****         pMSG->Dstate = data[addr].state;
+ 192:./data/protocol.c ****         pMSG->Dvalue = data[addr].type == eTTvd? data[addr].value/10 :data[addr].value;
+ 193:./data/protocol.c ****         ret++;
+ 194:./data/protocol.c ****     }
+ 195:./data/protocol.c ****     OS_EXIT_CRITICAL();
+ 196:./data/protocol.c ****     return ret;
+ 197:./data/protocol.c **** }
+ 198:./data/protocol.c **** 
+ 199:./data/protocol.c **** static void CAN_TransAll(void)
+ 200:./data/protocol.c **** {
+ 201:./data/protocol.c ****     if( Txmsg.cnt == 0 && TransAddr != 0)
+ 202:./data/protocol.c ****     {
+ 203:./data/protocol.c ****         uint8 i,j;
+ 204:./data/protocol.c ****         uint8 len=0;
+ 205:./data/protocol.c ****         uint8 tmp = TransAddr;
+ 206:./data/protocol.c ****         for(i=0; i<4; i++)
+ 207:./data/protocol.c ****         {
+ 208:./data/protocol.c ****             if( TransAddr > pUsrCfg->count )
+ 209:./data/protocol.c ****             {
+ 210:./data/protocol.c ****                 TransAddr = 0;
+ 211:./data/protocol.c ****                 break;
+ 212:./data/protocol.c ****             }
+ 213:./data/protocol.c ****             j = TransAddr-1;
+ 214:./data/protocol.c ****             Txmsg.Data[i].value = data[j].type == eTTvd? data[j].value/10 :data[j].value;
+ 215:./data/protocol.c ****             Txmsg.Data[i].type  = data[j].type;
+ 216:./data/protocol.c ****             TransAddr++;
+ 217:./data/protocol.c ****             len += 2;
+ 218:./data/protocol.c ****         }
+ 219:./data/protocol.c ****         if( len )
+ 220:./data/protocol.c ****         {
+ 221:./data/protocol.c ****             Txmsg.cnt = len;
+ 222:./data/protocol.c ****             Txmsg.id = __ID( 1, TCMDDATA_MK, tmp, pUsrCfg->address);
+ 223:./data/protocol.c ****         }
+ 224:./data/protocol.c ****     }
+ 225:./data/protocol.c **** 
+ 226:./data/protocol.c **** 	if (Txmsg.cnt == 0 && TransTTAddr != 0) {
+ 227:./data/protocol.c **** 		uint8 i, j;
+ 228:./data/protocol.c **** 		uint8 len = 0;
+ 229:./data/protocol.c **** 		uint8 tmp = TransTTAddr;
+ 230:./data/protocol.c **** 		TMKAllValue *pv = (TMKAllValue*)Txmsg.buff;
+ 231:./data/protocol.c **** 
+ 232:./data/protocol.c **** 		for (i = 0; i < 2; i++) {
+ 233:./data/protocol.c **** 			if (TransTTAddr > pUsrCfg->count) {
+ 234:./data/protocol.c **** 				TransTTAddr = 0;
+ 235:./data/protocol.c **** 				break;
+ 236:./data/protocol.c **** 			}
+ 237:./data/protocol.c **** 			j = TransTTAddr - 1;
+ 238:./data/protocol.c **** 			int v = data[j].type == eTTvd ? data[j].value / 10 : data[j].value;
+ 239:./data/protocol.c **** 
+ 240:./data/protocol.c **** 			pv->Data[i].d32 =MKAllValue12(v, data[j].type, GetWJZValue(data[j].tmp), data[j].state );
+ 241:./data/protocol.c **** 			TransTTAddr++;
+ 242:./data/protocol.c **** 			len += 4;
+ 243:./data/protocol.c **** 		}
+ 244:./data/protocol.c **** 		if (len) {
+ 245:./data/protocol.c **** 			Txmsg.cnt = len;
+ 246:./data/protocol.c **** 			Txmsg.id = __ID(1, TCMDDATA_MKALL12, tmp, pUsrCfg->address);
+ 247:./data/protocol.c **** 		}
+ 248:./data/protocol.c **** 	}
+ 249:./data/protocol.c **** }
+ 250:./data/protocol.c **** 
+ 251:./data/protocol.c **** uint8 CAN_WriteAll( void )
+ 252:./data/protocol.c **** {
+ 253:./data/protocol.c ****     COMOFF();
+ 254:./data/protocol.c ****     if( CanTransEn == 0)
+ 255:./data/protocol.c ****         return 0;
+ 256:./data/protocol.c ****     if( Txmsg.cnt == 0 )
+ 257:./data/protocol.c ****     {
+ 258:./data/protocol.c ****         if( cnt )
+ 259:./data/protocol.c ****         {
+ 260:./data/protocol.c ****             cnt--;
+ 261:./data/protocol.c ****             Txmsg = can_buff[out++];
+ 262:./data/protocol.c ****             if( out >= BUFFER_SIZE )
+ 263:./data/protocol.c ****                 out = 0;
+ 264:./data/protocol.c ****         }
+ 265:./data/protocol.c ****     }
+ 266:./data/protocol.c **** 
+ 267:./data/protocol.c ****     CAN_TransAll();
+ 268:./data/protocol.c **** 
+ 269:./data/protocol.c ****     if( Txmsg.cnt )
+ 270:./data/protocol.c ****     {
+ 271:./data/protocol.c ****         COMON();
+ 272:./data/protocol.c ****         int8 ret = CAN_wrMSG( &Txmsg );
+ 273:./data/protocol.c ****         if( ret > 0)
+ 274:./data/protocol.c ****         {//数据发送完成
+ 275:./data/protocol.c **** //            DEBUG2("tx %08x: %08x %08x\n", Txmsg.id, Txmsg.DataA, Txmsg.DataB);
+ 276:./data/protocol.c ****             ProCanError = 0;
+ 277:./data/protocol.c ****             Txmsg.cnt = 0;
+ 278:./data/protocol.c ****         }else
+ 279:./data/protocol.c ****         {
+ 280:./data/protocol.c ****             if( ProCanError > 30 )
+ 281:./data/protocol.c ****                 CAN_GetErr(0);
+ 282:./data/protocol.c ****             if( ProCanError > 1000 )
+ 283:./data/protocol.c ****             {
+ 284:./data/protocol.c ****                 ProCanError = 0;
+ 285:./data/protocol.c ****                 CAN_GetErr(1);
+ 286:./data/protocol.c ****             }
+ 287:./data/protocol.c ****         }
+ 288:./data/protocol.c ****         return ret;
+ 289:./data/protocol.c ****     }
+ 290:./data/protocol.c **** 
+ 291:./data/protocol.c ****     return FALSE;
+ 292:./data/protocol.c **** }
+ 293:./data/protocol.c **** 
+ 294:./data/protocol.c **** 
+ 295:./data/protocol.c **** //#define OEM_ZHHA           0x55AA
+ 296:./data/protocol.c **** //#define OEM_TANDA          0x55A0
+ 297:./data/protocol.c **** //#define OEM_O              0x55A1
+ 298:./data/protocol.c **** 
+ 299:./data/protocol.c **** extern void reset_cmd(void);
+ 300:./data/protocol.c **** void jz_cmd( int args, char **argv );
+ 301:./data/protocol.c **** //extern uint8 sound;
+ 302:./data/protocol.c **** void CanCmdMsg( CAN_msg *pMsg )
+ 303:./data/protocol.c **** {
+ 304:./data/protocol.c ****     DEBUG2("can %x-%x-%x\n", pMsg->IDstate, pMsg->IDcmd, pMsg->Dtype);
+ 305:./data/protocol.c ****     if( pMsg->IDstate == 0 )
+ 306:./data/protocol.c ****     {
+ 307:./data/protocol.c ****         return;
+ 308:./data/protocol.c ****     }
+ 309:./data/protocol.c **** 
+ 310:./data/protocol.c ****     switch (pMsg->IDcmd) {
+ 311:./data/protocol.c **** 	case TPROTRANS_GETTK:
+ 312:./data/protocol.c **** 		if (pMsg->IDTK == pUsrCfg->address || pMsg->IDTK == 0) {
+ 313:./data/protocol.c **** 			TK_Trans( TCMDDATA_TK);
+ 314:./data/protocol.c **** 			if (pMsg->Dvalue == OEM_NUM) {
+ 315:./data/protocol.c **** 				CanTransEn = 1;
+ 316:./data/protocol.c **** 				CanAutoDis = 1;
+ 317:./data/protocol.c **** 			}
+ 318:./data/protocol.c **** 		}
+ 319:./data/protocol.c ****         break;
+ 320:./data/protocol.c ****     case TPROTRANS_SETADDR:
+ 321:./data/protocol.c ****         DEBUG2("SetAddress ");
+ 322:./data/protocol.c ****         if( pMsg->Dstate == 0x55 && pMsg->Dtype == 0xAA )
+ 323:./data/protocol.c ****         {
+ 324:./data/protocol.c ****             DEBUG2("SetAddress:%d", pMsg->Dvalue);
+ 325:./data/protocol.c ****             SetAddress = pMsg->Dvalue;
+ 326:./data/protocol.c ****         }
+ 327:./data/protocol.c ****     	return;
+ 328:./data/protocol.c ****     case TPROTRANS_RESETALL:
+ 329:./data/protocol.c ****     	if( pMsg->Dvalue == 0x55AA )
+ 330:./data/protocol.c ****     	{
+ 331:./data/protocol.c ****     		UserSetDef();
+ 332:./data/protocol.c ****     	}
+ 333:./data/protocol.c ****         reset_cmd();
+ 334:./data/protocol.c ****         return;
+ 335:./data/protocol.c ****     	break;
+ 336:./data/protocol.c **** 	case TPROTRANS_HAIPPO3:
+ 337:./data/protocol.c **** 		CanTransEn = 0;
+ 338:./data/protocol.c **** 		CanAutoDis = 0;
+ 339:./data/protocol.c **** 		if (pMsg->Dtype == 0xAA) {
+ 340:./data/protocol.c **** 			if( pMsg->Dvalue == OEM_NUM )
+ 341:./data/protocol.c **** 			{
+ 342:./data/protocol.c **** 				CanTransEn = 1;
+ 343:./data/protocol.c **** 			}
+ 344:./data/protocol.c **** 			return;
+ 345:./data/protocol.c **** 		}
+ 346:./data/protocol.c **** 		break;
+ 347:./data/protocol.c **** 	case TPROTRANS_JZ:
+ 348:./data/protocol.c **** 		if (pMsg->IDTK == pUsrCfg->address || pMsg->IDTK == 0) {
+ 349:./data/protocol.c **** 			switch (pMsg->Dtype) {
+ 350:./data/protocol.c **** 			case 0xAA:
+ 351:./data/protocol.c **** 				jz_cmd(0, 0);
+ 352:./data/protocol.c **** 				return;
+ 353:./data/protocol.c **** 			case 0xAB:
+ 354:./data/protocol.c **** 				UserVJZ(pMsg->Dvalue);
+ 355:./data/protocol.c **** 				return;
+ 356:./data/protocol.c **** 			}
+ 357:./data/protocol.c **** 		}
+ 358:./data/protocol.c **** 	}
+ 359:./data/protocol.c **** 
+ 360:./data/protocol.c ****     if( pMsg->Dtype == 0xAA && ( pMsg->IDTK == pUsrCfg->address || pMsg->IDTK == 0 ))
+ 361:./data/protocol.c ****     {
+ 362:./data/protocol.c ****         switch( pMsg->IDcmd )
+ 363:./data/protocol.c ****         {
+ 364:./data/protocol.c **** 			case TPROTRANS_SETWARNING_QYV:
+ 365:./data/protocol.c **** 				UsrSetVqy( pMsg->Dvalue );
+ 366:./data/protocol.c **** 				return;
+ 367:./data/protocol.c ****             case TPROTRANS_SETWARNING_V:
+ 368:./data/protocol.c ****                 UsrSetVbj( pMsg->Dvalue );
+ 369:./data/protocol.c ****                 return;
+ 370:./data/protocol.c ****             case TPROTRANS_SETWARNING_I:
+ 371:./data/protocol.c ****                 UsrSetIbj( pMsg->Dvalue );
+ 372:./data/protocol.c ****                 return;
+ 373:./data/protocol.c ****             case TPROTRANS_SETED_I:
+ 374:./data/protocol.c ****                 UsrSetIed( pMsg->Dvalue );
+ 375:./data/protocol.c ****                 return;
+ 376:./data/protocol.c ****             case TPROTRANS_SETDELAYI :
+ 377:./data/protocol.c ****                 UsrSetDelayI( pMsg->Dvalue );
+ 378:./data/protocol.c ****                 return;
+ 379:./data/protocol.c ****             case TPROTRANS_SETDELAY :
+ 380:./data/protocol.c ****                 UsrSetDelay( pMsg->Dvalue );
+ 381:./data/protocol.c ****                 return;
+ 382:./data/protocol.c ****             case TPROTRANS_SETWARNING:
+ 383:./data/protocol.c ****                 UsrSetSbj( pMsg->Dvalue );
+ 384:./data/protocol.c ****                 return;
+ 385:./data/protocol.c ****             case TPROTRANS_SETWARNING_W:
+ 386:./data/protocol.c ****                 UsrSetWbj( pMsg->Dvalue );
+ 387:./data/protocol.c ****                 return;
+ 388:./data/protocol.c ****             case TPROTRANS_SETBDDIS:
+ 389:./data/protocol.c ****                 UsrSetBD( pMsg->Dvalue );
+ 390:./data/protocol.c ****                 return;
+ 391:./data/protocol.c ****             case TPROTRANS_TTCNT:
+ 392:./data/protocol.c ****                 UsrSetCnt( pMsg->Dvalue );
+ 393:./data/protocol.c ****                 return;
+ 394:./data/protocol.c ****             case TPROTRANS_SETTYPE:
+ 395:./data/protocol.c ****                 UsrSetType( pMsg->Dvalue );
+ 396:./data/protocol.c ****             	return ;
+ 397:./data/protocol.c ****         }
+ 398:./data/protocol.c ****     }
+ 399:./data/protocol.c **** 
+ 400:./data/protocol.c ****     if( pMsg->IDTK == pUsrCfg->address )
+ 401:./data/protocol.c ****     {
+ 402:./data/protocol.c ****         switch( pMsg->IDcmd )
+ 403:./data/protocol.c ****         {
+ 404:./data/protocol.c ****             case TPROTRANS_GETTT:
+ 405:./data/protocol.c ****                 TT_Trans( pMsg->IDTT );
+ 406:./data/protocol.c ****                 break;
+ 407:./data/protocol.c **** //            case TPROTRANS_GETTK:
+ 408:./data/protocol.c **** //                TK_Trans( TCMDDATA_TK );
+ 409:./data/protocol.c **** //                break;
+ 410:./data/protocol.c ****             case TPROTRANS_NORMAL:
+ 411:./data/protocol.c ****                 if( pMsg->IDTT )
+ 412:./data/protocol.c ****                 {
+ 413:./data/protocol.c ****                     TT_Trans( pMsg->IDTT -1 );
+ 414:./data/protocol.c ****                 }
+ 415:./data/protocol.c ****                 break;
+ 416:./data/protocol.c ****             case TPROTRANS_TKALL:
+ 417:./data/protocol.c ****                 {
+ 418:./data/protocol.c ****                     TK_Trans( TCMDDATA_TK );
+ 419:./data/protocol.c ****                     if( TransAddr == 0 )
+ 420:./data/protocol.c ****                         TransAddr = 1;
+ 421:./data/protocol.c ****                 }
+ 422:./data/protocol.c ****                 break;
+ 423:./data/protocol.c ****             case TPROTRANS_TTALL:
+ 424:./data/protocol.c ****             {
+ 425:./data/protocol.c ****                 TK_Trans( TCMDDATA_TK );
+ 426:./data/protocol.c ****                 if( TransTTAddr == 0 )
+ 427:./data/protocol.c ****                     TransTTAddr = 1;
+ 428:./data/protocol.c ****             	break;
+ 429:./data/protocol.c ****             }
+ 430:./data/protocol.c ****         }
+ 431:./data/protocol.c ****     }
+ 432:./data/protocol.c **** }
+ 433:./data/protocol.c **** 
+ 434:./data/protocol.c **** #include "pcommand.h"
+ 435:./data/protocol.c **** #include "../drive/nuc_uart0.h"
+ 436:./data/protocol.c **** static  int sendBuff( uint8 *buff, int size )
+ 437:./data/protocol.c **** {
+ 438:./data/protocol.c **** 	int i=size;
+ 439:./data/protocol.c **** 	for(int a=0; a<HZ; a++)
+ 440:./data/protocol.c **** 	{
+ 441:./data/protocol.c **** 		wdt_reset();
+ 442:./data/protocol.c **** 		int ret = Uart_SendBuff(buff, i);
+ 443:./data/protocol.c **** 		buff += ret;
+ 444:./data/protocol.c **** 		i   -= ret;
+ 445:./data/protocol.c **** 		if( i==0 ) break;
+ 446:./data/protocol.c **** 		OSTimeDly(1);
+ 447:./data/protocol.c **** 	}
+ 448:./data/protocol.c **** //    while( size--)
+ 449:./data/protocol.c **** //    {
+ 450:./data/protocol.c **** //        Uart_SendByte( *buff++);
+ 451:./data/protocol.c **** //    }
+ 452:./data/protocol.c ****     return 1;
+ 453:./data/protocol.c **** }
+ 454:./data/protocol.c **** 
+ 455:./data/protocol.c **** TProtocol pro;
+ 456:./data/protocol.c **** static 
+ 457:./data/protocol.c **** int get_cmd(int args, char **argv )
+ 458:./data/protocol.c **** {
+  27              		.loc 1 458 0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31              	.LVL0:
+  32 0000 F8B5     		push	{r3, r4, r5, r6, r7, lr}
+  33              	.LCFI0:
+  34              		.cfi_def_cfa_offset 24
+  35              		.cfi_offset 3, -24
+  36              		.cfi_offset 4, -20
+  37              		.cfi_offset 5, -16
+  38              		.cfi_offset 6, -12
+  39              		.cfi_offset 7, -8
+  40              		.cfi_offset 14, -4
+ 459:./data/protocol.c ****     TProData *pData = (TProData*)&pro.buff;
+ 460:./data/protocol.c ****     int i;
+ 461:./data/protocol.c **** 
+ 462:./data/protocol.c ****     pData->TTcnt =  pUsrCfg->count;
+  41              		.loc 1 462 0
+  42 0002 2F4B     		ldr	r3, .L11
+  43 0004 2F4C     		ldr	r4, .L11+4
+  44 0006 1868     		ldr	r0, [r3]
+  45              	.LVL1:
+ 463:./data/protocol.c ****     pData->type  =  pUsrCfg->type;
+ 464:./data/protocol.c ****     pData->addr  = pUsrCfg->address;
+ 465:./data/protocol.c ****     pData->state = MKState.state;
+ 466:./data/protocol.c ****     pData->state2 = MKState.state2;
+ 467:./data/protocol.c ****     for(i=0; i<pUsrCfg->count; i++)
+ 468:./data/protocol.c ****     {
+ 469:./data/protocol.c ****         pData->TTbuff[i].value = data[i].value;
+  46              		.loc 1 469 0
+  47 0008 1F26     		movs	r6, #31
+ 462:./data/protocol.c ****     pData->type  =  pUsrCfg->type;
+  48              		.loc 1 462 0
+  49 000a 8378     		ldrb	r3, [r0, #2]
+  50 000c 2371     		strb	r3, [r4, #4]
+ 463:./data/protocol.c ****     pData->type  =  pUsrCfg->type;
+  51              		.loc 1 463 0
+  52 000e C378     		ldrb	r3, [r0, #3]
+  53 0010 E370     		strb	r3, [r4, #3]
+ 464:./data/protocol.c ****     pData->state = MKState.state;
+  54              		.loc 1 464 0
+  55 0012 4378     		ldrb	r3, [r0, #1]
+  56 0014 0278     		ldrb	r2, [r0]
+  57 0016 1B02     		lsls	r3, r3, #8
+  58 0018 1343     		orrs	r3, r2
+  59 001a 6371     		strb	r3, [r4, #5]
+  60 001c 1B0A     		lsrs	r3, r3, #8
+  61 001e A371     		strb	r3, [r4, #6]
+ 465:./data/protocol.c ****     pData->state2 = MKState.state2;
+  62              		.loc 1 465 0
+  63 0020 294B     		ldr	r3, .L11+8
+  64 0022 1A78     		ldrb	r2, [r3]
+  65 0024 E271     		strb	r2, [r4, #7]
+  66 0026 5A78     		ldrb	r2, [r3, #1]
+  67 0028 2272     		strb	r2, [r4, #8]
+ 466:./data/protocol.c ****     for(i=0; i<pUsrCfg->count; i++)
+  68              		.loc 1 466 0
+  69 002a 9B78     		ldrb	r3, [r3, #2]
+  70 002c 6372     		strb	r3, [r4, #9]
+  71 002e 0023     		movs	r3, #0
+ 467:./data/protocol.c ****     {
+  72              		.loc 1 467 0
+  73 0030 1D00     		movs	r5, r3
+ 466:./data/protocol.c ****     for(i=0; i<pUsrCfg->count; i++)
+  74              		.loc 1 466 0
+  75 0032 A372     		strb	r3, [r4, #10]
+  76              	.LVL2:
+  77              	.L2:
+ 467:./data/protocol.c ****     {
+  78              		.loc 1 467 0 discriminator 1
+  79 0034 8178     		ldrb	r1, [r0, #2]
+  80 0036 2B00     		movs	r3, r5
+  81              	.LVL3:
+  82 0038 0135     		adds	r5, r5, #1
+  83 003a 8B42     		cmp	r3, r1
+  84 003c 1BDA     		bge	.L10
+  85 003e 2349     		ldr	r1, .L11+12
+  86 0040 6A01     		lsls	r2, r5, #5
+  87 0042 5218     		adds	r2, r2, r1
+  88              		.loc 1 469 0 discriminator 3
+  89 0044 0433     		adds	r3, r3, #4
+  90              	.LVL4:
+  91 0046 1100     		movs	r1, r2
+  92 0048 5B00     		lsls	r3, r3, #1
+  93              	.LVL5:
+  94 004a E318     		adds	r3, r4, r3
+  95 004c DF1C     		adds	r7, r3, #3
+  96 004e BC46     		mov	ip, r7
+  97 0050 2039     		subs	r1, r1, #32
+  98 0052 0F78     		ldrb	r7, [r1]
+  99 0054 4978     		ldrb	r1, [r1, #1]
+ 100 0056 DF70     		strb	r7, [r3, #3]
+ 101 0058 6746     		mov	r7, ip
+ 102 005a 7F78     		ldrb	r7, [r7, #1]
+ 103 005c 3140     		ands	r1, r6
+ 104 005e B743     		bics	r7, r6
+ 105 0060 3943     		orrs	r1, r7
+ 106 0062 6746     		mov	r7, ip
+ 470:./data/protocol.c ****         pData->TTbuff[i].type  = data[i].type;
+ 107              		.loc 1 470 0 discriminator 3
+ 108 0064 053A     		subs	r2, r2, #5
+ 109 0066 1278     		ldrb	r2, [r2]
+ 469:./data/protocol.c ****         pData->TTbuff[i].type  = data[i].type;
+ 110              		.loc 1 469 0 discriminator 3
+ 111 0068 7970     		strb	r1, [r7, #1]
+ 112              		.loc 1 470 0 discriminator 3
+ 113 006a 5101     		lsls	r1, r2, #5
+ 114 006c 1A79     		ldrb	r2, [r3, #4]
+ 115 006e 3240     		ands	r2, r6
+ 116 0070 0A43     		orrs	r2, r1
+ 117 0072 1A71     		strb	r2, [r3, #4]
+ 118              	.LVL6:
+ 119 0074 DEE7     		b	.L2
+ 120              	.LVL7:
+ 121              	.L10:
+ 122              	.LBB16:
+ 123              	.LBB17:
+  62:./data/protocol.c ****     pPro->T2 = TPROC_T2;
+ 124              		.loc 1 62 0
+ 125 0076 FA23     		movs	r3, #250
+ 126              	.LVL8:
+ 127              	.LBE17:
+ 128              	.LBE16:
+ 471:./data/protocol.c ****     }
+ 472:./data/protocol.c **** 
+ 473:./data/protocol.c ****     pro.Tcnt =  pUsrCfg->count*2 + 8;
+ 129              		.loc 1 473 0
+ 130 0078 0431     		adds	r1, r1, #4
+ 131 007a 4900     		lsls	r1, r1, #1
+ 132 007c CDB2     		uxtb	r5, r1
+ 133              	.LVL9:
+ 134              	.LBB26:
+ 135              	.LBB24:
+  62:./data/protocol.c ****     pPro->T2 = TPROC_T2;
+ 136              		.loc 1 62 0
+ 137 007e 2370     		strb	r3, [r4]
+ 138              	.LBB18:
+ 139              	.LBB19:
+ 140              		.file 2 "../mylib_t/crc16.h"
+   1:../mylib_t/crc16.h **** 
+   2:../mylib_t/crc16.h **** 
+   3:../mylib_t/crc16.h **** #ifndef __CRC16_H__
+   4:../mylib_t/crc16.h **** #define __CRC16_H__
+   5:../mylib_t/crc16.h **** 
+   6:../mylib_t/crc16.h **** 
+   7:../mylib_t/crc16.h **** #include "mytype.h"
+   8:../mylib_t/crc16.h **** 
+   9:../mylib_t/crc16.h **** #define CRC16_BEGIN        0x55AA
+  10:../mylib_t/crc16.h **** #define CRC32_BEGIN        0x55AAFFFF
+  11:../mylib_t/crc16.h **** 
+  12:../mylib_t/crc16.h **** 
+  13:../mylib_t/crc16.h **** extern uint16 crc16_update  (uint16 crc, uint8 a);	
+  14:../mylib_t/crc16.h **** 
+  15:../mylib_t/crc16.h **** /*
+  16:../mylib_t/crc16.h ****  * CRC  0xA001
+  17:../mylib_t/crc16.h ****  * CRC = crc16_IBM( 0xFFFF, buff, sizeof(buff) );
+  18:../mylib_t/crc16.h ****  * modbus校验
+  19:../mylib_t/crc16.h ****  */
+  20:../mylib_t/crc16.h **** extern uint16 crc16_IBM   ( uint16 crc, const uint8 *p,   int size );
+  21:../mylib_t/crc16.h **** 
+  22:../mylib_t/crc16.h **** /*
+  23:../mylib_t/crc16.h ****  * CRC  0x1201
+  24:../mylib_t/crc16.h ****  * TProtocl, xmodem
+  25:../mylib_t/crc16.h ****  */
+  26:../mylib_t/crc16.h **** extern uint16 crc16_XMODEM( uint16 crc, const uint8 *ptr, int len  );   
+  27:../mylib_t/crc16.h **** 
+  28:../mylib_t/crc16.h **** static inline uint16 GetCheckCRC   (uint16 crc, uint8 *buff,int len)
+  29:../mylib_t/crc16.h **** {
+  30:../mylib_t/crc16.h ****     return crc16_IBM( crc, buff, len );
+  31:../mylib_t/crc16.h **** }
+  32:../mylib_t/crc16.h **** 
+  33:../mylib_t/crc16.h **** static inline uint16 modbus_crc( uint16 crc, const uint8 *pd, int len )
+  34:../mylib_t/crc16.h **** {
+  35:../mylib_t/crc16.h ****     return crc16_XMODEM( crc, pd, len );
+ 141              		.loc 2 35 0
+ 142 0080 EA1C     		adds	r2, r5, #3
+ 143              	.LBE19:
+ 144              	.LBE18:
+  63:./data/protocol.c **** 
+ 145              		.loc 1 63 0
+ 146 0082 0133     		adds	r3, r3, #1
+ 147              	.LBB22:
+ 148              	.LBB20:
+ 149              		.loc 2 35 0
+ 150 0084 2100     		movs	r1, r4
+ 151 0086 0020     		movs	r0, #0
+ 152              	.LBE20:
+ 153              	.LBE22:
+ 154              	.LBE24:
+ 155              	.LBE26:
+ 156              		.loc 1 473 0
+ 157 0088 A570     		strb	r5, [r4, #2]
+ 158              	.LVL10:
+ 159              	.LBB27:
+ 160              	.LBB25:
+  63:./data/protocol.c **** 
+ 161              		.loc 1 63 0
+ 162 008a 6370     		strb	r3, [r4, #1]
+ 163              	.LVL11:
+ 164              	.LBB23:
+ 165              	.LBB21:
+ 166              		.loc 2 35 0
+ 167 008c FFF7FEFF 		bl	crc16_XMODEM
+ 168              	.LVL12:
+ 169              	.LBE21:
+ 170              	.LBE23:
+  69:./data/protocol.c **** }
+ 171              		.loc 1 69 0
+ 172 0090 C826     		movs	r6, #200
+  67:./data/protocol.c ****     pPro->buff[pPro->Tcnt+1] = crc>>8;
+ 173              		.loc 1 67 0
+ 174 0092 A378     		ldrb	r3, [r4, #2]
+  69:./data/protocol.c **** }
+ 175              		.loc 1 69 0
+ 176 0094 0535     		adds	r5, r5, #5
+ 177              	.LVL13:
+  67:./data/protocol.c ****     pPro->buff[pPro->Tcnt+1] = crc>>8;
+ 178              		.loc 1 67 0
+ 179 0096 E318     		adds	r3, r4, r3
+ 180 0098 D870     		strb	r0, [r3, #3]
+  68:./data/protocol.c ****     return size+2;
+ 181              		.loc 1 68 0
+ 182 009a 000A     		lsrs	r0, r0, #8
+ 183 009c 1871     		strb	r0, [r3, #4]
+ 184              	.LVL14:
+ 185              	.L5:
+ 186              	.LBE25:
+ 187              	.LBE27:
+ 188              	.LBB28:
+ 189              	.LBB29:
+ 190              	.LBB30:
+ 191              	.LBB31:
+ 441:./data/protocol.c **** 		int ret = Uart_SendBuff(buff, i);
+ 192              		.loc 1 441 0
+ 193 009e FFF7FEFF 		bl	wdt_reset
+ 194              	.LVL15:
+ 442:./data/protocol.c **** 		buff += ret;
+ 195              		.loc 1 442 0
+ 196 00a2 2900     		movs	r1, r5
+ 197 00a4 2000     		movs	r0, r4
+ 198 00a6 FFF7FEFF 		bl	Uart_SendBuff
+ 199              	.LVL16:
+ 443:./data/protocol.c **** 		i   -= ret;
+ 200              		.loc 1 443 0
+ 201 00aa 2418     		adds	r4, r4, r0
+ 202              	.LVL17:
+ 444:./data/protocol.c **** 		if( i==0 ) break;
+ 203              		.loc 1 444 0
+ 204 00ac 2D1A     		subs	r5, r5, r0
+ 205              	.LVL18:
+ 445:./data/protocol.c **** 		OSTimeDly(1);
+ 206              		.loc 1 445 0
+ 207 00ae 05D0     		beq	.L8
+ 446:./data/protocol.c **** 	}
+ 208              		.loc 1 446 0
+ 209 00b0 0120     		movs	r0, #1
+ 210              	.LVL19:
+ 211 00b2 013E     		subs	r6, r6, #1
+ 212              	.LVL20:
+ 213 00b4 FFF7FEFF 		bl	OSTimeDly
+ 214              	.LVL21:
+ 215              	.LBE31:
+ 439:./data/protocol.c **** 	{
+ 216              		.loc 1 439 0
+ 217 00b8 002E     		cmp	r6, #0
+ 218 00ba F0D1     		bne	.L5
+ 219              	.L8:
+ 220              	.LBE30:
+ 221              	.LBE29:
+ 222              	.LBE28:
+ 474:./data/protocol.c **** 
+ 475:./data/protocol.c ****     int size = Set_Crc( &pro );
+ 476:./data/protocol.c ****     return sendBuff( (uint8*)&pro, size);
+ 477:./data/protocol.c ****     return 0;
+ 478:./data/protocol.c **** }
+ 223              		.loc 1 478 0
+ 224 00bc 0120     		movs	r0, #1
+ 225              		@ sp needed
+ 226              	.LVL22:
+ 227              	.LVL23:
+ 228 00be F8BD     		pop	{r3, r4, r5, r6, r7, pc}
+ 229              	.L12:
+ 230              		.align	2
+ 231              	.L11:
+ 232 00c0 00000000 		.word	pUsrCfg
+ 233 00c4 00000000 		.word	pro
+ 234 00c8 00000000 		.word	MKState
+ 235 00cc 00000000 		.word	data
+ 236              		.cfi_endproc
+ 237              	.LFE72:
+ 239              		.section	.text.Pro_Init,"ax",%progbits
+ 240              		.align	1
+ 241              		.global	Pro_Init
+ 242              		.code	16
+ 243              		.thumb_func
+ 245              	Pro_Init:
+ 246              	.LFB61:
+  43:./data/protocol.c ****     in = out = cnt = 0;
+ 247              		.loc 1 43 0
+ 248              		.cfi_startproc
+ 249              		@ args = 0, pretend = 0, frame = 0
+ 250              		@ frame_needed = 0, uses_anonymous_args = 0
+ 251              		@ link register save eliminated.
+  44:./data/protocol.c ****     Txmsg.cnt = 0;
+ 252              		.loc 1 44 0
+ 253 0000 0023     		movs	r3, #0
+  48:./data/protocol.c ****     SetAddress = 0;
+ 254              		.loc 1 48 0
+ 255 0002 0749     		ldr	r1, .L14
+  44:./data/protocol.c ****     Txmsg.cnt = 0;
+ 256              		.loc 1 44 0
+ 257 0004 074A     		ldr	r2, .L14+4
+  48:./data/protocol.c ****     SetAddress = 0;
+ 258              		.loc 1 48 0
+ 259 0006 0B60     		str	r3, [r1]
+  49:./data/protocol.c **** 
+ 260              		.loc 1 49 0
+ 261 0008 0749     		ldr	r1, .L14+8
+  44:./data/protocol.c ****     Txmsg.cnt = 0;
+ 262              		.loc 1 44 0
+ 263 000a 1370     		strb	r3, [r2]
+ 264 000c 5370     		strb	r3, [r2, #1]
+ 265 000e 9370     		strb	r3, [r2, #2]
+  45:./data/protocol.c ****     TransAddr = 0;
+ 266              		.loc 1 45 0
+ 267 0010 1374     		strb	r3, [r2, #16]
+  46:./data/protocol.c ****     CanTransEn = 0;
+ 268              		.loc 1 46 0
+ 269 0012 1375     		strb	r3, [r2, #20]
+  47:./data/protocol.c ****     ProCanError = 0;
+ 270              		.loc 1 47 0
+ 271 0014 5375     		strb	r3, [r2, #21]
+  49:./data/protocol.c **** 
+ 272              		.loc 1 49 0
+ 273 0016 0B60     		str	r3, [r1]
+  51:./data/protocol.c ****     CanAutoDis  = 1;
+ 274              		.loc 1 51 0
+ 275 0018 9375     		strb	r3, [r2, #22]
+  52:./data/protocol.c **** }
+ 276              		.loc 1 52 0
+ 277 001a 0133     		adds	r3, r3, #1
+ 278 001c D375     		strb	r3, [r2, #23]
+  53:./data/protocol.c **** 
+ 279              		.loc 1 53 0
+ 280              		@ sp needed
+ 281 001e 7047     		bx	lr
+ 282              	.L15:
+ 283              		.align	2
+ 284              	.L14:
+ 285 0020 00000000 		.word	ProCanError
+ 286 0024 00000000 		.word	.LANCHOR0
+ 287 0028 00000000 		.word	SetAddress
+ 288              		.cfi_endproc
+ 289              	.LFE61:
+ 291              		.section	.text.BJ_Trans,"ax",%progbits
+ 292              		.align	1
+ 293              		.global	BJ_Trans
+ 294              		.code	16
+ 295              		.thumb_func
+ 297              	BJ_Trans:
+ 298              	.LFB63:
+  73:./data/protocol.c ****     CAN_msg *pMSG;
+ 299              		.loc 1 73 0
+ 300              		.cfi_startproc
+ 301              		@ args = 0, pretend = 0, frame = 0
+ 302              		@ frame_needed = 0, uses_anonymous_args = 0
+ 303              	.LVL24:
+ 304 0000 70B5     		push	{r4, r5, r6, lr}
+ 305              	.LCFI1:
+ 306              		.cfi_def_cfa_offset 16
+ 307              		.cfi_offset 4, -16
+ 308              		.cfi_offset 5, -12
+ 309              		.cfi_offset 6, -8
+ 310              		.cfi_offset 14, -4
+  77:./data/protocol.c ****         return 0;
+ 311              		.loc 1 77 0
+ 312 0002 1B4B     		ldr	r3, .L25
+  73:./data/protocol.c ****     CAN_msg *pMSG;
+ 313              		.loc 1 73 0
+ 314 0004 0600     		movs	r6, r0
+  77:./data/protocol.c ****         return 0;
+ 315              		.loc 1 77 0
+ 316 0006 587D     		ldrb	r0, [r3, #21]
+ 317              	.LVL25:
+ 318 0008 1C00     		movs	r4, r3
+ 319 000a 0028     		cmp	r0, #0
+ 320 000c 2ED0     		beq	.L17
+  79:./data/protocol.c ****     if( cnt < BUFFER_SIZE   )
+ 321              		.loc 1 79 0
+ 322 000e FFF7FEFF 		bl	OS_CPU_SR_Save
+ 323              	.LVL26:
+  80:./data/protocol.c ****     {
+ 324              		.loc 1 80 0
+ 325 0012 2378     		ldrb	r3, [r4]
+  75:./data/protocol.c ****     OS_SREG_VAR;
+ 326              		.loc 1 75 0
+ 327 0014 0025     		movs	r5, #0
+  80:./data/protocol.c ****     {
+ 328              		.loc 1 80 0
+ 329 0016 072B     		cmp	r3, #7
+ 330 0018 25D8     		bhi	.L18
+  82:./data/protocol.c ****         pMSG = &can_buff[in++];
+ 331              		.loc 1 82 0
+ 332 001a 0133     		adds	r3, r3, #1
+ 333 001c 2370     		strb	r3, [r4]
+  83:./data/protocol.c ****         if( in >= BUFFER_SIZE )
+ 334              		.loc 1 83 0
+ 335 001e A378     		ldrb	r3, [r4, #2]
+ 336 0020 5A1C     		adds	r2, r3, #1
+ 337 0022 D2B2     		uxtb	r2, r2
+ 338              	.LVL27:
+  84:./data/protocol.c ****             in = 0;
+ 339              		.loc 1 84 0
+ 340 0024 072A     		cmp	r2, #7
+ 341 0026 01D8     		bhi	.L19
+  83:./data/protocol.c ****         if( in >= BUFFER_SIZE )
+ 342              		.loc 1 83 0
+ 343 0028 A270     		strb	r2, [r4, #2]
+ 344 002a 00E0     		b	.L20
+ 345              	.L19:
+  85:./data/protocol.c **** 
+ 346              		.loc 1 85 0
+ 347 002c A570     		strb	r5, [r4, #2]
+ 348              	.L20:
+  87:./data/protocol.c ****         pMSG->cnt    = 4;
+ 349              		.loc 1 87 0
+ 350 002e 114A     		ldr	r2, .L25+4
+ 351 0030 1B01     		lsls	r3, r3, #4
+ 352              	.LVL28:
+ 353 0032 1268     		ldr	r2, [r2]
+ 354 0034 E318     		adds	r3, r4, r3
+ 355 0036 1178     		ldrb	r1, [r2]
+ 356 0038 5278     		ldrb	r2, [r2, #1]
+  93:./data/protocol.c ****     }
+ 357              		.loc 1 93 0
+ 358 003a 0125     		movs	r5, #1
+  87:./data/protocol.c ****         pMSG->cnt    = 4;
+ 359              		.loc 1 87 0
+ 360 003c 1202     		lsls	r2, r2, #8
+ 361 003e 0A43     		orrs	r2, r1
+ 362 0040 B421     		movs	r1, #180
+ 363 0042 8905     		lsls	r1, r1, #22
+ 364 0044 0A43     		orrs	r2, r1
+ 365 0046 711C     		adds	r1, r6, #1
+ 366 0048 C902     		lsls	r1, r1, #11
+ 367 004a 0A43     		orrs	r2, r1
+  88:./data/protocol.c ****         pMSG->Dtype  = data[addr].type;
+ 368              		.loc 1 88 0
+ 369 004c 0421     		movs	r1, #4
+  87:./data/protocol.c ****         pMSG->cnt    = 4;
+ 370              		.loc 1 87 0
+ 371 004e 9A61     		str	r2, [r3, #24]
+  88:./data/protocol.c ****         pMSG->Dtype  = data[addr].type;
+ 372              		.loc 1 88 0
+ 373 0050 5A1D     		adds	r2, r3, #5
+ 374 0052 D177     		strb	r1, [r2, #31]
+  89:./data/protocol.c ****         pMSG->Dstate = DATA_BJ;
+ 375              		.loc 1 89 0
+ 376 0054 084A     		ldr	r2, .L25+8
+ 377 0056 7601     		lsls	r6, r6, #5
+ 378 0058 9119     		adds	r1, r2, r6
+ 379 005a C97E     		ldrb	r1, [r1, #27]
+  91:./data/protocol.c **** 
+ 380              		.loc 1 91 0
+ 381 005c B25A     		ldrh	r2, [r6, r2]
+  89:./data/protocol.c ****         pMSG->Dstate = DATA_BJ;
+ 382              		.loc 1 89 0
+ 383 005e 1977     		strb	r1, [r3, #28]
+  90:./data/protocol.c ****         pMSG->Dvalue = data[addr].value ;
+ 384              		.loc 1 90 0
+ 385 0060 3321     		movs	r1, #51
+  91:./data/protocol.c **** 
+ 386              		.loc 1 91 0
+ 387 0062 DA83     		strh	r2, [r3, #30]
+ 388              	.LVL29:
+  90:./data/protocol.c ****         pMSG->Dvalue = data[addr].value ;
+ 389              		.loc 1 90 0
+ 390 0064 5977     		strb	r1, [r3, #29]
+ 391              	.LVL30:
+ 392              	.L18:
+  95:./data/protocol.c ****     return ret;
+ 393              		.loc 1 95 0
+ 394 0066 FFF7FEFF 		bl	OS_CPU_SR_Restore
+ 395              	.LVL31:
+  96:./data/protocol.c **** }
+ 396              		.loc 1 96 0
+ 397 006a 2800     		movs	r0, r5
+ 398              	.LVL32:
+ 399              	.L17:
+  97:./data/protocol.c **** 
+ 400              		.loc 1 97 0
+ 401              		@ sp needed
+ 402 006c 70BD     		pop	{r4, r5, r6, pc}
+ 403              	.L26:
+ 404 006e C046     		.align	2
+ 405              	.L25:
+ 406 0070 00000000 		.word	.LANCHOR0
+ 407 0074 00000000 		.word	pUsrCfg
+ 408 0078 00000000 		.word	data
+ 409              		.cfi_endproc
+ 410              	.LFE63:
+ 412              		.section	.text.GZ_Trans,"ax",%progbits
+ 413              		.align	1
+ 414              		.global	GZ_Trans
+ 415              		.code	16
+ 416              		.thumb_func
+ 418              	GZ_Trans:
+ 419              	.LFB64:
+ 104:./data/protocol.c ****     CAN_msg *pMSG;
+ 420              		.loc 1 104 0
+ 421              		.cfi_startproc
+ 422              		@ args = 0, pretend = 0, frame = 8
+ 423              		@ frame_needed = 0, uses_anonymous_args = 0
+ 424              	.LVL33:
+ 425 0000 F7B5     		push	{r0, r1, r2, r4, r5, r6, r7, lr}
+ 426              	.LCFI2:
+ 427              		.cfi_def_cfa_offset 32
+ 428              		.cfi_offset 0, -32
+ 429              		.cfi_offset 1, -28
+ 430              		.cfi_offset 2, -24
+ 431              		.cfi_offset 4, -20
+ 432              		.cfi_offset 5, -16
+ 433              		.cfi_offset 6, -12
+ 434              		.cfi_offset 7, -8
+ 435              		.cfi_offset 14, -4
+ 108:./data/protocol.c ****         return 0;
+ 436              		.loc 1 108 0
+ 437 0002 1D4C     		ldr	r4, .L36
+ 104:./data/protocol.c ****     CAN_msg *pMSG;
+ 438              		.loc 1 104 0
+ 439 0004 0600     		movs	r6, r0
+ 108:./data/protocol.c ****         return 0;
+ 440              		.loc 1 108 0
+ 441 0006 607D     		ldrb	r0, [r4, #21]
+ 442              	.LVL34:
+ 104:./data/protocol.c ****     CAN_msg *pMSG;
+ 443              		.loc 1 104 0
+ 444 0008 0F00     		movs	r7, r1
+ 445 000a 0192     		str	r2, [sp, #4]
+ 108:./data/protocol.c ****         return 0;
+ 446              		.loc 1 108 0
+ 447 000c 0028     		cmp	r0, #0
+ 448 000e 31D0     		beq	.L28
+ 110:./data/protocol.c ****     if( cnt < BUFFER_SIZE  )
+ 449              		.loc 1 110 0
+ 450 0010 FFF7FEFF 		bl	OS_CPU_SR_Save
+ 451              	.LVL35:
+ 111:./data/protocol.c ****     {
+ 452              		.loc 1 111 0
+ 453 0014 2378     		ldrb	r3, [r4]
+ 106:./data/protocol.c ****     OS_SREG_VAR;
+ 454              		.loc 1 106 0
+ 455 0016 0025     		movs	r5, #0
+ 111:./data/protocol.c ****     {
+ 456              		.loc 1 111 0
+ 457 0018 072B     		cmp	r3, #7
+ 458 001a 28D8     		bhi	.L29
+ 113:./data/protocol.c ****         pMSG = &can_buff[in++];
+ 459              		.loc 1 113 0
+ 460 001c 0133     		adds	r3, r3, #1
+ 461 001e 2370     		strb	r3, [r4]
+ 114:./data/protocol.c ****         if( in >= BUFFER_SIZE )
+ 462              		.loc 1 114 0
+ 463 0020 A378     		ldrb	r3, [r4, #2]
+ 464 0022 5A1C     		adds	r2, r3, #1
+ 465 0024 D2B2     		uxtb	r2, r2
+ 466              	.LVL36:
+ 115:./data/protocol.c ****             in = 0;
+ 467              		.loc 1 115 0
+ 468 0026 072A     		cmp	r2, #7
+ 469 0028 01D8     		bhi	.L30
+ 114:./data/protocol.c ****         if( in >= BUFFER_SIZE )
+ 470              		.loc 1 114 0
+ 471 002a A270     		strb	r2, [r4, #2]
+ 472 002c 00E0     		b	.L31
+ 473              	.L30:
+ 116:./data/protocol.c **** 
+ 474              		.loc 1 116 0
+ 475 002e A570     		strb	r5, [r4, #2]
+ 476              	.L31:
+ 118:./data/protocol.c ****         pMSG->cnt    = 4;
+ 477              		.loc 1 118 0
+ 478 0030 1B01     		lsls	r3, r3, #4
+ 479              	.LVL37:
+ 480 0032 E418     		adds	r4, r4, r3
+ 481 0034 114B     		ldr	r3, .L36+4
+ 482 0036 FF04     		lsls	r7, r7, #19
+ 483 0038 1B68     		ldr	r3, [r3]
+ 123:./data/protocol.c ****     }
+ 484              		.loc 1 123 0
+ 485 003a 0125     		movs	r5, #1
+ 118:./data/protocol.c ****         pMSG->cnt    = 4;
+ 486              		.loc 1 118 0
+ 487 003c 1A78     		ldrb	r2, [r3]
+ 488 003e 5B78     		ldrb	r3, [r3, #1]
+ 489 0040 1B02     		lsls	r3, r3, #8
+ 490 0042 1343     		orrs	r3, r2
+ 491 0044 A022     		movs	r2, #160
+ 492 0046 9205     		lsls	r2, r2, #22
+ 493 0048 1343     		orrs	r3, r2
+ 119:./data/protocol.c ****         pMSG->Dtype  = data[addr].type;
+ 494              		.loc 1 119 0
+ 495 004a 0422     		movs	r2, #4
+ 118:./data/protocol.c ****         pMSG->cnt    = 4;
+ 496              		.loc 1 118 0
+ 497 004c 1F43     		orrs	r7, r3
+ 498 004e 731C     		adds	r3, r6, #1
+ 499 0050 DB02     		lsls	r3, r3, #11
+ 500 0052 1F43     		orrs	r7, r3
+ 119:./data/protocol.c ****         pMSG->Dtype  = data[addr].type;
+ 501              		.loc 1 119 0
+ 502 0054 631D     		adds	r3, r4, #5
+ 503 0056 DA77     		strb	r2, [r3, #31]
+ 120:./data/protocol.c ****         pMSG->Dstate = state;
+ 504              		.loc 1 120 0
+ 505 0058 094B     		ldr	r3, .L36+8
+ 506 005a 7601     		lsls	r6, r6, #5
+ 507 005c 9A19     		adds	r2, r3, r6
+ 508 005e D27E     		ldrb	r2, [r2, #27]
+ 122:./data/protocol.c ****         ret++;
+ 509              		.loc 1 122 0
+ 510 0060 F35A     		ldrh	r3, [r6, r3]
+ 120:./data/protocol.c ****         pMSG->Dstate = state;
+ 511              		.loc 1 120 0
+ 512 0062 2277     		strb	r2, [r4, #28]
+ 121:./data/protocol.c ****         pMSG->Dvalue = data[addr].value;
+ 513              		.loc 1 121 0
+ 514 0064 6A46     		mov	r2, sp
+ 515 0066 1279     		ldrb	r2, [r2, #4]
+ 118:./data/protocol.c ****         pMSG->cnt    = 4;
+ 516              		.loc 1 118 0
+ 517 0068 A761     		str	r7, [r4, #24]
+ 121:./data/protocol.c ****         pMSG->Dvalue = data[addr].value;
+ 518              		.loc 1 121 0
+ 519 006a 6277     		strb	r2, [r4, #29]
+ 122:./data/protocol.c ****         ret++;
+ 520              		.loc 1 122 0
+ 521 006c E383     		strh	r3, [r4, #30]
+ 522              	.LVL38:
+ 523              	.L29:
+ 125:./data/protocol.c ****     return ret;
+ 524              		.loc 1 125 0
+ 525 006e FFF7FEFF 		bl	OS_CPU_SR_Restore
+ 526              	.LVL39:
+ 126:./data/protocol.c **** }
+ 527              		.loc 1 126 0
+ 528 0072 2800     		movs	r0, r5
+ 529              	.LVL40:
+ 530              	.L28:
+ 127:./data/protocol.c **** 
+ 531              		.loc 1 127 0
+ 532              		@ sp needed
+ 533 0074 FEBD     		pop	{r1, r2, r3, r4, r5, r6, r7, pc}
+ 534              	.L37:
+ 535 0076 C046     		.align	2
+ 536              	.L36:
+ 537 0078 00000000 		.word	.LANCHOR0
+ 538 007c 00000000 		.word	pUsrCfg
+ 539 0080 00000000 		.word	data
+ 540              		.cfi_endproc
+ 541              	.LFE64:
+ 543              		.section	.text.TK_Trans,"ax",%progbits
+ 544              		.align	1
+ 545              		.global	TK_Trans
+ 546              		.code	16
+ 547              		.thumb_func
+ 549              	TK_Trans:
+ 550              	.LFB65:
+ 131:./data/protocol.c ****     CAN_msg *pMSG;
+ 551              		.loc 1 131 0
+ 552              		.cfi_startproc
+ 553              		@ args = 0, pretend = 0, frame = 0
+ 554              		@ frame_needed = 0, uses_anonymous_args = 0
+ 555              	.LVL41:
+ 556 0000 F8B5     		push	{r3, r4, r5, r6, r7, lr}
+ 557              	.LCFI3:
+ 558              		.cfi_def_cfa_offset 24
+ 559              		.cfi_offset 3, -24
+ 560              		.cfi_offset 4, -20
+ 561              		.cfi_offset 5, -16
+ 562              		.cfi_offset 6, -12
+ 563              		.cfi_offset 7, -8
+ 564              		.cfi_offset 14, -4
+ 136:./data/protocol.c ****         return 0;
+ 565              		.loc 1 136 0
+ 566 0002 1F4B     		ldr	r3, .L47
+ 131:./data/protocol.c ****     CAN_msg *pMSG;
+ 567              		.loc 1 131 0
+ 568 0004 0600     		movs	r6, r0
+ 136:./data/protocol.c ****         return 0;
+ 569              		.loc 1 136 0
+ 570 0006 587D     		ldrb	r0, [r3, #21]
+ 571              	.LVL42:
+ 572 0008 1C00     		movs	r4, r3
+ 573 000a 0028     		cmp	r0, #0
+ 574 000c 36D0     		beq	.L39
+ 575              	.LVL43:
+ 576              	.LBB34:
+ 577              	.LBB35:
+ 138:./data/protocol.c ****     if( cnt < BUFFER_SIZE )
+ 578              		.loc 1 138 0
+ 579 000e FFF7FEFF 		bl	OS_CPU_SR_Save
+ 580              	.LVL44:
+ 139:./data/protocol.c ****     {
+ 581              		.loc 1 139 0
+ 582 0012 2378     		ldrb	r3, [r4]
+ 133:./data/protocol.c ****     TMKState *ps;
+ 583              		.loc 1 133 0
+ 584 0014 0025     		movs	r5, #0
+ 139:./data/protocol.c ****     {
+ 585              		.loc 1 139 0
+ 586 0016 072B     		cmp	r3, #7
+ 587 0018 2DD8     		bhi	.L40
+ 141:./data/protocol.c ****         pMSG = &can_buff[in++];
+ 588              		.loc 1 141 0
+ 589 001a 0133     		adds	r3, r3, #1
+ 590 001c 2370     		strb	r3, [r4]
+ 142:./data/protocol.c ****         if( in >= BUFFER_SIZE )
+ 591              		.loc 1 142 0
+ 592 001e A378     		ldrb	r3, [r4, #2]
+ 593 0020 5A1C     		adds	r2, r3, #1
+ 594 0022 D2B2     		uxtb	r2, r2
+ 595              	.LVL45:
+ 143:./data/protocol.c ****             in = 0;
+ 596              		.loc 1 143 0
+ 597 0024 072A     		cmp	r2, #7
+ 598 0026 01D8     		bhi	.L41
+ 142:./data/protocol.c ****         if( in >= BUFFER_SIZE )
+ 599              		.loc 1 142 0
+ 600 0028 A270     		strb	r2, [r4, #2]
+ 601 002a 00E0     		b	.L42
+ 602              	.L41:
+ 144:./data/protocol.c **** 
+ 603              		.loc 1 144 0
+ 604 002c A570     		strb	r5, [r4, #2]
+ 605              	.L42:
+ 146:./data/protocol.c **** 
+ 606              		.loc 1 146 0
+ 607 002e 2500     		movs	r5, r4
+ 148:./data/protocol.c ****         pMSG->cnt   = 8;
+ 608              		.loc 1 148 0
+ 609 0030 1449     		ldr	r1, .L47+4
+ 146:./data/protocol.c **** 
+ 610              		.loc 1 146 0
+ 611 0032 1B01     		lsls	r3, r3, #4
+ 612              	.LVL46:
+ 148:./data/protocol.c ****         pMSG->cnt   = 8;
+ 613              		.loc 1 148 0
+ 614 0034 0968     		ldr	r1, [r1]
+ 146:./data/protocol.c **** 
+ 615              		.loc 1 146 0
+ 616 0036 1835     		adds	r5, r5, #24
+ 617 0038 ED18     		adds	r5, r5, r3
+ 618              	.LVL47:
+ 148:./data/protocol.c ****         pMSG->cnt   = 8;
+ 619              		.loc 1 148 0
+ 620 003a E318     		adds	r3, r4, r3
+ 621 003c 4C78     		ldrb	r4, [r1, #1]
+ 622 003e 0F78     		ldrb	r7, [r1]
+ 623 0040 2402     		lsls	r4, r4, #8
+ 624 0042 3C43     		orrs	r4, r7
+ 625 0044 104F     		ldr	r7, .L47+8
+ 626 0046 F604     		lsls	r6, r6, #19
+ 627              	.LVL48:
+ 628 0048 3C43     		orrs	r4, r7
+ 629 004a 2643     		orrs	r6, r4
+ 149:./data/protocol.c **** 
+ 630              		.loc 1 149 0
+ 631 004c 0824     		movs	r4, #8
+ 148:./data/protocol.c ****         pMSG->cnt   = 8;
+ 632              		.loc 1 148 0
+ 633 004e 9E61     		str	r6, [r3, #24]
+ 149:./data/protocol.c **** 
+ 634              		.loc 1 149 0
+ 635 0050 0533     		adds	r3, r3, #5
+ 636 0052 DC77     		strb	r4, [r3, #31]
+ 151:./data/protocol.c **** 		ps->TTcnt    = pUsrCfg->count;
+ 637              		.loc 1 151 0
+ 638 0054 CB78     		ldrb	r3, [r1, #3]
+ 639 0056 2B71     		strb	r3, [r5, #4]
+ 152:./data/protocol.c **** 		ps->TKstate  = MKState.state;
+ 640              		.loc 1 152 0
+ 641 0058 8B78     		ldrb	r3, [r1, #2]
+ 642 005a 6B71     		strb	r3, [r5, #5]
+ 153:./data/protocol.c **** 		ps->TKstate2 = MKState.state2;
+ 643              		.loc 1 153 0
+ 644 005c 0B4B     		ldr	r3, .L47+12
+ 645 005e 1988     		ldrh	r1, [r3]
+ 646 0060 E980     		strh	r1, [r5, #6]
+ 154:./data/protocol.c **** 		ps->wValue   = wValue;
+ 647              		.loc 1 154 0
+ 648 0062 9B78     		ldrb	r3, [r3, #2]
+ 649 0064 2B81     		strh	r3, [r5, #8]
+ 155:./data/protocol.c **** 		ps->ZKaddr   = 0;
+ 650              		.loc 1 155 0
+ 651 0066 0A4B     		ldr	r3, .L47+16
+ 652 0068 1B68     		ldr	r3, [r3]
+ 653 006a 6B72     		strb	r3, [r5, #9]
+ 156:./data/protocol.c **** 		ps->version  = MKVERSION;
+ 654              		.loc 1 156 0
+ 655 006c 0023     		movs	r3, #0
+ 656 006e AB72     		strb	r3, [r5, #10]
+ 157:./data/protocol.c ****         ret++;
+ 657              		.loc 1 157 0
+ 658 0070 8233     		adds	r3, r3, #130
+ 659 0072 EB72     		strb	r3, [r5, #11]
+ 660              	.LVL49:
+ 158:./data/protocol.c ****     }
+ 661              		.loc 1 158 0
+ 662 0074 0125     		movs	r5, #1
+ 663              	.LVL50:
+ 664              	.L40:
+ 160:./data/protocol.c ****     return ret;
+ 665              		.loc 1 160 0
+ 666 0076 FFF7FEFF 		bl	OS_CPU_SR_Restore
+ 667              	.LVL51:
+ 668 007a 2800     		movs	r0, r5
+ 669              	.L39:
+ 670              	.LBE35:
+ 671              	.LBE34:
+ 162:./data/protocol.c **** 
+ 672              		.loc 1 162 0
+ 673              		@ sp needed
+ 674 007c F8BD     		pop	{r3, r4, r5, r6, r7, pc}
+ 675              	.L48:
+ 676 007e C046     		.align	2
+ 677              	.L47:
+ 678 0080 00000000 		.word	.LANCHOR0
+ 679 0084 00000000 		.word	pUsrCfg
+ 680 0088 00080028 		.word	671090688
+ 681 008c 00000000 		.word	MKState
+ 682 0090 00000000 		.word	wValue
+ 683              		.cfi_endproc
+ 684              	.LFE65:
+ 686              		.section	.text.AutoTrans,"ax",%progbits
+ 687              		.align	1
+ 688              		.global	AutoTrans
+ 689              		.code	16
+ 690              		.thumb_func
+ 692              	AutoTrans:
+ 693              	.LFB66:
+ 166:./data/protocol.c **** 	if( CanAutoDis ) return;
+ 694              		.loc 1 166 0
+ 695              		.cfi_startproc
+ 696              		@ args = 0, pretend = 0, frame = 0
+ 697              		@ frame_needed = 0, uses_anonymous_args = 0
+ 698 0000 10B5     		push	{r4, lr}
+ 699              	.LCFI4:
+ 700              		.cfi_def_cfa_offset 8
+ 701              		.cfi_offset 4, -8
+ 702              		.cfi_offset 14, -4
+ 167:./data/protocol.c ****     TK_Trans( TCMDDATA_TK );
+ 703              		.loc 1 167 0
+ 704 0002 044B     		ldr	r3, .L51
+ 705 0004 DB7D     		ldrb	r3, [r3, #23]
+ 706 0006 002B     		cmp	r3, #0
+ 707 0008 02D1     		bne	.L49
+ 168:./data/protocol.c **** }
+ 708              		.loc 1 168 0
+ 709 000a A420     		movs	r0, #164
+ 710 000c FFF7FEFF 		bl	TK_Trans
+ 711              	.LVL52:
+ 712              	.L49:
+ 169:./data/protocol.c **** 
+ 713              		.loc 1 169 0
+ 714              		@ sp needed
+ 715 0010 10BD     		pop	{r4, pc}
+ 716              	.L52:
+ 717 0012 C046     		.align	2
+ 718              	.L51:
+ 719 0014 00000000 		.word	.LANCHOR0
+ 720              		.cfi_endproc
+ 721              	.LFE66:
+ 723              		.global	__aeabi_uidiv
+ 724              		.section	.text.TT_Trans,"ax",%progbits
+ 725              		.align	1
+ 726              		.global	TT_Trans
+ 727              		.code	16
+ 728              		.thumb_func
+ 730              	TT_Trans:
+ 731              	.LFB67:
+ 172:./data/protocol.c ****     if( addr > pUsrCfg->count  )
+ 732              		.loc 1 172 0
+ 733              		.cfi_startproc
+ 734              		@ args = 0, pretend = 0, frame = 8
+ 735              		@ frame_needed = 0, uses_anonymous_args = 0
+ 736              	.LVL53:
+ 737 0000 F7B5     		push	{r0, r1, r2, r4, r5, r6, r7, lr}
+ 738              	.LCFI5:
+ 739              		.cfi_def_cfa_offset 32
+ 740              		.cfi_offset 0, -32
+ 741              		.cfi_offset 1, -28
+ 742              		.cfi_offset 2, -24
+ 743              		.cfi_offset 4, -20
+ 744              		.cfi_offset 5, -16
+ 745              		.cfi_offset 6, -12
+ 746              		.cfi_offset 7, -8
+ 747              		.cfi_offset 14, -4
+ 173:./data/protocol.c ****         return FALSE;
+ 748              		.loc 1 173 0
+ 749 0002 224B     		ldr	r3, .L65
+ 172:./data/protocol.c ****     if( addr > pUsrCfg->count  )
+ 750              		.loc 1 172 0
+ 751 0004 0600     		movs	r6, r0
+ 173:./data/protocol.c ****         return FALSE;
+ 752              		.loc 1 173 0
+ 753 0006 1A68     		ldr	r2, [r3]
+ 754 0008 1F00     		movs	r7, r3
+ 755 000a 9278     		ldrb	r2, [r2, #2]
+ 174:./data/protocol.c **** 
+ 756              		.loc 1 174 0
+ 757 000c 0020     		movs	r0, #0
+ 758              	.LVL54:
+ 173:./data/protocol.c ****         return FALSE;
+ 759              		.loc 1 173 0
+ 760 000e B242     		cmp	r2, r6
+ 761 0010 3BD3     		bcc	.L54
+ 762              	.LVL55:
+ 179:./data/protocol.c ****         return 0;
+ 763              		.loc 1 179 0
+ 764 0012 1F4C     		ldr	r4, .L65+4
+ 765 0014 607D     		ldrb	r0, [r4, #21]
+ 766 0016 0028     		cmp	r0, #0
+ 767 0018 37D0     		beq	.L54
+ 768              	.LVL56:
+ 769              	.LBB38:
+ 770              	.LBB39:
+ 181:./data/protocol.c ****     if( cnt < BUFFER_SIZE )
+ 771              		.loc 1 181 0
+ 772 001a FFF7FEFF 		bl	OS_CPU_SR_Save
+ 773              	.LVL57:
+ 182:./data/protocol.c ****     {
+ 774              		.loc 1 182 0
+ 775 001e 2378     		ldrb	r3, [r4]
+ 181:./data/protocol.c ****     if( cnt < BUFFER_SIZE )
+ 776              		.loc 1 181 0
+ 777 0020 0190     		str	r0, [sp, #4]
+ 778              	.LVL58:
+ 177:./data/protocol.c ****     OS_SREG_VAR;
+ 779              		.loc 1 177 0
+ 780 0022 0025     		movs	r5, #0
+ 182:./data/protocol.c ****     {
+ 781              		.loc 1 182 0
+ 782 0024 072B     		cmp	r3, #7
+ 783 0026 2CD8     		bhi	.L55
+ 185:./data/protocol.c ****         if( in >= BUFFER_SIZE )
+ 784              		.loc 1 185 0
+ 785 0028 A278     		ldrb	r2, [r4, #2]
+ 184:./data/protocol.c ****         pMSG = &can_buff[in++];
+ 786              		.loc 1 184 0
+ 787 002a 0133     		adds	r3, r3, #1
+ 788 002c 2370     		strb	r3, [r4]
+ 185:./data/protocol.c ****         if( in >= BUFFER_SIZE )
+ 789              		.loc 1 185 0
+ 790 002e 531C     		adds	r3, r2, #1
+ 791 0030 DBB2     		uxtb	r3, r3
+ 792              	.LVL59:
+ 186:./data/protocol.c ****             in = 0; 
+ 793              		.loc 1 186 0
+ 794 0032 072B     		cmp	r3, #7
+ 795 0034 01D8     		bhi	.L56
+ 185:./data/protocol.c ****         if( in >= BUFFER_SIZE )
+ 796              		.loc 1 185 0
+ 797 0036 A370     		strb	r3, [r4, #2]
+ 798 0038 00E0     		b	.L57
+ 799              	.L56:
+ 187:./data/protocol.c ****         pMSG->id     = __ID( CAN_ID_DATA, TCMDDATA_TT, addr+1, pUsrCfg->address);
+ 800              		.loc 1 187 0
+ 801 003a A570     		strb	r5, [r4, #2]
+ 802              	.L57:
+ 188:./data/protocol.c ****         pMSG->cnt    = 4;
+ 803              		.loc 1 188 0
+ 804 003c 3B68     		ldr	r3, [r7]
+ 805 003e 1501     		lsls	r5, r2, #4
+ 806 0040 1A78     		ldrb	r2, [r3]
+ 807              	.LVL60:
+ 808 0042 5B78     		ldrb	r3, [r3, #1]
+ 809 0044 6119     		adds	r1, r4, r5
+ 810 0046 1B02     		lsls	r3, r3, #8
+ 811 0048 1343     		orrs	r3, r2
+ 812 004a 124A     		ldr	r2, .L65+8
+ 813 004c 1343     		orrs	r3, r2
+ 814 004e 721C     		adds	r2, r6, #1
+ 815 0050 D202     		lsls	r2, r2, #11
+ 816 0052 1343     		orrs	r3, r2
+ 189:./data/protocol.c ****         pMSG->Dtype  = data[addr].type;
+ 817              		.loc 1 189 0
+ 818 0054 0422     		movs	r2, #4
+ 188:./data/protocol.c ****         pMSG->cnt    = 4;
+ 819              		.loc 1 188 0
+ 820 0056 8B61     		str	r3, [r1, #24]
+ 189:./data/protocol.c ****         pMSG->Dtype  = data[addr].type;
+ 821              		.loc 1 189 0
+ 822 0058 4B1D     		adds	r3, r1, #5
+ 823 005a DA77     		strb	r2, [r3, #31]
+ 190:./data/protocol.c ****         pMSG->Dstate = data[addr].state;
+ 824              		.loc 1 190 0
+ 825 005c 0E4B     		ldr	r3, .L65+12
+ 826 005e 7601     		lsls	r6, r6, #5
+ 827              	.LVL61:
+ 828 0060 9819     		adds	r0, r3, r6
+ 829              	.LVL62:
+ 830 0062 C27E     		ldrb	r2, [r0, #27]
+ 191:./data/protocol.c ****         pMSG->Dvalue = data[addr].type == eTTvd? data[addr].value/10 :data[addr].value;
+ 831              		.loc 1 191 0
+ 832 0064 807E     		ldrb	r0, [r0, #26]
+ 190:./data/protocol.c ****         pMSG->Dstate = data[addr].state;
+ 833              		.loc 1 190 0
+ 834 0066 0A77     		strb	r2, [r1, #28]
+ 191:./data/protocol.c ****         pMSG->Dvalue = data[addr].type == eTTvd? data[addr].value/10 :data[addr].value;
+ 835              		.loc 1 191 0
+ 836 0068 4877     		strb	r0, [r1, #29]
+ 192:./data/protocol.c ****         ret++;
+ 837              		.loc 1 192 0
+ 838 006a 052A     		cmp	r2, #5
+ 839 006c 05D1     		bne	.L58
+ 840 006e F05A     		ldrh	r0, [r6, r3]
+ 841 0070 0A21     		movs	r1, #10
+ 842 0072 FFF7FEFF 		bl	__aeabi_uidiv
+ 843              	.LVL63:
+ 844 0076 00B2     		sxth	r0, r0
+ 845 0078 00E0     		b	.L59
+ 846              	.LVL64:
+ 847              	.L58:
+ 848 007a F05E     		ldrsh	r0, [r6, r3]
+ 849              	.LVL65:
+ 850              	.L59:
+ 851 007c 6419     		adds	r4, r4, r5
+ 193:./data/protocol.c ****     }
+ 852              		.loc 1 193 0
+ 853 007e 0125     		movs	r5, #1
+ 192:./data/protocol.c ****         ret++;
+ 854              		.loc 1 192 0
+ 855 0080 E083     		strh	r0, [r4, #30]
+ 856              	.LVL66:
+ 857              	.L55:
+ 195:./data/protocol.c ****     return ret;
+ 858              		.loc 1 195 0
+ 859 0082 0198     		ldr	r0, [sp, #4]
+ 860 0084 FFF7FEFF 		bl	OS_CPU_SR_Restore
+ 861              	.LVL67:
+ 862 0088 2800     		movs	r0, r5
+ 863              	.LVL68:
+ 864              	.L54:
+ 865              	.LBE39:
+ 866              	.LBE38:
+ 197:./data/protocol.c **** 
+ 867              		.loc 1 197 0
+ 868              		@ sp needed
+ 869 008a FEBD     		pop	{r1, r2, r3, r4, r5, r6, r7, pc}
+ 870              	.L66:
+ 871              		.align	2
+ 872              	.L65:
+ 873 008c 00000000 		.word	pUsrCfg
+ 874 0090 00000000 		.word	.LANCHOR0
+ 875 0094 0000282D 		.word	757596160
+ 876 0098 00000000 		.word	data
+ 877              		.cfi_endproc
+ 878              	.LFE67:
+ 880              		.section	.text.CAN_WriteAll,"ax",%progbits
+ 881              		.align	1
+ 882              		.global	CAN_WriteAll
+ 883              		.code	16
+ 884              		.thumb_func
+ 886              	CAN_WriteAll:
+ 887              	.LFB69:
+ 252:./data/protocol.c ****     COMOFF();
+ 888              		.loc 1 252 0
+ 889              		.cfi_startproc
+ 890              		@ args = 0, pretend = 0, frame = 16
+ 891              		@ frame_needed = 0, uses_anonymous_args = 0
+ 892 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+ 893              	.LCFI6:
+ 894              		.cfi_def_cfa_offset 20
+ 895              		.cfi_offset 4, -20
+ 896              		.cfi_offset 5, -16
+ 897              		.cfi_offset 6, -12
+ 898              		.cfi_offset 7, -8
+ 899              		.cfi_offset 14, -4
+ 254:./data/protocol.c ****         return 0;
+ 900              		.loc 1 254 0
+ 901 0002 6F49     		ldr	r1, .L113
+ 252:./data/protocol.c ****     COMOFF();
+ 902              		.loc 1 252 0
+ 903 0004 85B0     		sub	sp, sp, #20
+ 904              	.LCFI7:
+ 905              		.cfi_def_cfa_offset 40
+ 254:./data/protocol.c ****         return 0;
+ 906              		.loc 1 254 0
+ 907 0006 4B7D     		ldrb	r3, [r1, #21]
+ 908 0008 002B     		cmp	r3, #0
+ 909 000a 01D1     		bne	.L68
+ 910              	.L90:
+ 255:./data/protocol.c ****     if( Txmsg.cnt == 0 )
+ 911              		.loc 1 255 0
+ 912 000c 0020     		movs	r0, #0
+ 913 000e D5E0     		b	.L111
+ 914              	.L68:
+ 256:./data/protocol.c ****     {
+ 915              		.loc 1 256 0
+ 916 0010 0C7C     		ldrb	r4, [r1, #16]
+ 917 0012 002C     		cmp	r4, #0
+ 918 0014 13D1     		bne	.L71
+ 258:./data/protocol.c ****         {
+ 919              		.loc 1 258 0
+ 920 0016 0B78     		ldrb	r3, [r1]
+ 921 0018 002B     		cmp	r3, #0
+ 922 001a 13D0     		beq	.L72
+ 260:./data/protocol.c ****             Txmsg = can_buff[out++];
+ 923              		.loc 1 260 0
+ 924 001c 013B     		subs	r3, r3, #1
+ 925 001e 0B70     		strb	r3, [r1]
+ 261:./data/protocol.c ****             if( out >= BUFFER_SIZE )
+ 926              		.loc 1 261 0
+ 927 0020 4B78     		ldrb	r3, [r1, #1]
+ 928 0022 0A1D     		adds	r2, r1, #4
+ 929 0024 581C     		adds	r0, r3, #1
+ 930 0026 1B01     		lsls	r3, r3, #4
+ 931 0028 C0B2     		uxtb	r0, r0
+ 932 002a CB18     		adds	r3, r1, r3
+ 933 002c 4870     		strb	r0, [r1, #1]
+ 934 002e 1833     		adds	r3, r3, #24
+ 935 0030 E0CB     		ldmia	r3!, {r5, r6, r7}
+ 936 0032 E0C2     		stmia	r2!, {r5, r6, r7}
+ 937 0034 1B68     		ldr	r3, [r3]
+ 938 0036 1360     		str	r3, [r2]
+ 262:./data/protocol.c ****                 out = 0;
+ 939              		.loc 1 262 0
+ 940 0038 0728     		cmp	r0, #7
+ 941 003a 00D9     		bls	.L71
+ 263:./data/protocol.c ****         }
+ 942              		.loc 1 263 0
+ 943 003c 4C70     		strb	r4, [r1, #1]
+ 944              	.L71:
+ 945              	.LBB46:
+ 946              	.LBB47:
+ 201:./data/protocol.c ****     {
+ 947              		.loc 1 201 0
+ 948 003e 0B7C     		ldrb	r3, [r1, #16]
+ 949 0040 002B     		cmp	r3, #0
+ 950 0042 48D1     		bne	.L74
+ 951              	.L72:
+ 952 0044 0B7D     		ldrb	r3, [r1, #20]
+ 953 0046 0093     		str	r3, [sp]
+ 954 0048 002B     		cmp	r3, #0
+ 955 004a 44D0     		beq	.L74
+ 956              	.LBB48:
+ 208:./data/protocol.c ****             {
+ 957              		.loc 1 208 0
+ 958 004c 0027     		movs	r7, #0
+ 959 004e 3D00     		movs	r5, r7
+ 960 0050 5C4B     		ldr	r3, .L113+4
+ 961 0052 009C     		ldr	r4, [sp]
+ 962 0054 1B68     		ldr	r3, [r3]
+ 963 0056 9B78     		ldrb	r3, [r3, #2]
+ 964 0058 0193     		str	r3, [sp, #4]
+ 965              	.L80:
+ 966              	.LVL69:
+ 967 005a 019B     		ldr	r3, [sp, #4]
+ 968 005c A342     		cmp	r3, r4
+ 969 005e 05D2     		bcs	.L75
+ 210:./data/protocol.c ****                 break;
+ 970              		.loc 1 210 0
+ 971 0060 0023     		movs	r3, #0
+ 972 0062 574A     		ldr	r2, .L113
+ 973 0064 1375     		strb	r3, [r2, #20]
+ 219:./data/protocol.c ****         {
+ 974              		.loc 1 219 0
+ 975 0066 9D42     		cmp	r5, r3
+ 976 0068 39D0     		beq	.L77
+ 977 006a 25E0     		b	.L76
+ 978              	.L75:
+ 979              	.LVL70:
+ 214:./data/protocol.c ****             Txmsg.Data[i].type  = data[j].type;
+ 980              		.loc 1 214 0
+ 981 006c 631E     		subs	r3, r4, #1
+ 982 006e DBB2     		uxtb	r3, r3
+ 983 0070 554A     		ldr	r2, .L113+8
+ 984 0072 5B01     		lsls	r3, r3, #5
+ 985 0074 D218     		adds	r2, r2, r3
+ 986 0076 D67E     		ldrb	r6, [r2, #27]
+ 987 0078 534A     		ldr	r2, .L113+8
+ 988 007a 985A     		ldrh	r0, [r3, r2]
+ 989 007c 052E     		cmp	r6, #5
+ 990 007e 02D1     		bne	.L78
+ 991 0080 0A21     		movs	r1, #10
+ 992 0082 FFF7FEFF 		bl	__aeabi_uidiv
+ 993              	.LVL71:
+ 994              	.L78:
+ 995 0086 4E4A     		ldr	r2, .L113
+ 996 0088 7B00     		lsls	r3, r7, #1
+ 997 008a D318     		adds	r3, r2, r3
+ 998 008c 1A89     		ldrh	r2, [r3, #8]
+ 999 008e C004     		lsls	r0, r0, #19
+ 1000 0090 520B     		lsrs	r2, r2, #13
+ 1001 0092 5203     		lsls	r2, r2, #13
+ 1002 0094 C00C     		lsrs	r0, r0, #19
+ 1003 0096 1043     		orrs	r0, r2
+ 215:./data/protocol.c ****             TransAddr++;
+ 1004              		.loc 1 215 0
+ 1005 0098 1F22     		movs	r2, #31
+ 214:./data/protocol.c ****             Txmsg.Data[i].type  = data[j].type;
+ 1006              		.loc 1 214 0
+ 1007 009a 1881     		strh	r0, [r3, #8]
+ 215:./data/protocol.c ****             TransAddr++;
+ 1008              		.loc 1 215 0
+ 1009 009c 000A     		lsrs	r0, r0, #8
+ 1010 009e 7601     		lsls	r6, r6, #5
+ 1011 00a0 1040     		ands	r0, r2
+ 217:./data/protocol.c ****         }
+ 1012              		.loc 1 217 0
+ 1013 00a2 0235     		adds	r5, r5, #2
+ 1014              	.LVL72:
+ 215:./data/protocol.c ****             TransAddr++;
+ 1015              		.loc 1 215 0
+ 1016 00a4 3043     		orrs	r0, r6
+ 216:./data/protocol.c ****             len += 2;
+ 1017              		.loc 1 216 0
+ 1018 00a6 0134     		adds	r4, r4, #1
+ 1019              	.LVL73:
+ 217:./data/protocol.c ****         }
+ 1020              		.loc 1 217 0
+ 1021 00a8 EDB2     		uxtb	r5, r5
+ 215:./data/protocol.c ****             TransAddr++;
+ 1022              		.loc 1 215 0
+ 1023 00aa 5872     		strb	r0, [r3, #9]
+ 216:./data/protocol.c ****             len += 2;
+ 1024              		.loc 1 216 0
+ 1025 00ac E4B2     		uxtb	r4, r4
+ 1026              	.LVL74:
+ 1027 00ae 0137     		adds	r7, r7, #1
+ 206:./data/protocol.c ****         {
+ 1028              		.loc 1 206 0
+ 1029 00b0 082D     		cmp	r5, #8
+ 1030 00b2 D2D1     		bne	.L80
+ 1031 00b4 424B     		ldr	r3, .L113
+ 1032 00b6 1C75     		strb	r4, [r3, #20]
+ 1033              	.LVL75:
+ 1034              	.L76:
+ 222:./data/protocol.c ****         }
+ 1035              		.loc 1 222 0
+ 1036 00b8 424B     		ldr	r3, .L113+4
+ 221:./data/protocol.c ****             Txmsg.id = __ID( 1, TCMDDATA_MK, tmp, pUsrCfg->address);
+ 1037              		.loc 1 221 0
+ 1038 00ba 4149     		ldr	r1, .L113
+ 222:./data/protocol.c ****         }
+ 1039              		.loc 1 222 0
+ 1040 00bc 1B68     		ldr	r3, [r3]
+ 221:./data/protocol.c ****             Txmsg.id = __ID( 1, TCMDDATA_MK, tmp, pUsrCfg->address);
+ 1041              		.loc 1 221 0
+ 1042 00be 0D74     		strb	r5, [r1, #16]
+ 222:./data/protocol.c ****         }
+ 1043              		.loc 1 222 0
+ 1044 00c0 1A78     		ldrb	r2, [r3]
+ 1045 00c2 5B78     		ldrb	r3, [r3, #1]
+ 1046 00c4 1B02     		lsls	r3, r3, #8
+ 1047 00c6 1343     		orrs	r3, r2
+ 1048 00c8 B522     		movs	r2, #181
+ 1049 00ca 9205     		lsls	r2, r2, #22
+ 1050 00cc 1343     		orrs	r3, r2
+ 1051 00ce 009A     		ldr	r2, [sp]
+ 1052 00d0 D202     		lsls	r2, r2, #11
+ 1053 00d2 1343     		orrs	r3, r2
+ 1054 00d4 4B60     		str	r3, [r1, #4]
+ 1055              	.LVL76:
+ 1056              	.L74:
+ 1057              	.LBE48:
+ 226:./data/protocol.c **** 		uint8 i, j;
+ 1058              		.loc 1 226 0
+ 1059 00d6 3A4B     		ldr	r3, .L113
+ 1060 00d8 1B7C     		ldrb	r3, [r3, #16]
+ 1061 00da 002B     		cmp	r3, #0
+ 1062 00dc 50D1     		bne	.L82
+ 1063              	.L77:
+ 1064 00de 384C     		ldr	r4, .L113
+ 1065 00e0 A37D     		ldrb	r3, [r4, #22]
+ 1066 00e2 0093     		str	r3, [sp]
+ 1067 00e4 002B     		cmp	r3, #0
+ 1068 00e6 47D0     		beq	.L83
+ 1069 00e8 2300     		movs	r3, r4
+ 1070 00ea 0027     		movs	r7, #0
+ 1071 00ec 0833     		adds	r3, r3, #8
+ 1072 00ee 0293     		str	r3, [sp, #8]
+ 1073              	.L89:
+ 1074              	.LVL77:
+ 1075              	.LBB49:
+ 1076              	.LBB50:
+ 233:./data/protocol.c **** 				TransTTAddr = 0;
+ 1077              		.loc 1 233 0
+ 1078 00f0 344B     		ldr	r3, .L113+4
+ 1079 00f2 A67D     		ldrb	r6, [r4, #22]
+ 1080 00f4 1A68     		ldr	r2, [r3]
+ 1081 00f6 9278     		ldrb	r2, [r2, #2]
+ 1082 00f8 0393     		str	r3, [sp, #12]
+ 1083 00fa B242     		cmp	r2, r6
+ 1084 00fc 04D2     		bcs	.L85
+ 234:./data/protocol.c **** 				break;
+ 1085              		.loc 1 234 0
+ 1086 00fe 0023     		movs	r3, #0
+ 1087 0100 A375     		strb	r3, [r4, #22]
+ 1088              	.LBE50:
+ 244:./data/protocol.c **** 			Txmsg.cnt = len;
+ 1089              		.loc 1 244 0
+ 1090 0102 9F42     		cmp	r7, r3
+ 1091 0104 38D0     		beq	.L83
+ 1092 0106 2AE0     		b	.L86
+ 1093              	.L85:
+ 1094              	.LVL78:
+ 1095              	.LBB51:
+ 238:./data/protocol.c **** 
+ 1096              		.loc 1 238 0
+ 1097 0108 013E     		subs	r6, r6, #1
+ 1098              	.LVL79:
+ 1099 010a 2F4B     		ldr	r3, .L113+8
+ 1100 010c F6B2     		uxtb	r6, r6
+ 1101 010e 7601     		lsls	r6, r6, #5
+ 1102 0110 9A19     		adds	r2, r3, r6
+ 1103 0112 D27E     		ldrb	r2, [r2, #27]
+ 1104 0114 9D5B     		ldrh	r5, [r3, r6]
+ 1105 0116 0192     		str	r2, [sp, #4]
+ 1106 0118 052A     		cmp	r2, #5
+ 1107 011a 04D1     		bne	.L88
+ 1108 011c 2800     		movs	r0, r5
+ 1109 011e 0A21     		movs	r1, #10
+ 1110 0120 FFF7FEFF 		bl	__aeabi_uidiv
+ 1111              	.LVL80:
+ 1112 0124 85B2     		uxth	r5, r0
+ 1113              	.L88:
+ 1114              	.LVL81:
+ 240:./data/protocol.c **** 			TransTTAddr++;
+ 1115              		.loc 1 240 0
+ 1116 0126 284B     		ldr	r3, .L113+8
+ 1117 0128 ED04     		lsls	r5, r5, #19
+ 1118              	.LVL82:
+ 1119 012a 9E19     		adds	r6, r3, r6
+ 1120 012c 7088     		ldrh	r0, [r6, #2]
+ 1121 012e FFF7FEFF 		bl	GetWJZValue
+ 1122              	.LVL83:
+ 1123 0132 019B     		ldr	r3, [sp, #4]
+ 1124 0134 B27E     		ldrb	r2, [r6, #26]
+ 1125 0136 5B07     		lsls	r3, r3, #29
+ 1126 0138 1B0C     		lsrs	r3, r3, #16
+ 1127 013a 1207     		lsls	r2, r2, #28
+ 1128 013c 1343     		orrs	r3, r2
+ 1129 013e ED0C     		lsrs	r5, r5, #19
+ 1130 0140 1D43     		orrs	r5, r3
+ 1131 0142 224B     		ldr	r3, .L113+12
+ 1132 0144 0004     		lsls	r0, r0, #16
+ 1133 0146 1840     		ands	r0, r3
+ 1134 0148 029B     		ldr	r3, [sp, #8]
+ 1135 014a 0543     		orrs	r5, r0
+ 1136 014c 20C3     		stmia	r3!, {r5}
+ 1137 014e 0293     		str	r3, [sp, #8]
+ 241:./data/protocol.c **** 			len += 4;
+ 1138              		.loc 1 241 0
+ 1139 0150 A37D     		ldrb	r3, [r4, #22]
+ 242:./data/protocol.c **** 		}
+ 1140              		.loc 1 242 0
+ 1141 0152 0437     		adds	r7, r7, #4
+ 1142              	.LVL84:
+ 241:./data/protocol.c **** 			len += 4;
+ 1143              		.loc 1 241 0
+ 1144 0154 0133     		adds	r3, r3, #1
+ 242:./data/protocol.c **** 		}
+ 1145              		.loc 1 242 0
+ 1146 0156 FFB2     		uxtb	r7, r7
+ 1147              	.LVL85:
+ 241:./data/protocol.c **** 			len += 4;
+ 1148              		.loc 1 241 0
+ 1149 0158 A375     		strb	r3, [r4, #22]
+ 1150              	.LBE51:
+ 232:./data/protocol.c **** 			if (TransTTAddr > pUsrCfg->count) {
+ 1151              		.loc 1 232 0
+ 1152 015a 082F     		cmp	r7, #8
+ 1153 015c C8D1     		bne	.L89
+ 1154              	.L86:
+ 246:./data/protocol.c **** 		}
+ 1155              		.loc 1 246 0
+ 1156 015e 039B     		ldr	r3, [sp, #12]
+ 245:./data/protocol.c **** 			Txmsg.id = __ID(1, TCMDDATA_MKALL12, tmp, pUsrCfg->address);
+ 1157              		.loc 1 245 0
+ 1158 0160 2774     		strb	r7, [r4, #16]
+ 246:./data/protocol.c **** 		}
+ 1159              		.loc 1 246 0
+ 1160 0162 1B68     		ldr	r3, [r3]
+ 1161 0164 1A78     		ldrb	r2, [r3]
+ 1162 0166 5B78     		ldrb	r3, [r3, #1]
+ 1163 0168 1B02     		lsls	r3, r3, #8
+ 1164 016a 1343     		orrs	r3, r2
+ 1165 016c 184A     		ldr	r2, .L113+16
+ 1166 016e 1343     		orrs	r3, r2
+ 1167 0170 009A     		ldr	r2, [sp]
+ 1168 0172 D202     		lsls	r2, r2, #11
+ 1169 0174 1343     		orrs	r3, r2
+ 1170 0176 6360     		str	r3, [r4, #4]
+ 1171              	.LVL86:
+ 1172              	.L83:
+ 1173              	.LBE49:
+ 1174              	.LBE47:
+ 1175              	.LBE46:
+ 269:./data/protocol.c ****     {
+ 1176              		.loc 1 269 0
+ 1177 0178 237C     		ldrb	r3, [r4, #16]
+ 1178 017a 002B     		cmp	r3, #0
+ 1179 017c 00D1     		bne	.LCB1062
+ 1180 017e 45E7     		b	.L90	@long jump
+ 1181              	.LCB1062:
+ 1182              	.L82:
+ 1183              	.LBB52:
+ 272:./data/protocol.c ****         if( ret > 0)
+ 1184              		.loc 1 272 0
+ 1185 0180 0F4E     		ldr	r6, .L113
+ 1186 0182 301D     		adds	r0, r6, #4
+ 1187 0184 FFF7FEFF 		bl	CAN_wrMSG
+ 1188              	.LVL87:
+ 273:./data/protocol.c ****         {//数据发送完成
+ 1189              		.loc 1 273 0
+ 1190 0188 43B2     		sxtb	r3, r0
+ 272:./data/protocol.c ****         if( ret > 0)
+ 1191              		.loc 1 272 0
+ 1192 018a 0400     		movs	r4, r0
+ 1193              	.LVL88:
+ 1194 018c 114D     		ldr	r5, .L113+20
+ 273:./data/protocol.c ****         {//数据发送完成
+ 1195              		.loc 1 273 0
+ 1196 018e 002B     		cmp	r3, #0
+ 1197 0190 03DD     		ble	.L91
+ 276:./data/protocol.c ****             Txmsg.cnt = 0;
+ 1198              		.loc 1 276 0
+ 1199 0192 0023     		movs	r3, #0
+ 1200 0194 2B60     		str	r3, [r5]
+ 277:./data/protocol.c ****         }else
+ 1201              		.loc 1 277 0
+ 1202 0196 3374     		strb	r3, [r6, #16]
+ 1203 0198 0FE0     		b	.L92
+ 1204              	.L91:
+ 280:./data/protocol.c ****                 CAN_GetErr(0);
+ 1205              		.loc 1 280 0
+ 1206 019a 2B68     		ldr	r3, [r5]
+ 1207 019c 1E2B     		cmp	r3, #30
+ 1208 019e 02DD     		ble	.L93
+ 281:./data/protocol.c ****             if( ProCanError > 1000 )
+ 1209              		.loc 1 281 0
+ 1210 01a0 0020     		movs	r0, #0
+ 1211              	.LVL89:
+ 1212 01a2 FFF7FEFF 		bl	CAN_GetErr
+ 1213              	.LVL90:
+ 1214              	.L93:
+ 282:./data/protocol.c ****             {
+ 1215              		.loc 1 282 0
+ 1216 01a6 FA23     		movs	r3, #250
+ 1217 01a8 2A68     		ldr	r2, [r5]
+ 1218 01aa 9B00     		lsls	r3, r3, #2
+ 1219 01ac 9A42     		cmp	r2, r3
+ 1220 01ae 04DD     		ble	.L92
+ 284:./data/protocol.c ****                 CAN_GetErr(1);
+ 1221              		.loc 1 284 0
+ 1222 01b0 0023     		movs	r3, #0
+ 285:./data/protocol.c ****             }
+ 1223              		.loc 1 285 0
+ 1224 01b2 0120     		movs	r0, #1
+ 284:./data/protocol.c ****                 CAN_GetErr(1);
+ 1225              		.loc 1 284 0
+ 1226 01b4 2B60     		str	r3, [r5]
+ 285:./data/protocol.c ****             }
+ 1227              		.loc 1 285 0
+ 1228 01b6 FFF7FEFF 		bl	CAN_GetErr
+ 1229              	.LVL91:
+ 1230              	.L92:
+ 288:./data/protocol.c ****     }
+ 1231              		.loc 1 288 0
+ 1232 01ba E0B2     		uxtb	r0, r4
+ 1233              	.L111:
+ 1234              	.LBE52:
+ 292:./data/protocol.c **** 
+ 1235              		.loc 1 292 0
+ 1236 01bc 05B0     		add	sp, sp, #20
+ 1237              		@ sp needed
+ 1238 01be F0BD     		pop	{r4, r5, r6, r7, pc}
+ 1239              	.L114:
+ 1240              		.align	2
+ 1241              	.L113:
+ 1242 01c0 00000000 		.word	.LANCHOR0
+ 1243 01c4 00000000 		.word	pUsrCfg
+ 1244 01c8 00000000 		.word	data
+ 1245 01cc 0000FF0F 		.word	268369920
+ 1246 01d0 0000682D 		.word	761790464
+ 1247 01d4 00000000 		.word	ProCanError
+ 1248              		.cfi_endproc
+ 1249              	.LFE69:
+ 1251              		.section	.text.CanCmdMsg,"ax",%progbits
+ 1252              		.align	1
+ 1253              		.global	CanCmdMsg
+ 1254              		.code	16
+ 1255              		.thumb_func
+ 1257              	CanCmdMsg:
+ 1258              	.LFB70:
+ 303:./data/protocol.c ****     DEBUG2("can %x-%x-%x\n", pMsg->IDstate, pMsg->IDcmd, pMsg->Dtype);
+ 1259              		.loc 1 303 0
+ 1260              		.cfi_startproc
+ 1261              		@ args = 0, pretend = 0, frame = 0
+ 1262              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1263              	.LVL92:
+ 1264 0000 70B5     		push	{r4, r5, r6, lr}
+ 1265              	.LCFI8:
+ 1266              		.cfi_def_cfa_offset 16
+ 1267              		.cfi_offset 4, -16
+ 1268              		.cfi_offset 5, -12
+ 1269              		.cfi_offset 6, -8
+ 1270              		.cfi_offset 14, -4
+ 304:./data/protocol.c ****     if( pMsg->IDstate == 0 )
+ 1271              		.loc 1 304 0
+ 1272 0002 914D     		ldr	r5, .L170
+ 303:./data/protocol.c ****     DEBUG2("can %x-%x-%x\n", pMsg->IDstate, pMsg->IDcmd, pMsg->Dtype);
+ 1273              		.loc 1 303 0
+ 1274 0004 0400     		movs	r4, r0
+ 304:./data/protocol.c ****     if( pMsg->IDstate == 0 )
+ 1275              		.loc 1 304 0
+ 1276 0006 2B68     		ldr	r3, [r5]
+ 1277 0008 5B07     		lsls	r3, r3, #29
+ 1278 000a 09D5     		bpl	.L116
+ 304:./data/protocol.c ****     if( pMsg->IDstate == 0 )
+ 1279              		.loc 1 304 0 is_stmt 0 discriminator 1
+ 1280 000c 4288     		ldrh	r2, [r0, #2]
+ 1281 000e C178     		ldrb	r1, [r0, #3]
+ 1282 0010 5205     		lsls	r2, r2, #21
+ 1283 0012 C906     		lsls	r1, r1, #27
+ 1284 0014 0379     		ldrb	r3, [r0, #4]
+ 1285 0016 120E     		lsrs	r2, r2, #24
+ 1286 0018 890F     		lsrs	r1, r1, #30
+ 1287 001a 8C48     		ldr	r0, .L170+4
+ 1288              	.LVL93:
+ 1289 001c FFF7FEFF 		bl	dbg_print
+ 1290              	.LVL94:
+ 1291              	.L116:
+ 305:./data/protocol.c ****     {
+ 1292              		.loc 1 305 0 is_stmt 1
+ 1293 0020 1823     		movs	r3, #24
+ 1294 0022 E278     		ldrb	r2, [r4, #3]
+ 1295 0024 1A42     		tst	r2, r3
+ 1296 0026 00D1     		bne	.LCB1172
+ 1297 0028 0CE1     		b	.L115	@long jump
+ 1298              	.LCB1172:
+ 310:./data/protocol.c **** 	case TPROTRANS_GETTK:
+ 1299              		.loc 1 310 0
+ 1300 002a 6088     		ldrh	r0, [r4, #2]
+ 1301 002c 4005     		lsls	r0, r0, #21
+ 1302 002e D840     		lsrs	r0, r0, r3
+ 1303 0030 5038     		subs	r0, r0, #80
+ 1304 0032 0B28     		cmp	r0, #11
+ 1305 0034 70D8     		bhi	.L119
+ 1306 0036 FFF7FEFF 		bl	__gnu_thumb1_case_uqi
+ 1307              	.L121:
+ 1308 003a 38       		.byte	(.L120-.L121)/2
+ 1309 003b 6F       		.byte	(.L119-.L121)/2
+ 1310 003c 6F       		.byte	(.L119-.L121)/2
+ 1311 003d 06       		.byte	(.L122-.L121)/2
+ 1312 003e 6F       		.byte	(.L119-.L121)/2
+ 1313 003f 42       		.byte	(.L123-.L121)/2
+ 1314 0040 6F       		.byte	(.L119-.L121)/2
+ 1315 0041 6F       		.byte	(.L119-.L121)/2
+ 1316 0042 6F       		.byte	(.L119-.L121)/2
+ 1317 0043 6F       		.byte	(.L119-.L121)/2
+ 1318 0044 20       		.byte	(.L124-.L121)/2
+ 1319 0045 53       		.byte	(.L125-.L121)/2
+ 1320              		.p2align 1
+ 1321              	.L122:
+ 312:./data/protocol.c **** 			TK_Trans( TCMDDATA_TK);
+ 1322              		.loc 1 312 0
+ 1323 0046 824A     		ldr	r2, .L170+8
+ 1324 0048 2388     		ldrh	r3, [r4]
+ 1325 004a 1268     		ldr	r2, [r2]
+ 1326 004c 5B05     		lsls	r3, r3, #21
+ 1327 004e 1178     		ldrb	r1, [r2]
+ 1328 0050 5278     		ldrb	r2, [r2, #1]
+ 1329 0052 580D     		lsrs	r0, r3, #21
+ 1330 0054 1202     		lsls	r2, r2, #8
+ 1331 0056 0A43     		orrs	r2, r1
+ 1332 0058 9042     		cmp	r0, r2
+ 1333 005a 01D0     		beq	.L126
+ 312:./data/protocol.c **** 			TK_Trans( TCMDDATA_TK);
+ 1334              		.loc 1 312 0 is_stmt 0 discriminator 1
+ 1335 005c 002B     		cmp	r3, #0
+ 1336 005e 5BD1     		bne	.L119
+ 1337              	.L126:
+ 313:./data/protocol.c **** 			if (pMsg->Dvalue == OEM_NUM) {
+ 1338              		.loc 1 313 0 is_stmt 1
+ 1339 0060 A420     		movs	r0, #164
+ 1340 0062 FFF7FEFF 		bl	TK_Trans
+ 1341              	.LVL95:
+ 314:./data/protocol.c **** 				CanTransEn = 1;
+ 1342              		.loc 1 314 0
+ 1343 0066 7B4B     		ldr	r3, .L170+12
+ 1344 0068 0621     		movs	r1, #6
+ 1345 006a 625E     		ldrsh	r2, [r4, r1]
+ 1346 006c 9A42     		cmp	r2, r3
+ 1347 006e 53D1     		bne	.L119
+ 315:./data/protocol.c **** 				CanAutoDis = 1;
+ 1348              		.loc 1 315 0
+ 1349 0070 0122     		movs	r2, #1
+ 1350 0072 794B     		ldr	r3, .L170+16
+ 1351 0074 5A75     		strb	r2, [r3, #21]
+ 316:./data/protocol.c **** 			}
+ 1352              		.loc 1 316 0
+ 1353 0076 DA75     		strb	r2, [r3, #23]
+ 1354 0078 4EE0     		b	.L119
+ 1355              	.L124:
+ 321:./data/protocol.c ****         if( pMsg->Dstate == 0x55 && pMsg->Dtype == 0xAA )
+ 1356              		.loc 1 321 0
+ 1357 007a 2B68     		ldr	r3, [r5]
+ 1358 007c 5B07     		lsls	r3, r3, #29
+ 1359 007e 02D5     		bpl	.L128
+ 321:./data/protocol.c ****         if( pMsg->Dstate == 0x55 && pMsg->Dtype == 0xAA )
+ 1360              		.loc 1 321 0 is_stmt 0 discriminator 1
+ 1361 0080 7648     		ldr	r0, .L170+20
+ 1362 0082 FFF7FEFF 		bl	dbg_print
+ 1363              	.LVL96:
+ 1364              	.L128:
+ 322:./data/protocol.c ****         {
+ 1365              		.loc 1 322 0 is_stmt 1
+ 1366 0086 734B     		ldr	r3, .L170+12
+ 1367 0088 A288     		ldrh	r2, [r4, #4]
+ 1368 008a 9A42     		cmp	r2, r3
+ 1369 008c 00D0     		beq	.LCB1234
+ 1370 008e D9E0     		b	.L115	@long jump
+ 1371              	.LCB1234:
+ 324:./data/protocol.c ****             SetAddress = pMsg->Dvalue;
+ 1372              		.loc 1 324 0
+ 1373 0090 2B68     		ldr	r3, [r5]
+ 1374 0092 5B07     		lsls	r3, r3, #29
+ 1375 0094 04D5     		bpl	.L130
+ 324:./data/protocol.c ****             SetAddress = pMsg->Dvalue;
+ 1376              		.loc 1 324 0 is_stmt 0 discriminator 1
+ 1377 0096 0623     		movs	r3, #6
+ 1378 0098 E15E     		ldrsh	r1, [r4, r3]
+ 1379 009a 7148     		ldr	r0, .L170+24
+ 1380 009c FFF7FEFF 		bl	dbg_print
+ 1381              	.LVL97:
+ 1382              	.L130:
+ 325:./data/protocol.c ****         }
+ 1383              		.loc 1 325 0 is_stmt 1
+ 1384 00a0 0623     		movs	r3, #6
+ 1385 00a2 E25E     		ldrsh	r2, [r4, r3]
+ 1386 00a4 6F4B     		ldr	r3, .L170+28
+ 1387 00a6 1A60     		str	r2, [r3]
+ 1388 00a8 CCE0     		b	.L115
+ 1389              	.L120:
+ 329:./data/protocol.c ****     	{
+ 1390              		.loc 1 329 0
+ 1391 00aa 6A4B     		ldr	r3, .L170+12
+ 1392 00ac 0621     		movs	r1, #6
+ 1393 00ae 625E     		ldrsh	r2, [r4, r1]
+ 1394 00b0 9A42     		cmp	r2, r3
+ 1395 00b2 01D1     		bne	.L131
+ 331:./data/protocol.c ****     	}
+ 1396              		.loc 1 331 0
+ 1397 00b4 FFF7FEFF 		bl	UserSetDef
+ 1398              	.LVL98:
+ 1399              	.L131:
+ 333:./data/protocol.c ****         return;
+ 1400              		.loc 1 333 0
+ 1401 00b8 FFF7FEFF 		bl	reset_cmd
+ 1402              	.LVL99:
+ 334:./data/protocol.c ****     	break;
+ 1403              		.loc 1 334 0
+ 1404 00bc C2E0     		b	.L115
+ 1405              	.L123:
+ 337:./data/protocol.c **** 		CanAutoDis = 0;
+ 1406              		.loc 1 337 0
+ 1407 00be 0022     		movs	r2, #0
+ 1408 00c0 654B     		ldr	r3, .L170+16
+ 1409 00c2 5A75     		strb	r2, [r3, #21]
+ 338:./data/protocol.c **** 		if (pMsg->Dtype == 0xAA) {
+ 1410              		.loc 1 338 0
+ 1411 00c4 DA75     		strb	r2, [r3, #23]
+ 339:./data/protocol.c **** 			if( pMsg->Dvalue == OEM_NUM )
+ 1412              		.loc 1 339 0
+ 1413 00c6 2279     		ldrb	r2, [r4, #4]
+ 1414 00c8 AA2A     		cmp	r2, #170
+ 1415 00ca 00D0     		beq	.LCB1275
+ 1416 00cc 7EE0     		b	.L132	@long jump
+ 1417              	.LCB1275:
+ 340:./data/protocol.c **** 			{
+ 1418              		.loc 1 340 0
+ 1419 00ce 614A     		ldr	r2, .L170+12
+ 1420 00d0 0620     		movs	r0, #6
+ 1421 00d2 215E     		ldrsh	r1, [r4, r0]
+ 1422 00d4 9142     		cmp	r1, r2
+ 1423 00d6 00D0     		beq	.LCB1279
+ 1424 00d8 B4E0     		b	.L115	@long jump
+ 1425              	.LCB1279:
+ 342:./data/protocol.c **** 			}
+ 1426              		.loc 1 342 0
+ 1427 00da 0122     		movs	r2, #1
+ 1428 00dc 5A75     		strb	r2, [r3, #21]
+ 1429 00de B1E0     		b	.L115
+ 1430              	.L125:
+ 348:./data/protocol.c **** 			switch (pMsg->Dtype) {
+ 1431              		.loc 1 348 0
+ 1432 00e0 5B4A     		ldr	r2, .L170+8
+ 1433 00e2 2388     		ldrh	r3, [r4]
+ 1434 00e4 1268     		ldr	r2, [r2]
+ 1435 00e6 5B05     		lsls	r3, r3, #21
+ 1436 00e8 1178     		ldrb	r1, [r2]
+ 1437 00ea 5278     		ldrb	r2, [r2, #1]
+ 1438 00ec 580D     		lsrs	r0, r3, #21
+ 1439 00ee 1202     		lsls	r2, r2, #8
+ 1440 00f0 0A43     		orrs	r2, r1
+ 1441 00f2 9042     		cmp	r0, r2
+ 1442 00f4 01D0     		beq	.L133
+ 348:./data/protocol.c **** 			switch (pMsg->Dtype) {
+ 1443              		.loc 1 348 0 is_stmt 0 discriminator 1
+ 1444 00f6 002B     		cmp	r3, #0
+ 1445 00f8 0ED1     		bne	.L119
+ 1446              	.L133:
+ 349:./data/protocol.c **** 			case 0xAA:
+ 1447              		.loc 1 349 0 is_stmt 1
+ 1448 00fa 2379     		ldrb	r3, [r4, #4]
+ 1449 00fc AA2B     		cmp	r3, #170
+ 1450 00fe 06D0     		beq	.L134
+ 1451 0100 AB2B     		cmp	r3, #171
+ 1452 0102 09D1     		bne	.L119
+ 354:./data/protocol.c **** 				return;
+ 1453              		.loc 1 354 0
+ 1454 0104 0623     		movs	r3, #6
+ 1455 0106 E05E     		ldrsh	r0, [r4, r3]
+ 1456 0108 FFF7FEFF 		bl	UserVJZ
+ 1457              	.LVL100:
+ 355:./data/protocol.c **** 			}
+ 1458              		.loc 1 355 0
+ 1459 010c 9AE0     		b	.L115
+ 1460              	.L134:
+ 351:./data/protocol.c **** 				return;
+ 1461              		.loc 1 351 0
+ 1462 010e 0021     		movs	r1, #0
+ 1463 0110 0800     		movs	r0, r1
+ 1464 0112 FFF7FEFF 		bl	jz_cmd
+ 1465              	.LVL101:
+ 352:./data/protocol.c **** 			case 0xAB:
+ 1466              		.loc 1 352 0
+ 1467 0116 95E0     		b	.L115
+ 1468              	.L119:
+ 360:./data/protocol.c ****     {
+ 1469              		.loc 1 360 0
+ 1470 0118 2379     		ldrb	r3, [r4, #4]
+ 1471 011a AA2B     		cmp	r3, #170
+ 1472 011c 56D1     		bne	.L132
+ 360:./data/protocol.c ****     {
+ 1473              		.loc 1 360 0 is_stmt 0 discriminator 1
+ 1474 011e 4C4A     		ldr	r2, .L170+8
+ 1475 0120 2388     		ldrh	r3, [r4]
+ 1476 0122 1268     		ldr	r2, [r2]
+ 1477 0124 5B05     		lsls	r3, r3, #21
+ 1478 0126 1178     		ldrb	r1, [r2]
+ 1479 0128 5278     		ldrb	r2, [r2, #1]
+ 1480 012a 580D     		lsrs	r0, r3, #21
+ 1481 012c 1202     		lsls	r2, r2, #8
+ 1482 012e 0A43     		orrs	r2, r1
+ 1483 0130 9042     		cmp	r0, r2
+ 1484 0132 01D0     		beq	.L136
+ 360:./data/protocol.c ****     {
+ 1485              		.loc 1 360 0 discriminator 2
+ 1486 0134 002B     		cmp	r3, #0
+ 1487 0136 49D1     		bne	.L132
+ 1488              	.L136:
+ 362:./data/protocol.c ****         {
+ 1489              		.loc 1 362 0 is_stmt 1
+ 1490 0138 6088     		ldrh	r0, [r4, #2]
+ 1491 013a 4005     		lsls	r0, r0, #21
+ 1492 013c 000E     		lsrs	r0, r0, #24
+ 1493 013e 5738     		subs	r0, r0, #87
+ 1494 0140 1428     		cmp	r0, #20
+ 1495 0142 43D8     		bhi	.L132
+ 1496 0144 FFF7FEFF 		bl	__gnu_thumb1_case_uqi
+ 1497              	.L138:
+ 1498 0148 38       		.byte	(.L137-.L138)/2
+ 1499 0149 29       		.byte	(.L139-.L138)/2
+ 1500 014a 2E       		.byte	(.L140-.L138)/2
+ 1501 014b 42       		.byte	(.L132-.L138)/2
+ 1502 014c 42       		.byte	(.L132-.L138)/2
+ 1503 014d 24       		.byte	(.L141-.L138)/2
+ 1504 014e 15       		.byte	(.L142-.L138)/2
+ 1505 014f 1A       		.byte	(.L143-.L138)/2
+ 1506 0150 10       		.byte	(.L144-.L138)/2
+ 1507 0151 1F       		.byte	(.L145-.L138)/2
+ 1508 0152 33       		.byte	(.L146-.L138)/2
+ 1509 0153 42       		.byte	(.L132-.L138)/2
+ 1510 0154 0B       		.byte	(.L147-.L138)/2
+ 1511 0155 42       		.byte	(.L132-.L138)/2
+ 1512 0156 42       		.byte	(.L132-.L138)/2
+ 1513 0157 42       		.byte	(.L132-.L138)/2
+ 1514 0158 42       		.byte	(.L132-.L138)/2
+ 1515 0159 42       		.byte	(.L132-.L138)/2
+ 1516 015a 42       		.byte	(.L132-.L138)/2
+ 1517 015b 42       		.byte	(.L132-.L138)/2
+ 1518 015c 3D       		.byte	(.L148-.L138)/2
+ 1519 015d 00       		.p2align 1
+ 1520              	.L147:
+ 365:./data/protocol.c **** 				return;
+ 1521              		.loc 1 365 0
+ 1522 015e 0623     		movs	r3, #6
+ 1523 0160 E05E     		ldrsh	r0, [r4, r3]
+ 1524 0162 FFF7FEFF 		bl	UsrSetVqy
+ 1525              	.LVL102:
+ 366:./data/protocol.c ****             case TPROTRANS_SETWARNING_V:
+ 1526              		.loc 1 366 0
+ 1527 0166 6DE0     		b	.L115
+ 1528              	.L144:
+ 368:./data/protocol.c ****                 return;
+ 1529              		.loc 1 368 0
+ 1530 0168 0623     		movs	r3, #6
+ 1531 016a E05E     		ldrsh	r0, [r4, r3]
+ 1532 016c FFF7FEFF 		bl	UsrSetVbj
+ 1533              	.LVL103:
+ 369:./data/protocol.c ****             case TPROTRANS_SETWARNING_I:
+ 1534              		.loc 1 369 0
+ 1535 0170 68E0     		b	.L115
+ 1536              	.L142:
+ 371:./data/protocol.c ****                 return;
+ 1537              		.loc 1 371 0
+ 1538 0172 0623     		movs	r3, #6
+ 1539 0174 E05E     		ldrsh	r0, [r4, r3]
+ 1540 0176 FFF7FEFF 		bl	UsrSetIbj
+ 1541              	.LVL104:
+ 372:./data/protocol.c ****             case TPROTRANS_SETED_I:
+ 1542              		.loc 1 372 0
+ 1543 017a 63E0     		b	.L115
+ 1544              	.L143:
+ 374:./data/protocol.c ****                 return;
+ 1545              		.loc 1 374 0
+ 1546 017c 0623     		movs	r3, #6
+ 1547 017e E05E     		ldrsh	r0, [r4, r3]
+ 1548 0180 FFF7FEFF 		bl	UsrSetIed
+ 1549              	.LVL105:
+ 375:./data/protocol.c ****             case TPROTRANS_SETDELAYI :
+ 1550              		.loc 1 375 0
+ 1551 0184 5EE0     		b	.L115
+ 1552              	.L145:
+ 377:./data/protocol.c ****                 return;
+ 1553              		.loc 1 377 0
+ 1554 0186 0623     		movs	r3, #6
+ 1555 0188 E05E     		ldrsh	r0, [r4, r3]
+ 1556 018a FFF7FEFF 		bl	UsrSetDelayI
+ 1557              	.LVL106:
+ 378:./data/protocol.c ****             case TPROTRANS_SETDELAY :
+ 1558              		.loc 1 378 0
+ 1559 018e 59E0     		b	.L115
+ 1560              	.L141:
+ 380:./data/protocol.c ****                 return;
+ 1561              		.loc 1 380 0
+ 1562 0190 0623     		movs	r3, #6
+ 1563 0192 E05E     		ldrsh	r0, [r4, r3]
+ 1564 0194 FFF7FEFF 		bl	UsrSetDelay
+ 1565              	.LVL107:
+ 381:./data/protocol.c ****             case TPROTRANS_SETWARNING:
+ 1566              		.loc 1 381 0
+ 1567 0198 54E0     		b	.L115
+ 1568              	.L139:
+ 383:./data/protocol.c ****                 return;
+ 1569              		.loc 1 383 0
+ 1570 019a 0623     		movs	r3, #6
+ 1571 019c E05E     		ldrsh	r0, [r4, r3]
+ 1572 019e FFF7FEFF 		bl	UsrSetSbj
+ 1573              	.LVL108:
+ 384:./data/protocol.c ****             case TPROTRANS_SETWARNING_W:
+ 1574              		.loc 1 384 0
+ 1575 01a2 4FE0     		b	.L115
+ 1576              	.L140:
+ 386:./data/protocol.c ****                 return;
+ 1577              		.loc 1 386 0
+ 1578 01a4 0623     		movs	r3, #6
+ 1579 01a6 E05E     		ldrsh	r0, [r4, r3]
+ 1580 01a8 FFF7FEFF 		bl	UsrSetWbj
+ 1581              	.LVL109:
+ 387:./data/protocol.c ****             case TPROTRANS_SETBDDIS:
+ 1582              		.loc 1 387 0
+ 1583 01ac 4AE0     		b	.L115
+ 1584              	.L146:
+ 389:./data/protocol.c ****                 return;
+ 1585              		.loc 1 389 0
+ 1586 01ae 0623     		movs	r3, #6
+ 1587 01b0 E05E     		ldrsh	r0, [r4, r3]
+ 1588 01b2 FFF7FEFF 		bl	UsrSetBD
+ 1589              	.LVL110:
+ 390:./data/protocol.c ****             case TPROTRANS_TTCNT:
+ 1590              		.loc 1 390 0
+ 1591 01b6 45E0     		b	.L115
+ 1592              	.L137:
+ 392:./data/protocol.c ****                 return;
+ 1593              		.loc 1 392 0
+ 1594 01b8 0623     		movs	r3, #6
+ 1595 01ba E05E     		ldrsh	r0, [r4, r3]
+ 1596 01bc FFF7FEFF 		bl	UsrSetCnt
+ 1597              	.LVL111:
+ 393:./data/protocol.c ****             case TPROTRANS_SETTYPE:
+ 1598              		.loc 1 393 0
+ 1599 01c0 40E0     		b	.L115
+ 1600              	.L148:
+ 395:./data/protocol.c ****             	return ;
+ 1601              		.loc 1 395 0
+ 1602 01c2 0623     		movs	r3, #6
+ 1603 01c4 E05E     		ldrsh	r0, [r4, r3]
+ 1604 01c6 FFF7FEFF 		bl	UsrSetType
+ 1605              	.LVL112:
+ 396:./data/protocol.c ****         }
+ 1606              		.loc 1 396 0
+ 1607 01ca 3BE0     		b	.L115
+ 1608              	.L132:
+ 400:./data/protocol.c ****     {
+ 1609              		.loc 1 400 0
+ 1610 01cc 204A     		ldr	r2, .L170+8
+ 1611 01ce 2388     		ldrh	r3, [r4]
+ 1612 01d0 1268     		ldr	r2, [r2]
+ 1613 01d2 5B05     		lsls	r3, r3, #21
+ 1614 01d4 1178     		ldrb	r1, [r2]
+ 1615 01d6 5278     		ldrb	r2, [r2, #1]
+ 1616 01d8 5B0D     		lsrs	r3, r3, #21
+ 1617 01da 1202     		lsls	r2, r2, #8
+ 1618 01dc 0A43     		orrs	r2, r1
+ 1619 01de 9342     		cmp	r3, r2
+ 1620 01e0 30D1     		bne	.L115
+ 402:./data/protocol.c ****         {
+ 1621              		.loc 1 402 0
+ 1622 01e2 6388     		ldrh	r3, [r4, #2]
+ 1623 01e4 5B05     		lsls	r3, r3, #21
+ 1624 01e6 1B0E     		lsrs	r3, r3, #24
+ 1625 01e8 522B     		cmp	r3, #82
+ 1626 01ea 08D0     		beq	.L149
+ 1627 01ec 02D8     		bhi	.L150
+ 1628 01ee 012B     		cmp	r3, #1
+ 1629 01f0 09D0     		beq	.L151
+ 1630 01f2 27E0     		b	.L115
+ 1631              	.L150:
+ 1632 01f4 562B     		cmp	r3, #86
+ 1633 01f6 12D0     		beq	.L152
+ 1634 01f8 6A2B     		cmp	r3, #106
+ 1635 01fa 1AD0     		beq	.L153
+ 1636 01fc 22E0     		b	.L115
+ 1637              	.L149:
+ 405:./data/protocol.c ****                 break;
+ 1638              		.loc 1 405 0
+ 1639 01fe 2068     		ldr	r0, [r4]
+ 1640 0200 4003     		lsls	r0, r0, #13
+ 1641 0202 000E     		lsrs	r0, r0, #24
+ 1642 0204 08E0     		b	.L169
+ 1643              	.L151:
+ 411:./data/protocol.c ****                 {
+ 1644              		.loc 1 411 0
+ 1645 0206 FF23     		movs	r3, #255
+ 1646 0208 2068     		ldr	r0, [r4]
+ 1647 020a DB02     		lsls	r3, r3, #11
+ 1648 020c 1842     		tst	r0, r3
+ 1649 020e 19D0     		beq	.L115
+ 413:./data/protocol.c ****                 }
+ 1650              		.loc 1 413 0
+ 1651 0210 4003     		lsls	r0, r0, #13
+ 1652 0212 000E     		lsrs	r0, r0, #24
+ 1653 0214 0138     		subs	r0, r0, #1
+ 1654 0216 C0B2     		uxtb	r0, r0
+ 1655              	.L169:
+ 1656 0218 FFF7FEFF 		bl	TT_Trans
+ 1657              	.LVL113:
+ 1658 021c 12E0     		b	.L115
+ 1659              	.L152:
+ 418:./data/protocol.c ****                     if( TransAddr == 0 )
+ 1660              		.loc 1 418 0
+ 1661 021e A420     		movs	r0, #164
+ 1662 0220 FFF7FEFF 		bl	TK_Trans
+ 1663              	.LVL114:
+ 419:./data/protocol.c ****                         TransAddr = 1;
+ 1664              		.loc 1 419 0
+ 1665 0224 0C4B     		ldr	r3, .L170+16
+ 1666 0226 1A7D     		ldrb	r2, [r3, #20]
+ 1667 0228 002A     		cmp	r2, #0
+ 1668 022a 0BD1     		bne	.L115
+ 420:./data/protocol.c ****                 }
+ 1669              		.loc 1 420 0
+ 1670 022c 0132     		adds	r2, r2, #1
+ 1671 022e 1A75     		strb	r2, [r3, #20]
+ 1672 0230 08E0     		b	.L115
+ 1673              	.L153:
+ 425:./data/protocol.c ****                 if( TransTTAddr == 0 )
+ 1674              		.loc 1 425 0
+ 1675 0232 A420     		movs	r0, #164
+ 1676 0234 FFF7FEFF 		bl	TK_Trans
+ 1677              	.LVL115:
+ 426:./data/protocol.c ****                     TransTTAddr = 1;
+ 1678              		.loc 1 426 0
+ 1679 0238 074B     		ldr	r3, .L170+16
+ 1680 023a 9A7D     		ldrb	r2, [r3, #22]
+ 1681 023c 002A     		cmp	r2, #0
+ 1682 023e 01D1     		bne	.L115
+ 427:./data/protocol.c ****             	break;
+ 1683              		.loc 1 427 0
+ 1684 0240 0132     		adds	r2, r2, #1
+ 1685 0242 9A75     		strb	r2, [r3, #22]
+ 1686              	.L115:
+ 432:./data/protocol.c **** 
+ 1687              		.loc 1 432 0
+ 1688              		@ sp needed
+ 1689              	.LVL116:
+ 1690 0244 70BD     		pop	{r4, r5, r6, pc}
+ 1691              	.L171:
+ 1692 0246 C046     		.align	2
+ 1693              	.L170:
+ 1694 0248 00000000 		.word	debug_en
+ 1695 024c 00000000 		.word	.LC39
+ 1696 0250 00000000 		.word	pUsrCfg
+ 1697 0254 AA550000 		.word	21930
+ 1698 0258 00000000 		.word	.LANCHOR0
+ 1699 025c 0E000000 		.word	.LC43
+ 1700 0260 1A000000 		.word	.LC45
+ 1701 0264 00000000 		.word	SetAddress
+ 1702              		.cfi_endproc
+ 1703              	.LFE70:
+ 1705              		.global	cmd_get
+ 1706              		.comm	pro,136,1
+ 1707              		.comm	ProCanError,4,4
+ 1708              		.comm	SetAddress,4,4
+ 1709              		.section	.rodata
+ 1712              	help_get:
+ 1713 0000 67657400 		.ascii	"get\000"
+ 1716              	name_get:
+ 1717 0004 67657400 		.ascii	"get\000"
+ 1718              		.section	.shell,"aw",%progbits
+ 1719              		.align	2
+ 1722              	cmd_get:
+ 1723 0000 04000000 		.word	name_get
+ 1724 0004 00000000 		.word	get_cmd
+ 1725 0008 00000000 		.word	help_get
+ 1726              		.section	.rodata.str1.1,"aMS",%progbits,1
+ 1727              	.LC39:
+ 1728 0000 63616E20 		.ascii	"can %x-%x-%x\012\000"
+ 1728      25782D25 
+ 1728      782D2578 
+ 1728      0A00
+ 1729              	.LC43:
+ 1730 000e 53657441 		.ascii	"SetAddress \000"
+ 1730      64647265 
+ 1730      73732000 
+ 1731              	.LC45:
+ 1732 001a 53657441 		.ascii	"SetAddress:%d\000"
+ 1732      64647265 
+ 1732      73733A25 
+ 1732      6400
+ 1733              		.bss
+ 1734              		.align	2
+ 1735              		.set	.LANCHOR0,. + 0
+ 1738              	cnt:
+ 1739 0000 00       		.space	1
+ 1742              	out:
+ 1743 0001 00       		.space	1
+ 1746              	in:
+ 1747 0002 00       		.space	1
+ 1748 0003 00       		.space	1
+ 1751              	Txmsg:
+ 1752 0004 00000000 		.space	16
+ 1752      00000000 
+ 1752      00000000 
+ 1752      00000000 
+ 1755              	TransAddr:
+ 1756 0014 00       		.space	1
+ 1759              	CanTransEn:
+ 1760 0015 00       		.space	1
+ 1763              	TransTTAddr:
+ 1764 0016 00       		.space	1
+ 1767              	CanAutoDis:
+ 1768 0017 00       		.space	1
+ 1771              	can_buff:
+ 1772 0018 00000000 		.space	128
+ 1772      00000000 
+ 1772      00000000 
+ 1772      00000000 
+ 1772      00000000 
+ 1773              		.text
+ 1774              	.Letext0:
+ 1775              		.file 3 "d:\\wingcc\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 1776              		.file 4 "d:\\wingcc\\arm-none-eabi\\include\\sys\\_stdint.h"
+ 1777              		.file 5 "./bsp/mytype.h"
+ 1778              		.file 6 "./data/../drive/nuc_can.h"
+ 1779              		.file 7 "../mylib_t/protocol_def.h"
+ 1780              		.file 8 "../mylib_t/data_def.h"
+ 1781              		.file 9 "./data/protocol.h"
+ 1782              		.file 10 "../mylib_t/os_cpu.h"
+ 1783              		.file 11 "./data/data.h"
+ 1784              		.file 12 "./data/user.h"
+ 1785              		.file 13 "../mylib_t/pcommand.h"
+ 1786              		.file 14 "./app/app_cfg.h"
+ 1787              		.file 15 "./bsp/system_NUC131.h"
+ 1788              		.file 16 "./drive/nuc_wdt.h"
+ 1789              		.file 17 "./drive/nuc_uart0.h"
+ 1790              		.file 18 "../mylib_t/MicroOS.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 protocol.c
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:20     .text.get_cmd:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:24     .text.get_cmd:00000000 get_cmd
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:232    .text.get_cmd:000000c0 $d
+                            *COM*:00000088 pro
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:240    .text.Pro_Init:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:245    .text.Pro_Init:00000000 Pro_Init
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:285    .text.Pro_Init:00000020 $d
+                            *COM*:00000004 ProCanError
+                            *COM*:00000004 SetAddress
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:292    .text.BJ_Trans:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:297    .text.BJ_Trans:00000000 BJ_Trans
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:406    .text.BJ_Trans:00000070 $d
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:413    .text.GZ_Trans:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:418    .text.GZ_Trans:00000000 GZ_Trans
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:537    .text.GZ_Trans:00000078 $d
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:544    .text.TK_Trans:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:549    .text.TK_Trans:00000000 TK_Trans
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:678    .text.TK_Trans:00000080 $d
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:687    .text.AutoTrans:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:692    .text.AutoTrans:00000000 AutoTrans
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:719    .text.AutoTrans:00000014 $d
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:725    .text.TT_Trans:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:730    .text.TT_Trans:00000000 TT_Trans
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:873    .text.TT_Trans:0000008c $d
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:881    .text.CAN_WriteAll:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:886    .text.CAN_WriteAll:00000000 CAN_WriteAll
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1242   .text.CAN_WriteAll:000001c0 $d
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1252   .text.CanCmdMsg:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1257   .text.CanCmdMsg:00000000 CanCmdMsg
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1308   .text.CanCmdMsg:0000003a $d
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1320   .text.CanCmdMsg:00000046 $t
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1498   .text.CanCmdMsg:00000148 $d
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1694   .text.CanCmdMsg:00000248 $d
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1722   .shell:00000000 cmd_get
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1712   .rodata:00000000 help_get
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1716   .rodata:00000004 name_get
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1719   .shell:00000000 $d
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1734   .bss:00000000 $d
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1738   .bss:00000000 cnt
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1742   .bss:00000001 out
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1746   .bss:00000002 in
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1751   .bss:00000004 Txmsg
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1755   .bss:00000014 TransAddr
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1759   .bss:00000015 CanTransEn
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1763   .bss:00000016 TransTTAddr
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1767   .bss:00000017 CanAutoDis
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1771   .bss:00000018 can_buff
+                     .debug_frame:00000010 $d
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1519   .text.CanCmdMsg:0000015d $d
+C:\Users\beyond\AppData\Local\Temp\ccrK77Qq.s:1519   .text.CanCmdMsg:0000015e $t
+
+UNDEFINED SYMBOLS
+crc16_XMODEM
+wdt_reset
+Uart_SendBuff
+OSTimeDly
+pUsrCfg
+MKState
+data
+OS_CPU_SR_Save
+OS_CPU_SR_Restore
+wValue
+__aeabi_uidiv
+GetWJZValue
+CAN_wrMSG
+CAN_GetErr
+dbg_print
+__gnu_thumb1_case_uqi
+UserSetDef
+reset_cmd
+UserVJZ
+jz_cmd
+UsrSetVqy
+UsrSetVbj
+UsrSetIbj
+UsrSetIed
+UsrSetDelayI
+UsrSetDelay
+UsrSetSbj
+UsrSetWbj
+UsrSetBD
+UsrSetCnt
+UsrSetType
+debug_en

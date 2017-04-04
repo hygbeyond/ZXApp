@@ -1,0 +1,2788 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 4
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"nuc_can.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.CAN_testmode,"ax",%progbits
+  20              		.align	1
+  21              		.global	CAN_testmode
+  22              		.code	16
+  23              		.thumb_func
+  25              	CAN_testmode:
+  26              	.LFB75:
+  27              		.cfi_startproc
+  28              		@ args = 0, pretend = 0, frame = 0
+  29              		@ frame_needed = 0, uses_anonymous_args = 0
+  30              		@ link register save eliminated.
+  31              		@ sp needed
+  32 0000 7047     		bx	lr
+  33              		.cfi_endproc
+  34              	.LFE75:
+  36              		.section	.text.CAN_start,"ax",%progbits
+  37              		.align	1
+  38              		.global	CAN_start
+  39              		.code	16
+  40              		.thumb_func
+  42              	CAN_start:
+  43              	.LFB64:
+  44              		.file 1 "./drive/nuc_can.c"
+   1:./drive/nuc_can.c **** 
+   2:./drive/nuc_can.c **** 
+   3:./drive/nuc_can.c **** #include "mytype.h"
+   4:./drive/nuc_can.c **** #include "bsp.h"
+   5:./drive/nuc_can.c **** #include "app_cfg.h"
+   6:./drive/nuc_can.c **** #include "nuc_can.h"
+   7:./drive/nuc_can.c **** 
+   8:./drive/nuc_can.c **** 
+   9:./drive/nuc_can.c **** /*------- LPC11Cxx  CAN Register Definitions ---------------------------------*/
+  10:./drive/nuc_can.c **** 
+  11:./drive/nuc_can.c **** /*- CAN CMDREQ register ------------------------------------------------------*/
+  12:./drive/nuc_can.c **** #define _CMDREQ_BUSY       (1UL << 15)
+  13:./drive/nuc_can.c **** 
+  14:./drive/nuc_can.c **** /*- CAN CTRL register --------------------------------------------------------*/
+  15:./drive/nuc_can.c **** #define _CNTL_INIT         (1UL <<  0)
+  16:./drive/nuc_can.c **** #define _CNTL_IE           (1UL <<  1) 
+  17:./drive/nuc_can.c **** #define _CNTL_SIE          (1UL <<  2)
+  18:./drive/nuc_can.c **** #define _CNTL_EIE          (1UL <<  3) 
+  19:./drive/nuc_can.c **** #define _CNTL_DAR          (1UL <<  5)
+  20:./drive/nuc_can.c **** #define _CNTL_CCE          (1UL <<  6) 
+  21:./drive/nuc_can.c **** #define _CNTL_TEST         (1UL <<  7)
+  22:./drive/nuc_can.c **** 
+  23:./drive/nuc_can.c **** /*- CAN TEST register --------------------------------------------------------*/
+  24:./drive/nuc_can.c **** #define _TEST_BASIC        (1UL <<  2)
+  25:./drive/nuc_can.c **** #define _TEST_SILENT       (1UL <<  3)
+  26:./drive/nuc_can.c **** #define _TEST_LBACK        (1UL <<  4)
+  27:./drive/nuc_can.c **** 
+  28:./drive/nuc_can.c **** /*- CAN STAT register --------------------------------------------------------*/
+  29:./drive/nuc_can.c **** #define _STAT_LEC          (7UL <<  0)
+  30:./drive/nuc_can.c **** #define _STAT_TXOK         (1UL <<  3) 
+  31:./drive/nuc_can.c **** #define _STAT_RXOK         (1UL <<  4)
+  32:./drive/nuc_can.c **** #define _STAT_EPASS        (1UL <<  5) 
+  33:./drive/nuc_can.c **** #define _STAT_EWARN        (1UL <<  6)
+  34:./drive/nuc_can.c **** #define _STAT_BOFF         (1UL <<  7)
+  35:./drive/nuc_can.c **** 
+  36:./drive/nuc_can.c **** /*- CAN CMDMASK register -----------------------------------------------------*/
+  37:./drive/nuc_can.c **** #define	_CMDMASK_DATAB     (1UL <<  0)
+  38:./drive/nuc_can.c **** #define	_CMDMASK_DATAA     (1UL <<  1)
+  39:./drive/nuc_can.c **** #define	_CMDMASK_TREQ      (1UL <<  2)
+  40:./drive/nuc_can.c **** #define	_CMDMASK_INTPND    (1UL <<  3)
+  41:./drive/nuc_can.c **** #define	_CMDMASK_CTRL      (1UL <<  4)
+  42:./drive/nuc_can.c **** #define	_CMDMASK_ARB       (1UL <<  5)
+  43:./drive/nuc_can.c **** #define	_CMDMASK_MASK      (1UL <<  6)
+  44:./drive/nuc_can.c **** #define	_CMDMASK_WR        (1UL <<  7)
+  45:./drive/nuc_can.c **** #define _CMDMASK_RD        (0UL <<  7)
+  46:./drive/nuc_can.c **** 
+  47:./drive/nuc_can.c **** /*- CAN MSK1 register --------------------------------------------------------*/
+  48:./drive/nuc_can.c **** #define _MSK1_MSK          (0xFFFF)
+  49:./drive/nuc_can.c **** 
+  50:./drive/nuc_can.c **** /*- CAN MSK2 register --------------------------------------------------------*/
+  51:./drive/nuc_can.c **** #define _MSK2_MSK          (0x1FFF)
+  52:./drive/nuc_can.c **** #define	_MSK2_MXTD         (1UL << 15)
+  53:./drive/nuc_can.c **** #define	_MSK2_MDIR         (1UL << 14)
+  54:./drive/nuc_can.c **** 
+  55:./drive/nuc_can.c **** /*- CAN ARB1 register --------------------------------------------------------*/
+  56:./drive/nuc_can.c **** #define _ARB1_ID           (0xFFFF)
+  57:./drive/nuc_can.c **** 
+  58:./drive/nuc_can.c **** /*- CAN ARB2 register --------------------------------------------------------*/
+  59:./drive/nuc_can.c **** #define _ARB2_ID           (0x1FFF)
+  60:./drive/nuc_can.c **** #define	_ARB2_DIR          (1UL << 13)
+  61:./drive/nuc_can.c **** #define	_ARB2_XTD          (1UL << 14)
+  62:./drive/nuc_can.c **** #define	_ARB2_MSGVAL       (1UL << 15)
+  63:./drive/nuc_can.c **** 
+  64:./drive/nuc_can.c **** /*- CAN MCTRL register -------------------------------------------------------*/
+  65:./drive/nuc_can.c **** #define	_MCTRL_DLC         (0x0F)   
+  66:./drive/nuc_can.c **** #define	_MCTRL_EOB         (1UL <<  7)
+  67:./drive/nuc_can.c **** #define _MCTRL_TXRQST      (1UL <<  8)
+  68:./drive/nuc_can.c **** #define	_MCTRL_RMTEN       (1UL <<  9)
+  69:./drive/nuc_can.c **** #define	_MCTRL_RXIE        (1UL << 10)
+  70:./drive/nuc_can.c **** #define	_MCTRL_TXIE        (1UL << 11)
+  71:./drive/nuc_can.c **** #define _MCTRL_UMASK       (1UL << 12)
+  72:./drive/nuc_can.c **** #define	_MCTRL_INTPND      (1UL << 13)
+  73:./drive/nuc_can.c **** #define	_MCTRL_MSGLST      (1UL << 14)
+  74:./drive/nuc_can.c **** #define	_MCTRL_NEWDAT      (1UL << 15)
+  75:./drive/nuc_can.c **** 
+  76:./drive/nuc_can.c **** 
+  77:./drive/nuc_can.c **** #define SJW                 2
+  78:./drive/nuc_can.c **** 
+  79:./drive/nuc_can.c **** #define _MSG_OBJ_MAX        0x0020         /* 1..32 */
+  80:./drive/nuc_can.c **** 
+  81:./drive/nuc_can.c **** #define _STD_FORMAT         0x000007FF     /* 11 bit standard format */	
+  82:./drive/nuc_can.c **** #define _EXT_FORMAT         0x1FFFFFFF     /* 29 bit extended format */
+  83:./drive/nuc_can.c **** /* -- end LPC11Cxx  CAN Register Definitions -------------------------------- */
+  84:./drive/nuc_can.c **** 
+  85:./drive/nuc_can.c **** #define  CAN_TX_NUM             5
+  86:./drive/nuc_can.c **** 
+  87:./drive/nuc_can.c **** #define  LIST_BUF_SIZE         16
+  88:./drive/nuc_can.c **** #include "mylist.h"
+  89:./drive/nuc_can.c **** 
+  90:./drive/nuc_can.c **** LIST_TYPE_EXT( TCANlist, CAN_msg, 16 );
+  91:./drive/nuc_can.c **** 
+  92:./drive/nuc_can.c **** TCANlist canList_rx;
+  93:./drive/nuc_can.c **** 
+  94:./drive/nuc_can.c **** 
+  95:./drive/nuc_can.c **** #define tCAN     CAN0
+  96:./drive/nuc_can.c **** #define LPC_CAN  CAN0
+  97:./drive/nuc_can.c **** 
+  98:./drive/nuc_can.c **** 
+  99:./drive/nuc_can.c **** static uint32 can_baudrate;
+ 100:./drive/nuc_can.c **** 
+ 101:./drive/nuc_can.c **** CAN_msg       CAN_TxMsg;                         /* CAN message for sending */
+ 102:./drive/nuc_can.c **** CAN_msg       CAN_RxMsg;                         /* CAN message for receiving */   
+ 103:./drive/nuc_can.c **** 
+ 104:./drive/nuc_can.c **** unsigned int  CAN_TxRdy = 0;                     /* CAN HW ready to transmit a message */
+ 105:./drive/nuc_can.c **** 
+ 106:./drive/nuc_can.c **** /*----------------------------------------------------------------------------*/
+ 107:./drive/nuc_can.c **** /*  Get current bit rate                                                      */
+ 108:./drive/nuc_can.c **** /*----------------------------------------------------------------------------*/
+ 109:./drive/nuc_can.c **** static uint32_t GetCANBitRate(void)
+ 110:./drive/nuc_can.c **** {
+ 111:./drive/nuc_can.c ****     uint8_t u8Tseg1, u8Tseg2;
+ 112:./drive/nuc_can.c ****     uint32_t u32Bpr;
+ 113:./drive/nuc_can.c **** 
+ 114:./drive/nuc_can.c ****     u8Tseg1 = (tCAN->BTIME & CAN_BTIME_TSEG1_Msk) >> CAN_BTIME_TSEG1_Pos;
+ 115:./drive/nuc_can.c ****     u8Tseg2 = (tCAN->BTIME & CAN_BTIME_TSEG2_Msk) >> CAN_BTIME_TSEG2_Pos;
+ 116:./drive/nuc_can.c ****     u32Bpr  = (tCAN->BTIME & CAN_BTIME_BRP_Msk) | (tCAN->BRPE << 6);
+ 117:./drive/nuc_can.c **** 
+ 118:./drive/nuc_can.c ****     return (SystemCoreClock / (u32Bpr + 1) / (u8Tseg1 + u8Tseg2 + 3));
+ 119:./drive/nuc_can.c **** }
+ 120:./drive/nuc_can.c **** 
+ 121:./drive/nuc_can.c **** 
+ 122:./drive/nuc_can.c **** static int CAN_setup( void )
+ 123:./drive/nuc_can.c **** {
+ 124:./drive/nuc_can.c ****     uint8_t u8Tseg1, u8Tseg2;
+ 125:./drive/nuc_can.c ****     uint32_t u32Brp;
+ 126:./drive/nuc_can.c ****     uint32_t u32Value;
+ 127:./drive/nuc_can.c **** 
+ 128:./drive/nuc_can.c ****     /* Set the CAN to enter initialization mode and enable access bit timing register */
+ 129:./drive/nuc_can.c ****     tCAN->CON |= CAN_CON_INIT_Msk;
+ 130:./drive/nuc_can.c ****     tCAN->CON |= CAN_CON_CCE_Msk;
+ 131:./drive/nuc_can.c **** 
+ 132:./drive/nuc_can.c **** 
+ 133:./drive/nuc_can.c ****     SystemCoreClockUpdate();
+ 134:./drive/nuc_can.c **** 
+ 135:./drive/nuc_can.c ****     u8Tseg1 = 2;
+ 136:./drive/nuc_can.c ****     u8Tseg2 = 1;
+ 137:./drive/nuc_can.c **** 
+ 138:./drive/nuc_can.c ****     u32Value = SystemCoreClock / can_baudrate;
+ 139:./drive/nuc_can.c **** 
+ 140:./drive/nuc_can.c ****     while(1)
+ 141:./drive/nuc_can.c ****     {
+ 142:./drive/nuc_can.c ****         if(((u32Value % (u8Tseg1 + u8Tseg2 + 3)) == 0))
+ 143:./drive/nuc_can.c ****             break;
+ 144:./drive/nuc_can.c ****         if(u8Tseg1 < 7)
+ 145:./drive/nuc_can.c ****             u8Tseg2++;
+ 146:./drive/nuc_can.c **** 
+ 147:./drive/nuc_can.c ****         if((u32Value % (u8Tseg1 + u8Tseg2 + 3)) == 0)
+ 148:./drive/nuc_can.c ****             break;
+ 149:./drive/nuc_can.c ****         if(u8Tseg1 < 15)
+ 150:./drive/nuc_can.c ****             u8Tseg1++;
+ 151:./drive/nuc_can.c ****         else
+ 152:./drive/nuc_can.c ****         {
+ 153:./drive/nuc_can.c ****             u8Tseg1 = 2;
+ 154:./drive/nuc_can.c ****             u8Tseg2 = 1;
+ 155:./drive/nuc_can.c ****             break;
+ 156:./drive/nuc_can.c ****         }
+ 157:./drive/nuc_can.c ****     }
+ 158:./drive/nuc_can.c **** 
+ 159:./drive/nuc_can.c ****     u32Brp  = SystemCoreClock / (can_baudrate) / (u8Tseg1 + u8Tseg2 + 3) - 1;
+ 160:./drive/nuc_can.c **** 
+ 161:./drive/nuc_can.c ****     u32Value = ((uint32_t)u8Tseg2 << CAN_BTIME_TSEG2_Pos) | ((uint32_t)u8Tseg1 << CAN_BTIME_TSEG1_P
+ 162:./drive/nuc_can.c ****                (u32Brp & CAN_BTIME_BRP_Msk) | (tCAN->BTIME & CAN_BTIME_SJW_Msk);
+ 163:./drive/nuc_can.c ****     tCAN->BTIME = u32Value;
+ 164:./drive/nuc_can.c ****     tCAN->BRPE     = (u32Brp >> 6) & 0x0F;
+ 165:./drive/nuc_can.c **** 
+ 166:./drive/nuc_can.c ****     /* pre-initialize CAN message objects */ 
+ 167:./drive/nuc_can.c ****     for (int i = 0; i < _MSG_OBJ_MAX; i++ )
+ 168:./drive/nuc_can.c ****     {
+ 169:./drive/nuc_can.c ****         tCAN->IF[0].CMASK    = _CMDMASK_WR    | _CMDMASK_MASK | _CMDMASK_ARB | _CMDMASK_CTRL | _CMD
+ 170:./drive/nuc_can.c ****         tCAN->IF[0].MASK1    = 0x0;          // useless in basic mode
+ 171:./drive/nuc_can.c ****         tCAN->IF[0].MASK2    = 0x0;          // useless in basic mode
+ 172:./drive/nuc_can.c ****         tCAN->IF[0].ARB1     = 0x0;          // ID15~0
+ 173:./drive/nuc_can.c ****         tCAN->IF[0].ARB2     = 0x0;          // MsgVal, eXt, xmt, ID28~16
+ 174:./drive/nuc_can.c ****         tCAN->IF[0].MCON     = 0x0;          // DLC
+ 175:./drive/nuc_can.c ****         tCAN->IF[0].DAT_A1   = 0x0;          // data0,1
+ 176:./drive/nuc_can.c ****         tCAN->IF[0].DAT_A2   = 0x0;          // data2,3
+ 177:./drive/nuc_can.c ****         tCAN->IF[0].DAT_B1   = 0x0;          // data4,5
+ 178:./drive/nuc_can.c ****         tCAN->IF[0].DAT_B2   = 0x0;          // data6,7
+ 179:./drive/nuc_can.c ****         tCAN->IF[0].CREQ     = i+1;          // set bit15 for sending
+ 180:./drive/nuc_can.c **** 
+ 181:./drive/nuc_can.c ****         while (tCAN->IF[0].CREQ & _CMDREQ_BUSY);
+ 182:./drive/nuc_can.c ****     }
+ 183:./drive/nuc_can.c **** 
+ 184:./drive/nuc_can.c ****     tCAN->STATUS = 0;                            /* reset CAN status register */
+ 185:./drive/nuc_can.c **** 
+ 186:./drive/nuc_can.c ****     tCAN->CON = (tCAN->CON & 0xF1) 
+ 187:./drive/nuc_can.c ****                 |  CAN_CON_IE_Msk
+ 188:./drive/nuc_can.c ****                 // |  CAN_CON_SIE_Msk
+ 189:./drive/nuc_can.c ****                 |  CAN_CON_EIE_Msk;
+ 190:./drive/nuc_can.c **** 
+ 191:./drive/nuc_can.c ****     /* Set the CAN to leave initialization mode */
+ 192:./drive/nuc_can.c ****     tCAN->CON &= (~(CAN_CON_INIT_Msk | CAN_CON_CCE_Msk));
+ 193:./drive/nuc_can.c ****     while(tCAN->CON & CAN_CON_INIT_Msk); /* Check INIT bit is released */
+ 194:./drive/nuc_can.c **** 
+ 195:./drive/nuc_can.c ****     NVIC_EnableIRQ(CAN0_IRQn);                     /* enable CAN interrupt */
+ 196:./drive/nuc_can.c **** 
+ 197:./drive/nuc_can.c ****     CAN_TxRdy  = 1;  
+ 198:./drive/nuc_can.c **** 
+ 199:./drive/nuc_can.c ****     CAN_wrFilter( 0, 0, EXTENDED_FORMAT); 
+ 200:./drive/nuc_can.c ****     CAN_wrFilter( 0, 0, STANDARD_FORMAT); 
+ 201:./drive/nuc_can.c **** 
+ 202:./drive/nuc_can.c ****     return (GetCANBitRate());
+ 203:./drive/nuc_can.c **** }
+ 204:./drive/nuc_can.c **** 
+ 205:./drive/nuc_can.c **** int CAN_init( uint32 baud )
+ 206:./drive/nuc_can.c **** {
+ 207:./drive/nuc_can.c ****     can_baudrate = baud;
+ 208:./drive/nuc_can.c ****     return CAN_setup();
+ 209:./drive/nuc_can.c **** }
+ 210:./drive/nuc_can.c **** 
+ 211:./drive/nuc_can.c **** void CAN_Init(uint32 addr, uint32 baud)
+ 212:./drive/nuc_can.c **** {
+ 213:./drive/nuc_can.c ****     LIST_BUF_RESET( canList_rx );
+ 214:./drive/nuc_can.c ****     CAN_init( baud );
+ 215:./drive/nuc_can.c **** }
+ 216:./drive/nuc_can.c **** 
+ 217:./drive/nuc_can.c **** /*----------------------------------------------------------------------------
+ 218:./drive/nuc_can.c ****   set the testmode
+ 219:./drive/nuc_can.c ****  *----------------------------------------------------------------------------*/
+ 220:./drive/nuc_can.c **** void CAN_testmode (void) {
+ 221:./drive/nuc_can.c **** 
+ 222:./drive/nuc_can.c ****     //tCAN->CON |=  _CNTL_TEST;                 /* enable Test mode     */ // important to set this
+ 223:./drive/nuc_can.c ****     //LPC_CAN->TEST  =  _TEST_LBACK;                 /* enable loopback mode */
+ 224:./drive/nuc_can.c **** }
+ 225:./drive/nuc_can.c **** 
+ 226:./drive/nuc_can.c **** /*----------------------------------------------------------------------------
+ 227:./drive/nuc_can.c ****   leave initialisation mode.
+ 228:./drive/nuc_can.c ****  *----------------------------------------------------------------------------*/
+ 229:./drive/nuc_can.c **** void CAN_start (void)  {
+  45              		.loc 1 229 0
+  46              		.cfi_startproc
+  47              		@ args = 0, pretend = 0, frame = 0
+  48              		@ frame_needed = 0, uses_anonymous_args = 0
+  49              		@ link register save eliminated.
+ 230:./drive/nuc_can.c **** 
+ 231:./drive/nuc_can.c ****     //tCAN->CON &= ~_CNTL_INIT;                     /* Enter normal operating mode */
+ 232:./drive/nuc_can.c **** }
+  50              		.loc 1 232 0
+  51              		@ sp needed
+  52 0000 7047     		bx	lr
+  53              		.cfi_endproc
+  54              	.LFE64:
+  56              		.section	.text.CAN_waitReady,"ax",%progbits
+  57              		.align	1
+  58              		.global	CAN_waitReady
+  59              		.code	16
+  60              		.thumb_func
+  62              	CAN_waitReady:
+  63              	.LFB65:
+ 233:./drive/nuc_can.c **** 
+ 234:./drive/nuc_can.c **** /*----------------------------------------------------------------------------
+ 235:./drive/nuc_can.c ****   check if transmit mailbox is empty
+ 236:./drive/nuc_can.c ****  *----------------------------------------------------------------------------*/
+ 237:./drive/nuc_can.c **** void CAN_waitReady (void)  {
+  64              		.loc 1 237 0
+  65              		.cfi_startproc
+  66              		@ args = 0, pretend = 0, frame = 0
+  67              		@ frame_needed = 0, uses_anonymous_args = 0
+  68              		@ link register save eliminated.
+ 238:./drive/nuc_can.c **** 
+ 239:./drive/nuc_can.c ****     CAN_TxRdy = 1;
+  69              		.loc 1 239 0
+  70 0000 0122     		movs	r2, #1
+  71 0002 014B     		ldr	r3, .L4
+ 240:./drive/nuc_can.c **** }
+  72              		.loc 1 240 0
+  73              		@ sp needed
+ 239:./drive/nuc_can.c **** }
+  74              		.loc 1 239 0
+  75 0004 1A60     		str	r2, [r3]
+  76              		.loc 1 240 0
+  77 0006 7047     		bx	lr
+  78              	.L5:
+  79              		.align	2
+  80              	.L4:
+  81 0008 00000000 		.word	.LANCHOR0
+  82              		.cfi_endproc
+  83              	.LFE65:
+  85              		.section	.text.CAN_GetErrCnt,"ax",%progbits
+  86              		.align	1
+  87              		.global	CAN_GetErrCnt
+  88              		.code	16
+  89              		.thumb_func
+  91              	CAN_GetErrCnt:
+  92              	.LFB67:
+ 241:./drive/nuc_can.c **** 
+ 242:./drive/nuc_can.c **** int CAN_GetErr( int en )
+ 243:./drive/nuc_can.c **** {
+ 244:./drive/nuc_can.c **** 
+ 245:./drive/nuc_can.c ****     static int errCnt = 0;
+ 246:./drive/nuc_can.c ****     uint32_t state = tCAN->STATUS;
+ 247:./drive/nuc_can.c **** 	volatile int i, time = 100;
+ 248:./drive/nuc_can.c **** 	
+ 249:./drive/nuc_can.c ****     if( state & _STAT_BOFF )
+ 250:./drive/nuc_can.c ****     {
+ 251:./drive/nuc_can.c ****         pr_debug("error:0x%08lx ", state);
+ 252:./drive/nuc_can.c ****         errCnt++;
+ 253:./drive/nuc_can.c ****         if( errCnt > 30 )
+ 254:./drive/nuc_can.c ****         {
+ 255:./drive/nuc_can.c ****             errCnt = 0;
+ 256:./drive/nuc_can.c **** 			CAN_setup();
+ 257:./drive/nuc_can.c **** 			CAN_TxRdy = 1;
+ 258:./drive/nuc_can.c ****             return state;
+ 259:./drive/nuc_can.c ****         }
+ 260:./drive/nuc_can.c **** 		while( time-- )
+ 261:./drive/nuc_can.c **** 		{
+ 262:./drive/nuc_can.c **** 			tCAN->CON &= ~_CNTL_INIT;
+ 263:./drive/nuc_can.c **** 			for(i=0; i<10000;i++);
+ 264:./drive/nuc_can.c **** 			if(!( tCAN->STATUS & _STAT_BOFF )) break;
+ 265:./drive/nuc_can.c **** 		}
+ 266:./drive/nuc_can.c ****         return state;
+ 267:./drive/nuc_can.c ****     }
+ 268:./drive/nuc_can.c ****     errCnt = 0;
+ 269:./drive/nuc_can.c ****     return 0;
+ 270:./drive/nuc_can.c **** }
+ 271:./drive/nuc_can.c **** 
+ 272:./drive/nuc_can.c **** void CAN_GetErrCnt( uint8 *pRxCnt, uint8 *pTxCnt)
+ 273:./drive/nuc_can.c **** {
+  93              		.loc 1 273 0
+  94              		.cfi_startproc
+  95              		@ args = 0, pretend = 0, frame = 0
+  96              		@ frame_needed = 0, uses_anonymous_args = 0
+  97              		@ link register save eliminated.
+  98              	.LVL0:
+ 274:./drive/nuc_can.c ****     *pRxCnt = (LPC_CAN->ERR>>8) & 0x7F;
+  99              		.loc 1 274 0
+ 100 0000 034A     		ldr	r2, .L7
+ 275:./drive/nuc_can.c **** 	*pTxCnt = (LPC_CAN->ERR   )& 0xFF;
+ 276:./drive/nuc_can.c **** }
+ 101              		.loc 1 276 0
+ 102              		@ sp needed
+ 274:./drive/nuc_can.c ****     *pRxCnt = (LPC_CAN->ERR>>8) & 0x7F;
+ 103              		.loc 1 274 0
+ 104 0002 9368     		ldr	r3, [r2, #8]
+ 105 0004 5B04     		lsls	r3, r3, #17
+ 106 0006 5B0E     		lsrs	r3, r3, #25
+ 107 0008 0370     		strb	r3, [r0]
+ 275:./drive/nuc_can.c **** 	*pTxCnt = (LPC_CAN->ERR   )& 0xFF;
+ 108              		.loc 1 275 0
+ 109 000a 9368     		ldr	r3, [r2, #8]
+ 110 000c 0B70     		strb	r3, [r1]
+ 111              		.loc 1 276 0
+ 112 000e 7047     		bx	lr
+ 113              	.L8:
+ 114              		.align	2
+ 115              	.L7:
+ 116 0010 00001840 		.word	1075314688
+ 117              		.cfi_endproc
+ 118              	.LFE67:
+ 120              		.section	.text.CAN_wrMsg,"ax",%progbits
+ 121              		.align	1
+ 122              		.global	CAN_wrMsg
+ 123              		.code	16
+ 124              		.thumb_func
+ 126              	CAN_wrMsg:
+ 127              	.LFB68:
+ 277:./drive/nuc_can.c **** 
+ 278:./drive/nuc_can.c **** /*----------------------------------------------------------------------------
+ 279:./drive/nuc_can.c ****   write a message to CAN peripheral and transmit it.
+ 280:./drive/nuc_can.c ****  *----------------------------------------------------------------------------*/
+ 281:./drive/nuc_can.c **** void CAN_wrMsg (CAN_msg *msg)  
+ 282:./drive/nuc_can.c **** {
+ 128              		.loc 1 282 0
+ 129              		.cfi_startproc
+ 130              		@ args = 0, pretend = 0, frame = 0
+ 131              		@ frame_needed = 0, uses_anonymous_args = 0
+ 132              	.LVL1:
+ 283:./drive/nuc_can.c ****     uint8_t u8MsgObj;
+ 284:./drive/nuc_can.c ****     int32_t i;
+ 285:./drive/nuc_can.c ****     uint32_t can_msgv;
+ 286:./drive/nuc_can.c **** 
+ 287:./drive/nuc_can.c ****     can_msgv = (tCAN->MVLD2 << 16) | tCAN->MVLD1;
+ 133              		.loc 1 287 0
+ 134 0000 2B4B     		ldr	r3, .L26
+ 288:./drive/nuc_can.c **** 
+ 289:./drive/nuc_can.c ****     for (i = _MSG_OBJ_MAX - 1; i > -1; i--) {
+ 290:./drive/nuc_can.c ****         if ((can_msgv & (1 << i)) == 0)
+ 135              		.loc 1 290 0
+ 136 0002 0121     		movs	r1, #1
+ 287:./drive/nuc_can.c **** 
+ 137              		.loc 1 287 0
+ 138 0004 9A6E     		ldr	r2, [r3, #104]
+ 139 0006 5B6E     		ldr	r3, [r3, #100]
+ 140 0008 1204     		lsls	r2, r2, #16
+ 141 000a 1A43     		orrs	r2, r3
+ 142              	.LVL2:
+ 289:./drive/nuc_can.c ****         if ((can_msgv & (1 << i)) == 0)
+ 143              		.loc 1 289 0
+ 144 000c 1F23     		movs	r3, #31
+ 282:./drive/nuc_can.c ****     uint8_t u8MsgObj;
+ 145              		.loc 1 282 0
+ 146 000e 10B5     		push	{r4, lr}
+ 147              	.LCFI0:
+ 148              		.cfi_def_cfa_offset 8
+ 149              		.cfi_offset 4, -8
+ 150              		.cfi_offset 14, -4
+ 151              	.LVL3:
+ 152              	.L11:
+ 153              		.loc 1 290 0
+ 154 0010 0C00     		movs	r4, r1
+ 155 0012 9C40     		lsls	r4, r4, r3
+ 156 0014 2242     		tst	r2, r4
+ 157 0016 46D0     		beq	.L10
+ 158              	.LVL4:
+ 289:./drive/nuc_can.c ****         if ((can_msgv & (1 << i)) == 0)
+ 159              		.loc 1 289 0 discriminator 2
+ 160 0018 013B     		subs	r3, r3, #1
+ 161 001a F9D2     		bcs	.L11
+ 162              	.LVL5:
+ 291:./drive/nuc_can.c ****             break;
+ 292:./drive/nuc_can.c ****     }
+ 293:./drive/nuc_can.c ****     u8MsgObj = i>-1? i+1: 0 ;
+ 163              		.loc 1 293 0
+ 164 001c 0022     		movs	r2, #0
+ 165              	.LVL6:
+ 166              	.L18:
+ 294:./drive/nuc_can.c **** 
+ 295:./drive/nuc_can.c ****     if( msg->id & CAN_MSG_RTR )
+ 167              		.loc 1 295 0 discriminator 4
+ 168 001e 0168     		ldr	r1, [r0]
+ 169 0020 244B     		ldr	r3, .L26+4
+ 170 0022 4900     		lsls	r1, r1, #1
+ 171 0024 07D5     		bpl	.L12
+ 296:./drive/nuc_can.c ****     {
+ 297:./drive/nuc_can.c ****         tCAN->IF[0].CMASK = _CMDMASK_WR   | _CMDMASK_MASK  | _CMDMASK_ARB | _CMDMASK_CTRL | _CMDMAS
+ 172              		.loc 1 297 0
+ 173 0026 F321     		movs	r1, #243
+ 174 0028 5962     		str	r1, [r3, #36]
+ 298:./drive/nuc_can.c ****         tCAN->IF[0].MCON  = _MCTRL_UMASK  /*| _MCTRL_TXRQST */ | _MCTRL_RMTEN | _MCTRL_TXIE  | _MCT
+ 175              		.loc 1 298 0
+ 176 002a 047B     		ldrb	r4, [r0, #12]
+ 177 002c E439     		subs	r1, r1, #228
+ 178 002e 2140     		ands	r1, r4
+ 179 0030 D424     		movs	r4, #212
+ 180 0032 6401     		lsls	r4, r4, #5
+ 181 0034 06E0     		b	.L22
+ 182              	.L12:
+ 299:./drive/nuc_can.c ****     }else
+ 300:./drive/nuc_can.c ****     {
+ 301:./drive/nuc_can.c ****         tCAN->IF[0].CMASK = _CMDMASK_WR   | _CMDMASK_ARB   | _CMDMASK_CTRL | _CMDMASK_TREQ | _CMDMA
+ 183              		.loc 1 301 0
+ 184 0036 B721     		movs	r1, #183
+ 185 0038 5962     		str	r1, [r3, #36]
+ 302:./drive/nuc_can.c ****         tCAN->IF[0].MCON  =                 _MCTRL_TXRQST  | _MCTRL_TXIE  | _MCTRL_EOB    | (msg->l
+ 186              		.loc 1 302 0
+ 187 003a 047B     		ldrb	r4, [r0, #12]
+ 188 003c A839     		subs	r1, r1, #168
+ 189 003e 2140     		ands	r1, r4
+ 190 0040 9824     		movs	r4, #152
+ 191 0042 2401     		lsls	r4, r4, #4
+ 192              	.L22:
+ 193 0044 2143     		orrs	r1, r4
+ 303:./drive/nuc_can.c ****     }
+ 304:./drive/nuc_can.c **** 
+ 305:./drive/nuc_can.c ****     if ( !( msg->id & CAN_MSG_EXT ) ) {   /* handle standard format */
+ 194              		.loc 1 305 0
+ 195 0046 8024     		movs	r4, #128
+ 302:./drive/nuc_can.c ****         tCAN->IF[0].MCON  =                 _MCTRL_TXRQST  | _MCTRL_TXIE  | _MCTRL_EOB    | (msg->l
+ 196              		.loc 1 302 0
+ 197 0048 9963     		str	r1, [r3, #56]
+ 198              		.loc 1 305 0
+ 199 004a 0168     		ldr	r1, [r0]
+ 200 004c A405     		lsls	r4, r4, #22
+ 201 004e 0C40     		ands	r4, r1
+ 202 0050 06D1     		bne	.L14
+ 306:./drive/nuc_can.c ****         tCAN->IF[0].ARB1  = 0;
+ 203              		.loc 1 306 0
+ 204 0052 1C63     		str	r4, [r3, #48]
+ 307:./drive/nuc_can.c ****         tCAN->IF[0].ARB2  = ((msg->id & _STD_FORMAT) << 2)           | _ARB2_DIR | _ARB2_MSGVAL;
+ 205              		.loc 1 307 0
+ 206 0054 0168     		ldr	r1, [r0]
+ 207 0056 8C00     		lsls	r4, r1, #2
+ 208 0058 1749     		ldr	r1, .L26+8
+ 209 005a 2140     		ands	r1, r4
+ 210 005c A024     		movs	r4, #160
+ 211 005e 04E0     		b	.L23
+ 212              	.L14:
+ 308:./drive/nuc_can.c ****     }
+ 309:./drive/nuc_can.c ****     else {                                  /* handle extended format */
+ 310:./drive/nuc_can.c ****         tCAN->IF[0].ARB1 = ( msg->id        & _ARB1_ID);
+ 311:./drive/nuc_can.c ****         tCAN->IF[0].ARB2 = ((msg->id >> 16) & _ARB2_ID)  | _ARB2_XTD | _ARB2_DIR | _ARB2_MSGVAL;
+ 213              		.loc 1 311 0
+ 214 0060 E024     		movs	r4, #224
+ 310:./drive/nuc_can.c ****         tCAN->IF[0].ARB2 = ((msg->id >> 16) & _ARB2_ID)  | _ARB2_XTD | _ARB2_DIR | _ARB2_MSGVAL;
+ 215              		.loc 1 310 0
+ 216 0062 89B2     		uxth	r1, r1
+ 217 0064 1963     		str	r1, [r3, #48]
+ 218              		.loc 1 311 0
+ 219 0066 0168     		ldr	r1, [r0]
+ 220 0068 090C     		lsrs	r1, r1, #16
+ 221              	.L23:
+ 222 006a 2402     		lsls	r4, r4, #8
+ 223 006c 2143     		orrs	r1, r4
+ 224 006e 5963     		str	r1, [r3, #52]
+ 312:./drive/nuc_can.c ****     }
+ 313:./drive/nuc_can.c **** 
+ 314:./drive/nuc_can.c ****     /* Set the data for IFn Data Register */
+ 315:./drive/nuc_can.c ****     tCAN->IF[0].DAT_A1 = msg->buff16[0];
+ 225              		.loc 1 315 0
+ 226 0070 8488     		ldrh	r4, [r0, #4]
+ 227 0072 1049     		ldr	r1, .L26+4
+ 228 0074 DC63     		str	r4, [r3, #60]
+ 316:./drive/nuc_can.c ****     tCAN->IF[0].DAT_A2 = msg->buff16[1];
+ 229              		.loc 1 316 0
+ 230 0076 C488     		ldrh	r4, [r0, #6]
+ 231 0078 1C64     		str	r4, [r3, #64]
+ 317:./drive/nuc_can.c ****     tCAN->IF[0].DAT_B1 = msg->buff16[2];
+ 232              		.loc 1 317 0
+ 233 007a 0489     		ldrh	r4, [r0, #8]
+ 234 007c 5C64     		str	r4, [r3, #68]
+ 318:./drive/nuc_can.c ****     tCAN->IF[0].DAT_B2 = msg->buff16[3];
+ 235              		.loc 1 318 0
+ 236 007e 4489     		ldrh	r4, [r0, #10]
+ 237 0080 9C64     		str	r4, [r3, #72]
+ 319:./drive/nuc_can.c **** 
+ 320:./drive/nuc_can.c ****     if (msg->type == REMOTE_FRAME) {
+ 238              		.loc 1 320 0
+ 239 0082 807A     		ldrb	r0, [r0, #10]
+ 240              	.LVL7:
+ 241 0084 0128     		cmp	r0, #1
+ 242 0086 07D1     		bne	.L16
+ 321:./drive/nuc_can.c ****         tCAN->IF[0].CMASK  &= ~(_CMDMASK_DATAA | _CMDMASK_DATAB);
+ 243              		.loc 1 321 0
+ 244 0088 0324     		movs	r4, #3
+ 245 008a 486A     		ldr	r0, [r1, #36]
+ 246 008c A043     		bics	r0, r4
+ 247 008e 4862     		str	r0, [r1, #36]
+ 322:./drive/nuc_can.c ****         tCAN->IF[0].ARB2   &= ~(_ARB2_DIR);                 /* trasnmit a Remote Frame Request */
+ 248              		.loc 1 322 0
+ 249 0090 4C6B     		ldr	r4, [r1, #52]
+ 250 0092 0A48     		ldr	r0, .L26+12
+ 251 0094 2040     		ands	r0, r4
+ 252 0096 4863     		str	r0, [r1, #52]
+ 253              	.L16:
+ 323:./drive/nuc_can.c ****     }
+ 324:./drive/nuc_can.c **** 
+ 325:./drive/nuc_can.c ****     tCAN->IF[0].CREQ  = u8MsgObj;   /* Transfer message object data to message RAM */
+ 254              		.loc 1 325 0
+ 255 0098 1A62     		str	r2, [r3, #32]
+ 326:./drive/nuc_can.c ****     while (tCAN->IF[0].CREQ & _CMDREQ_BUSY);
+ 256              		.loc 1 326 0
+ 257 009a 8022     		movs	r2, #128
+ 258              	.LVL8:
+ 259 009c 1202     		lsls	r2, r2, #8
+ 260              	.L17:
+ 261              		.loc 1 326 0 is_stmt 0 discriminator 1
+ 262 009e 196A     		ldr	r1, [r3, #32]
+ 263 00a0 1142     		tst	r1, r2
+ 264 00a2 FCD1     		bne	.L17
+ 265 00a4 02E0     		b	.L25
+ 266              	.LVL9:
+ 267              	.L10:
+ 293:./drive/nuc_can.c **** 
+ 268              		.loc 1 293 0 is_stmt 1
+ 269 00a6 0133     		adds	r3, r3, #1
+ 270              	.LVL10:
+ 271 00a8 DAB2     		uxtb	r2, r3
+ 272              	.LVL11:
+ 273 00aa B8E7     		b	.L18
+ 274              	.LVL12:
+ 275              	.L25:
+ 327:./drive/nuc_can.c **** }
+ 276              		.loc 1 327 0
+ 277              		@ sp needed
+ 278 00ac 10BD     		pop	{r4, pc}
+ 279              	.L27:
+ 280 00ae C046     		.align	2
+ 281              	.L26:
+ 282 00b0 FC001840 		.word	1075314940
+ 283 00b4 00001840 		.word	1075314688
+ 284 00b8 FC1F0000 		.word	8188
+ 285 00bc FFDFFFFF 		.word	-8193
+ 286              		.cfi_endproc
+ 287              	.LFE68:
+ 289              		.section	.text.CAN_wrFilter,"ax",%progbits
+ 290              		.align	1
+ 291              		.global	CAN_wrFilter
+ 292              		.code	16
+ 293              		.thumb_func
+ 295              	CAN_wrFilter:
+ 296              	.LFB70:
+ 328:./drive/nuc_can.c **** 
+ 329:./drive/nuc_can.c **** /*----------------------------------------------------------------------------
+ 330:./drive/nuc_can.c ****   read a message from CAN peripheral and release it.
+ 331:./drive/nuc_can.c ****  *----------------------------------------------------------------------------*/
+ 332:./drive/nuc_can.c **** static void CAN_ISRmsg (uint32_t can_msgObj)  
+ 333:./drive/nuc_can.c **** {
+ 334:./drive/nuc_can.c ****     while (tCAN->IF[1].CREQ & _CMDREQ_BUSY);
+ 335:./drive/nuc_can.c ****     tCAN->IF[1].CMASK = _CMDMASK_RD     | _CMDMASK_MASK | _CMDMASK_ARB   | _CMDMASK_CTRL |
+ 336:./drive/nuc_can.c ****         _CMDMASK_INTPND | _CMDMASK_TREQ | _CMDMASK_DATAA | _CMDMASK_DATAB;	
+ 337:./drive/nuc_can.c ****     tCAN->IF[1].CREQ = can_msgObj;        /* Transfer message object data from message RAM */
+ 338:./drive/nuc_can.c ****     while (tCAN->IF[1].CREQ & _CMDREQ_BUSY);
+ 339:./drive/nuc_can.c **** 
+ 340:./drive/nuc_can.c ****     /* check the message object whether it is receive or transmit*/
+ 341:./drive/nuc_can.c ****     if (tCAN->IF[1].MCON & _MCTRL_TXIE) {
+ 342:./drive/nuc_can.c ****         CAN_TxRdy = 1;                          /*  set transmit flag   */
+ 343:./drive/nuc_can.c ****         /* release message obect */
+ 344:./drive/nuc_can.c ****         tCAN->IF[1].CMASK = _CMDMASK_WR    | _CMDMASK_MASK | _CMDMASK_ARB | _CMDMASK_CTRL |
+ 345:./drive/nuc_can.c ****             _CMDMASK_DATAA | _CMDMASK_DATAB;
+ 346:./drive/nuc_can.c ****         tCAN->IF[1].MCON  = 0x0000;
+ 347:./drive/nuc_can.c **** 
+ 348:./drive/nuc_can.c ****         tCAN->IF[1].MASK1   = 0x0000;
+ 349:./drive/nuc_can.c ****         tCAN->IF[1].MASK2   = 0x0000;
+ 350:./drive/nuc_can.c **** 
+ 351:./drive/nuc_can.c ****         tCAN->IF[1].ARB1   = 0x0000;
+ 352:./drive/nuc_can.c ****         tCAN->IF[1].ARB2   = 0x0000;
+ 353:./drive/nuc_can.c **** 
+ 354:./drive/nuc_can.c ****         tCAN->IF[1].DAT_A1    = 0x0000;
+ 355:./drive/nuc_can.c ****         tCAN->IF[1].DAT_A2    = 0x0000;
+ 356:./drive/nuc_can.c ****         tCAN->IF[1].DAT_B1    = 0x0000;
+ 357:./drive/nuc_can.c ****         tCAN->IF[1].DAT_B2    = 0x0000;
+ 358:./drive/nuc_can.c **** 
+ 359:./drive/nuc_can.c ****         tCAN->IF[1].CREQ = can_msgObj;	   	/* Transfer message object data to message RAM */
+ 360:./drive/nuc_can.c ****         while( tCAN->IF[1].CREQ & _CMDREQ_BUSY );
+ 361:./drive/nuc_can.c ****     }
+ 362:./drive/nuc_can.c ****     else {
+ 363:./drive/nuc_can.c ****         if (tCAN->IF[1].ARB2 & (1UL << 14)) {  /* check XTD bit (extended format) */
+ 364:./drive/nuc_can.c ****             CAN_RxMsg.id = ((tCAN->IF[1].ARB2 & _ARB2_ID) << 16) | tCAN->IF[1].ARB1;
+ 365:./drive/nuc_can.c ****         }
+ 366:./drive/nuc_can.c ****         else {
+ 367:./drive/nuc_can.c ****             CAN_RxMsg.id = (tCAN->IF[1].ARB2 >> 2) & _STD_FORMAT; /* bit 28-18 is 11-bit standard f
+ 368:./drive/nuc_can.c ****         }
+ 369:./drive/nuc_can.c **** 
+ 370:./drive/nuc_can.c ****         CAN_RxMsg.len = tCAN->IF[1].MCON & _MCTRL_DLC;	         /* get message object data length *
+ 371:./drive/nuc_can.c ****         CAN_RxMsg.buff16[0] = tCAN->IF[1].DAT_A1;
+ 372:./drive/nuc_can.c ****         CAN_RxMsg.buff16[1] = tCAN->IF[1].DAT_A2;
+ 373:./drive/nuc_can.c ****         CAN_RxMsg.buff16[2] = tCAN->IF[1].DAT_B1;
+ 374:./drive/nuc_can.c ****         CAN_RxMsg.buff16[3] = tCAN->IF[1].DAT_B2;
+ 375:./drive/nuc_can.c **** 
+ 376:./drive/nuc_can.c ****         if( !LIST_BUF_FULL( canList_rx ) ) // && ( msg_obj.id == 0 || msg_obj.id == CANID ))
+ 377:./drive/nuc_can.c ****         {
+ 378:./drive/nuc_can.c ****             LIST_BUF_WR( canList_rx, CAN_RxMsg);
+ 379:./drive/nuc_can.c ****         }
+ 380:./drive/nuc_can.c ****     }
+ 381:./drive/nuc_can.c **** }
+ 382:./drive/nuc_can.c **** 
+ 383:./drive/nuc_can.c **** /*----------------------------------------------------------------------------
+ 384:./drive/nuc_can.c ****   setup acceptance filter.
+ 385:./drive/nuc_can.c ****  *----------------------------------------------------------------------------*/
+ 386:./drive/nuc_can.c **** void CAN_wrFilter (uint32 id, uint32 msk, uint8 format)  {
+ 297              		.loc 1 386 0
+ 298              		.cfi_startproc
+ 299              		@ args = 0, pretend = 0, frame = 0
+ 300              		@ frame_needed = 0, uses_anonymous_args = 0
+ 301              	.LVL13:
+ 387:./drive/nuc_can.c ****     /* Set the Message Buffer Register */
+ 388:./drive/nuc_can.c ****     uint8_t u8MsgObj = 0;
+ 389:./drive/nuc_can.c ****     int32_t i;
+ 390:./drive/nuc_can.c ****     uint32_t can_msgv;
+ 391:./drive/nuc_can.c **** 
+ 392:./drive/nuc_can.c **** 
+ 393:./drive/nuc_can.c ****     can_msgv = (tCAN->MVLD2 << 16) | tCAN->MVLD1;
+ 302              		.loc 1 393 0
+ 303 0000 1C4B     		ldr	r3, .L40
+ 386:./drive/nuc_can.c ****     /* Set the Message Buffer Register */
+ 304              		.loc 1 386 0
+ 305 0002 70B5     		push	{r4, r5, r6, lr}
+ 306              	.LCFI1:
+ 307              		.cfi_def_cfa_offset 16
+ 308              		.cfi_offset 4, -16
+ 309              		.cfi_offset 5, -12
+ 310              		.cfi_offset 6, -8
+ 311              		.cfi_offset 14, -4
+ 312              		.loc 1 393 0
+ 313 0004 9C6E     		ldr	r4, [r3, #104]
+ 314 0006 5B6E     		ldr	r3, [r3, #100]
+ 315 0008 2404     		lsls	r4, r4, #16
+ 316 000a 1C43     		orrs	r4, r3
+ 317              	.LVL14:
+ 394:./drive/nuc_can.c **** 
+ 395:./drive/nuc_can.c ****     for (i = _MSG_OBJ_MAX - 1; i > -1; i--) {
+ 396:./drive/nuc_can.c ****         if ((can_msgv & (1 << i)) == 0)
+ 318              		.loc 1 396 0
+ 319 000c 0125     		movs	r5, #1
+ 395:./drive/nuc_can.c ****         if ((can_msgv & (1 << i)) == 0)
+ 320              		.loc 1 395 0
+ 321 000e 1F23     		movs	r3, #31
+ 322              	.LVL15:
+ 323              	.L30:
+ 324              		.loc 1 396 0
+ 325 0010 2E00     		movs	r6, r5
+ 326 0012 9E40     		lsls	r6, r6, r3
+ 327 0014 3442     		tst	r4, r6
+ 328 0016 28D0     		beq	.L29
+ 329              	.LVL16:
+ 395:./drive/nuc_can.c ****         if ((can_msgv & (1 << i)) == 0)
+ 330              		.loc 1 395 0 discriminator 2
+ 331 0018 013B     		subs	r3, r3, #1
+ 332 001a F9D2     		bcs	.L30
+ 333              	.LVL17:
+ 397:./drive/nuc_can.c ****             break;
+ 398:./drive/nuc_can.c ****     }
+ 399:./drive/nuc_can.c ****     u8MsgObj = i>-1? i+1: 0 ;
+ 334              		.loc 1 399 0
+ 335 001c 0024     		movs	r4, #0
+ 336              	.LVL18:
+ 337              	.L34:
+ 400:./drive/nuc_can.c **** 
+ 401:./drive/nuc_can.c **** 
+ 402:./drive/nuc_can.c ****     tCAN->IF[0].CMASK = _CMDMASK_WR  | _CMDMASK_MASK | _CMDMASK_ARB | _CMDMASK_CTRL;
+ 338              		.loc 1 402 0 discriminator 4
+ 339 001e F025     		movs	r5, #240
+ 340 0020 154B     		ldr	r3, .L40+4
+ 341 0022 5D62     		str	r5, [r3, #36]
+ 403:./drive/nuc_can.c ****     tCAN->IF[0].MCON  = _MCTRL_UMASK | _MCTRL_RXIE   | _MCTRL_EOB   | _MCTRL_DLC;
+ 342              		.loc 1 403 0 discriminator 4
+ 343 0024 154D     		ldr	r5, .L40+8
+ 344 0026 9D63     		str	r5, [r3, #56]
+ 345 0028 8025     		movs	r5, #128
+ 346 002a 2D02     		lsls	r5, r5, #8
+ 404:./drive/nuc_can.c **** 
+ 405:./drive/nuc_can.c ****     if (format == STANDARD_FORMAT) {       /* handle standard format */
+ 347              		.loc 1 405 0 discriminator 4
+ 348 002c 002A     		cmp	r2, #0
+ 349 002e 08D1     		bne	.L31
+ 350              	.LVL19:
+ 406:./drive/nuc_can.c ****         id = id & _STD_FORMAT;               
+ 407:./drive/nuc_can.c **** 
+ 408:./drive/nuc_can.c ****         tCAN->IF[0].MASK1  =  0;
+ 409:./drive/nuc_can.c ****         tCAN->IF[0].MASK2  = (msk << 2);
+ 351              		.loc 1 409 0
+ 352 0030 8900     		lsls	r1, r1, #2
+ 353              	.LVL20:
+ 408:./drive/nuc_can.c ****         tCAN->IF[0].MASK2  = (msk << 2);
+ 354              		.loc 1 408 0
+ 355 0032 9A62     		str	r2, [r3, #40]
+ 356              		.loc 1 409 0
+ 357 0034 D962     		str	r1, [r3, #44]
+ 410:./drive/nuc_can.c **** 
+ 411:./drive/nuc_can.c ****         tCAN->IF[0].ARB1  =  0;
+ 358              		.loc 1 411 0
+ 359 0036 1A63     		str	r2, [r3, #48]
+ 412:./drive/nuc_can.c ****         tCAN->IF[0].ARB2  = (id << 2)            | _ARB2_MSGVAL;      /* id is stored left-aligned 
+ 360              		.loc 1 412 0
+ 361 0038 114A     		ldr	r2, .L40+12
+ 362              	.LVL21:
+ 363 003a 8000     		lsls	r0, r0, #2
+ 364              	.LVL22:
+ 365 003c 1040     		ands	r0, r2
+ 366 003e 2843     		orrs	r0, r5
+ 367 0040 0BE0     		b	.L38
+ 368              	.LVL23:
+ 369              	.L31:
+ 413:./drive/nuc_can.c ****     }
+ 414:./drive/nuc_can.c ****     else {                                  /* handle extended format */
+ 415:./drive/nuc_can.c ****         id = id & _EXT_FORMAT;               
+ 416:./drive/nuc_can.c **** 
+ 417:./drive/nuc_can.c ****         tCAN->IF[0].MASK1 = (msk        & _MSK1_MSK);
+ 370              		.loc 1 417 0
+ 371 0042 8AB2     		uxth	r2, r1
+ 372              	.LVL24:
+ 418:./drive/nuc_can.c ****         tCAN->IF[0].MASK2 = (msk >> 16)             | _MSK2_MXTD;
+ 373              		.loc 1 418 0
+ 374 0044 090C     		lsrs	r1, r1, #16
+ 375              	.LVL25:
+ 417:./drive/nuc_can.c ****         tCAN->IF[0].MASK2 = (msk >> 16)             | _MSK2_MXTD;
+ 376              		.loc 1 417 0
+ 377 0046 9A62     		str	r2, [r3, #40]
+ 378              		.loc 1 418 0
+ 379 0048 2943     		orrs	r1, r5
+ 419:./drive/nuc_can.c **** 
+ 420:./drive/nuc_can.c ****         tCAN->IF[0].ARB1 = (id        & _ARB1_ID);
+ 380              		.loc 1 420 0
+ 381 004a 82B2     		uxth	r2, r0
+ 418:./drive/nuc_can.c **** 
+ 382              		.loc 1 418 0
+ 383 004c D962     		str	r1, [r3, #44]
+ 384              		.loc 1 420 0
+ 385 004e 1A63     		str	r2, [r3, #48]
+ 421:./drive/nuc_can.c ****         tCAN->IF[0].ARB2 = (id >> 16)             | _ARB2_XTD | _ARB2_MSGVAL;
+ 386              		.loc 1 421 0
+ 387 0050 C022     		movs	r2, #192
+ 388 0052 C000     		lsls	r0, r0, #3
+ 389              	.LVL26:
+ 390 0054 C00C     		lsrs	r0, r0, #19
+ 391 0056 1202     		lsls	r2, r2, #8
+ 392 0058 1043     		orrs	r0, r2
+ 393              	.LVL27:
+ 394              	.L38:
+ 422:./drive/nuc_can.c ****     }
+ 423:./drive/nuc_can.c **** 
+ 424:./drive/nuc_can.c ****     tCAN->IF[0].CREQ = u8MsgObj;         /* Transfer message object data to message RAM */
+ 425:./drive/nuc_can.c ****     while (tCAN->IF[0].CREQ & _CMDREQ_BUSY);
+ 395              		.loc 1 425 0
+ 396 005a 8022     		movs	r2, #128
+ 421:./drive/nuc_can.c ****         tCAN->IF[0].ARB2 = (id >> 16)             | _ARB2_XTD | _ARB2_MSGVAL;
+ 397              		.loc 1 421 0
+ 398 005c 5863     		str	r0, [r3, #52]
+ 399              		.loc 1 425 0
+ 400 005e 1202     		lsls	r2, r2, #8
+ 424:./drive/nuc_can.c ****     while (tCAN->IF[0].CREQ & _CMDREQ_BUSY);
+ 401              		.loc 1 424 0
+ 402 0060 1C62     		str	r4, [r3, #32]
+ 403              	.L33:
+ 404              		.loc 1 425 0 discriminator 1
+ 405 0062 196A     		ldr	r1, [r3, #32]
+ 406 0064 1142     		tst	r1, r2
+ 407 0066 FCD1     		bne	.L33
+ 408 0068 02E0     		b	.L39
+ 409              	.LVL28:
+ 410              	.L29:
+ 399:./drive/nuc_can.c **** 
+ 411              		.loc 1 399 0
+ 412 006a 0133     		adds	r3, r3, #1
+ 413              	.LVL29:
+ 414 006c DCB2     		uxtb	r4, r3
+ 415              	.LVL30:
+ 416 006e D6E7     		b	.L34
+ 417              	.LVL31:
+ 418              	.L39:
+ 426:./drive/nuc_can.c **** }
+ 419              		.loc 1 426 0
+ 420              		@ sp needed
+ 421              	.LVL32:
+ 422 0070 70BD     		pop	{r4, r5, r6, pc}
+ 423              	.L41:
+ 424 0072 C046     		.align	2
+ 425              	.L40:
+ 426 0074 FC001840 		.word	1075314940
+ 427 0078 00001840 		.word	1075314688
+ 428 007c 8F140000 		.word	5263
+ 429 0080 FC1F0000 		.word	8188
+ 430              		.cfi_endproc
+ 431              	.LFE70:
+ 433              		.global	__aeabi_uidiv
+ 434              		.global	__aeabi_uidivmod
+ 435              		.section	.text.CAN_setup,"ax",%progbits
+ 436              		.align	1
+ 437              		.code	16
+ 438              		.thumb_func
+ 440              	CAN_setup:
+ 441              	.LFB60:
+ 123:./drive/nuc_can.c ****     uint8_t u8Tseg1, u8Tseg2;
+ 442              		.loc 1 123 0
+ 443              		.cfi_startproc
+ 444              		@ args = 0, pretend = 0, frame = 16
+ 445              		@ frame_needed = 0, uses_anonymous_args = 0
+ 446 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+ 447              	.LCFI2:
+ 448              		.cfi_def_cfa_offset 20
+ 449              		.cfi_offset 4, -20
+ 450              		.cfi_offset 5, -16
+ 451              		.cfi_offset 6, -12
+ 452              		.cfi_offset 7, -8
+ 453              		.cfi_offset 14, -4
+ 129:./drive/nuc_can.c ****     tCAN->CON |= CAN_CON_CCE_Msk;
+ 454              		.loc 1 129 0
+ 455 0002 0127     		movs	r7, #1
+ 130:./drive/nuc_can.c **** 
+ 456              		.loc 1 130 0
+ 457 0004 4022     		movs	r2, #64
+ 129:./drive/nuc_can.c ****     tCAN->CON |= CAN_CON_CCE_Msk;
+ 458              		.loc 1 129 0
+ 459 0006 474C     		ldr	r4, .L59
+ 123:./drive/nuc_can.c ****     uint8_t u8Tseg1, u8Tseg2;
+ 460              		.loc 1 123 0
+ 461 0008 85B0     		sub	sp, sp, #20
+ 462              	.LCFI3:
+ 463              		.cfi_def_cfa_offset 40
+ 129:./drive/nuc_can.c ****     tCAN->CON |= CAN_CON_CCE_Msk;
+ 464              		.loc 1 129 0
+ 465 000a 2368     		ldr	r3, [r4]
+ 138:./drive/nuc_can.c **** 
+ 466              		.loc 1 138 0
+ 467 000c 0226     		movs	r6, #2
+ 129:./drive/nuc_can.c ****     tCAN->CON |= CAN_CON_CCE_Msk;
+ 468              		.loc 1 129 0
+ 469 000e 3B43     		orrs	r3, r7
+ 470 0010 2360     		str	r3, [r4]
+ 130:./drive/nuc_can.c **** 
+ 471              		.loc 1 130 0
+ 472 0012 2368     		ldr	r3, [r4]
+ 473 0014 1343     		orrs	r3, r2
+ 474 0016 2360     		str	r3, [r4]
+ 133:./drive/nuc_can.c **** 
+ 475              		.loc 1 133 0
+ 476 0018 FFF7FEFF 		bl	SystemCoreClockUpdate
+ 477              	.LVL33:
+ 138:./drive/nuc_can.c **** 
+ 478              		.loc 1 138 0
+ 479 001c 424B     		ldr	r3, .L59+4
+ 480 001e 434D     		ldr	r5, .L59+8
+ 481 0020 1868     		ldr	r0, [r3]
+ 482 0022 6968     		ldr	r1, [r5, #4]
+ 483 0024 FFF7FEFF 		bl	__aeabi_uidiv
+ 484              	.LVL34:
+ 485 0028 3F4B     		ldr	r3, .L59+4
+ 486 002a 0190     		str	r0, [sp, #4]
+ 487              	.LVL35:
+ 488 002c 0293     		str	r3, [sp, #8]
+ 489 002e 0395     		str	r5, [sp, #12]
+ 490              	.LVL36:
+ 491              	.L45:
+ 142:./drive/nuc_can.c ****             break;
+ 492              		.loc 1 142 0
+ 493 0030 B919     		adds	r1, r7, r6
+ 494 0032 0331     		adds	r1, r1, #3
+ 495 0034 0198     		ldr	r0, [sp, #4]
+ 496 0036 F5B2     		uxtb	r5, r6
+ 497              	.LVL37:
+ 498 0038 FFF7FEFF 		bl	__aeabi_uidivmod
+ 499              	.LVL38:
+ 500 003c 0029     		cmp	r1, #0
+ 501 003e 0FD0     		beq	.L43
+ 144:./drive/nuc_can.c ****             u8Tseg2++;
+ 502              		.loc 1 144 0
+ 503 0040 062E     		cmp	r6, #6
+ 504 0042 01D8     		bhi	.L44
+ 145:./drive/nuc_can.c **** 
+ 505              		.loc 1 145 0
+ 506 0044 0137     		adds	r7, r7, #1
+ 507              	.LVL39:
+ 508 0046 FFB2     		uxtb	r7, r7
+ 509              	.LVL40:
+ 510              	.L44:
+ 147:./drive/nuc_can.c ****             break;
+ 511              		.loc 1 147 0
+ 512 0048 B919     		adds	r1, r7, r6
+ 513 004a 0331     		adds	r1, r1, #3
+ 514 004c 0198     		ldr	r0, [sp, #4]
+ 515 004e FFF7FEFF 		bl	__aeabi_uidivmod
+ 516              	.LVL41:
+ 517 0052 0029     		cmp	r1, #0
+ 518 0054 04D0     		beq	.L43
+ 519 0056 0136     		adds	r6, r6, #1
+ 149:./drive/nuc_can.c ****             u8Tseg1++;
+ 520              		.loc 1 149 0
+ 521 0058 102E     		cmp	r6, #16
+ 522 005a E9D1     		bne	.L45
+ 154:./drive/nuc_can.c ****             break;
+ 523              		.loc 1 154 0
+ 524 005c 0127     		movs	r7, #1
+ 525              	.LVL42:
+ 153:./drive/nuc_can.c ****             u8Tseg2 = 1;
+ 526              		.loc 1 153 0
+ 527 005e 0225     		movs	r5, #2
+ 528              	.LVL43:
+ 529              	.L43:
+ 159:./drive/nuc_can.c **** 
+ 530              		.loc 1 159 0
+ 531 0060 E919     		adds	r1, r5, r7
+ 161:./drive/nuc_can.c ****                (u32Brp & CAN_BTIME_BRP_Msk) | (tCAN->BTIME & CAN_BTIME_SJW_Msk);
+ 532              		.loc 1 161 0
+ 533 0062 2D02     		lsls	r5, r5, #8
+ 534              	.LVL44:
+ 535 0064 3F03     		lsls	r7, r7, #12
+ 536              	.LVL45:
+ 537 0066 2F43     		orrs	r7, r5
+ 538 0068 C025     		movs	r5, #192
+ 159:./drive/nuc_can.c **** 
+ 539              		.loc 1 159 0
+ 540 006a 0198     		ldr	r0, [sp, #4]
+ 541 006c 0331     		adds	r1, r1, #3
+ 542 006e FFF7FEFF 		bl	__aeabi_uidiv
+ 543              	.LVL46:
+ 162:./drive/nuc_can.c ****     tCAN->BTIME = u32Value;
+ 544              		.loc 1 162 0
+ 545 0072 E368     		ldr	r3, [r4, #12]
+ 546              	.LBB10:
+ 167:./drive/nuc_can.c ****     {
+ 547              		.loc 1 167 0
+ 548 0074 0021     		movs	r1, #0
+ 549              	.LBE10:
+ 161:./drive/nuc_can.c ****                (u32Brp & CAN_BTIME_BRP_Msk) | (tCAN->BTIME & CAN_BTIME_SJW_Msk);
+ 550              		.loc 1 161 0
+ 551 0076 1D40     		ands	r5, r3
+ 552 0078 3F23     		movs	r3, #63
+ 159:./drive/nuc_can.c **** 
+ 553              		.loc 1 159 0
+ 554 007a 0138     		subs	r0, r0, #1
+ 555              	.LVL47:
+ 161:./drive/nuc_can.c ****                (u32Brp & CAN_BTIME_BRP_Msk) | (tCAN->BTIME & CAN_BTIME_SJW_Msk);
+ 556              		.loc 1 161 0
+ 557 007c 0340     		ands	r3, r0
+ 558 007e 2F43     		orrs	r7, r5
+ 559 0080 1F43     		orrs	r7, r3
+ 560              	.LVL48:
+ 163:./drive/nuc_can.c ****     tCAN->BRPE     = (u32Brp >> 6) & 0x0F;
+ 561              		.loc 1 163 0
+ 562 0082 E760     		str	r7, [r4, #12]
+ 563              	.LBB11:
+ 181:./drive/nuc_can.c ****     }
+ 564              		.loc 1 181 0
+ 565 0084 8027     		movs	r7, #128
+ 566              	.LVL49:
+ 169:./drive/nuc_can.c ****         tCAN->IF[0].MASK1    = 0x0;          // useless in basic mode
+ 567              		.loc 1 169 0
+ 568 0086 F325     		movs	r5, #243
+ 170:./drive/nuc_can.c ****         tCAN->IF[0].MASK2    = 0x0;          // useless in basic mode
+ 569              		.loc 1 170 0
+ 570 0088 0B00     		movs	r3, r1
+ 571              	.LBE11:
+ 164:./drive/nuc_can.c **** 
+ 572              		.loc 1 164 0
+ 573 008a 8005     		lsls	r0, r0, #22
+ 574              	.LVL50:
+ 575 008c 000F     		lsrs	r0, r0, #28
+ 576 008e A061     		str	r0, [r4, #24]
+ 577              	.LVL51:
+ 578              	.LBB12:
+ 181:./drive/nuc_can.c ****     }
+ 579              		.loc 1 181 0
+ 580 0090 3F02     		lsls	r7, r7, #8
+ 581              	.LVL52:
+ 582              	.L47:
+ 179:./drive/nuc_can.c **** 
+ 583              		.loc 1 179 0
+ 584 0092 0131     		adds	r1, r1, #1
+ 585              	.LVL53:
+ 169:./drive/nuc_can.c ****         tCAN->IF[0].MASK1    = 0x0;          // useless in basic mode
+ 586              		.loc 1 169 0
+ 587 0094 6562     		str	r5, [r4, #36]
+ 170:./drive/nuc_can.c ****         tCAN->IF[0].MASK2    = 0x0;          // useless in basic mode
+ 588              		.loc 1 170 0
+ 589 0096 A362     		str	r3, [r4, #40]
+ 171:./drive/nuc_can.c ****         tCAN->IF[0].ARB1     = 0x0;          // ID15~0
+ 590              		.loc 1 171 0
+ 591 0098 E362     		str	r3, [r4, #44]
+ 172:./drive/nuc_can.c ****         tCAN->IF[0].ARB2     = 0x0;          // MsgVal, eXt, xmt, ID28~16
+ 592              		.loc 1 172 0
+ 593 009a 2363     		str	r3, [r4, #48]
+ 173:./drive/nuc_can.c ****         tCAN->IF[0].MCON     = 0x0;          // DLC
+ 594              		.loc 1 173 0
+ 595 009c 6363     		str	r3, [r4, #52]
+ 174:./drive/nuc_can.c ****         tCAN->IF[0].DAT_A1   = 0x0;          // data0,1
+ 596              		.loc 1 174 0
+ 597 009e A363     		str	r3, [r4, #56]
+ 175:./drive/nuc_can.c ****         tCAN->IF[0].DAT_A2   = 0x0;          // data2,3
+ 598              		.loc 1 175 0
+ 599 00a0 E363     		str	r3, [r4, #60]
+ 176:./drive/nuc_can.c ****         tCAN->IF[0].DAT_B1   = 0x0;          // data4,5
+ 600              		.loc 1 176 0
+ 601 00a2 2364     		str	r3, [r4, #64]
+ 177:./drive/nuc_can.c ****         tCAN->IF[0].DAT_B2   = 0x0;          // data6,7
+ 602              		.loc 1 177 0
+ 603 00a4 6364     		str	r3, [r4, #68]
+ 178:./drive/nuc_can.c ****         tCAN->IF[0].CREQ     = i+1;          // set bit15 for sending
+ 604              		.loc 1 178 0
+ 605 00a6 A364     		str	r3, [r4, #72]
+ 179:./drive/nuc_can.c **** 
+ 606              		.loc 1 179 0
+ 607 00a8 2162     		str	r1, [r4, #32]
+ 608              	.L46:
+ 181:./drive/nuc_can.c ****     }
+ 609              		.loc 1 181 0 discriminator 1
+ 610 00aa 206A     		ldr	r0, [r4, #32]
+ 611 00ac 1D4A     		ldr	r2, .L59
+ 612 00ae 3840     		ands	r0, r7
+ 613 00b0 FBD1     		bne	.L46
+ 614              	.LVL54:
+ 167:./drive/nuc_can.c ****     {
+ 615              		.loc 1 167 0 discriminator 1
+ 616 00b2 2029     		cmp	r1, #32
+ 617 00b4 EDD1     		bne	.L47
+ 618              	.LBE12:
+ 189:./drive/nuc_can.c **** 
+ 619              		.loc 1 189 0
+ 620 00b6 F123     		movs	r3, #241
+ 184:./drive/nuc_can.c **** 
+ 621              		.loc 1 184 0
+ 622 00b8 5060     		str	r0, [r2, #4]
+ 186:./drive/nuc_can.c ****                 |  CAN_CON_IE_Msk
+ 623              		.loc 1 186 0
+ 624 00ba 1168     		ldr	r1, [r2]
+ 625              	.LVL55:
+ 189:./drive/nuc_can.c **** 
+ 626              		.loc 1 189 0
+ 627 00bc 0B40     		ands	r3, r1
+ 628 00be 0A21     		movs	r1, #10
+ 629 00c0 0B43     		orrs	r3, r1
+ 186:./drive/nuc_can.c ****                 |  CAN_CON_IE_Msk
+ 630              		.loc 1 186 0
+ 631 00c2 1360     		str	r3, [r2]
+ 192:./drive/nuc_can.c ****     while(tCAN->CON & CAN_CON_INIT_Msk); /* Check INIT bit is released */
+ 632              		.loc 1 192 0
+ 633 00c4 1368     		ldr	r3, [r2]
+ 634 00c6 3731     		adds	r1, r1, #55
+ 635 00c8 8B43     		bics	r3, r1
+ 636 00ca 1360     		str	r3, [r2]
+ 193:./drive/nuc_can.c **** 
+ 637              		.loc 1 193 0
+ 638 00cc 0123     		movs	r3, #1
+ 639              	.L48:
+ 193:./drive/nuc_can.c **** 
+ 640              		.loc 1 193 0 is_stmt 0 discriminator 1
+ 641 00ce 2568     		ldr	r5, [r4]
+ 642 00d0 144F     		ldr	r7, .L59
+ 643 00d2 0122     		movs	r2, #1
+ 644 00d4 1D40     		ands	r5, r3
+ 645 00d6 FAD1     		bne	.L48
+ 646              	.LVL56:
+ 647              	.LBB13:
+ 648              	.LBB14:
+ 649              		.file 2 "./bsp/core_cm0.h"
+   1:./bsp/core_cm0.h **** /**************************************************************************//**
+   2:./bsp/core_cm0.h ****  * @file     core_cm0.h
+   3:./bsp/core_cm0.h ****  * @brief    CMSIS Cortex-M0 Core Peripheral Access Layer Header File
+   4:./bsp/core_cm0.h ****  * @version  V1.30
+   5:./bsp/core_cm0.h ****  * @date     30. October 2009
+   6:./bsp/core_cm0.h ****  *
+   7:./bsp/core_cm0.h ****  * @note
+   8:./bsp/core_cm0.h ****  * Copyright (C) 2009 ARM Limited. All rights reserved.
+   9:./bsp/core_cm0.h ****  *
+  10:./bsp/core_cm0.h ****  * @par
+  11:./bsp/core_cm0.h ****  * ARM Limited (ARM) is supplying this software for use with Cortex-M 
+  12:./bsp/core_cm0.h ****  * processor based microcontrollers.  This file can be freely distributed 
+  13:./bsp/core_cm0.h ****  * within development tools that are supporting such ARM based processors. 
+  14:./bsp/core_cm0.h ****  *
+  15:./bsp/core_cm0.h ****  * @par
+  16:./bsp/core_cm0.h ****  * THIS SOFTWARE IS PROVIDED "AS IS".  NO WARRANTIES, WHETHER EXPRESS, IMPLIED
+  17:./bsp/core_cm0.h ****  * OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, IMPLIED WARRANTIES OF
+  18:./bsp/core_cm0.h ****  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE APPLY TO THIS SOFTWARE.
+  19:./bsp/core_cm0.h ****  * ARM SHALL NOT, IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL, OR
+  20:./bsp/core_cm0.h ****  * CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
+  21:./bsp/core_cm0.h ****  *
+  22:./bsp/core_cm0.h ****  ******************************************************************************/
+  23:./bsp/core_cm0.h **** 
+  24:./bsp/core_cm0.h **** #ifndef __CM0_CORE_H__
+  25:./bsp/core_cm0.h **** #define __CM0_CORE_H__
+  26:./bsp/core_cm0.h **** 
+  27:./bsp/core_cm0.h **** /** @addtogroup CMSIS_CM0_core_LintCinfiguration CMSIS CM0 Core Lint Configuration
+  28:./bsp/core_cm0.h ****  *
+  29:./bsp/core_cm0.h ****  * List of Lint messages which will be suppressed and not shown:
+  30:./bsp/core_cm0.h ****  *   - not yet checked
+  31:./bsp/core_cm0.h ****  * .
+  32:./bsp/core_cm0.h ****  * Note:  To re-enable a Message, insert a space before 'lint' *
+  33:./bsp/core_cm0.h ****  *
+  34:./bsp/core_cm0.h ****  */
+  35:./bsp/core_cm0.h **** 
+  36:./bsp/core_cm0.h **** 
+  37:./bsp/core_cm0.h **** /** @addtogroup CMSIS_CM0_core_definitions CM0 Core Definitions
+  38:./bsp/core_cm0.h ****   This file defines all structures and symbols for CMSIS core:
+  39:./bsp/core_cm0.h ****     - CMSIS version number
+  40:./bsp/core_cm0.h ****     - Cortex-M core registers and bitfields
+  41:./bsp/core_cm0.h ****     - Cortex-M core peripheral base address
+  42:./bsp/core_cm0.h ****   @{
+  43:./bsp/core_cm0.h ****  */
+  44:./bsp/core_cm0.h **** 
+  45:./bsp/core_cm0.h **** #ifdef __cplusplus
+  46:./bsp/core_cm0.h ****  extern "C" {
+  47:./bsp/core_cm0.h **** #endif 
+  48:./bsp/core_cm0.h **** 
+  49:./bsp/core_cm0.h **** #define __CM0_CMSIS_VERSION_MAIN  (0x01)                                                       /*!<
+  50:./bsp/core_cm0.h **** #define __CM0_CMSIS_VERSION_SUB   (0x30)                                                       /*!<
+  51:./bsp/core_cm0.h **** #define __CM0_CMSIS_VERSION       ((__CM0_CMSIS_VERSION_MAIN << 16) | __CM0_CMSIS_VERSION_SUB) /*!<
+  52:./bsp/core_cm0.h **** 
+  53:./bsp/core_cm0.h **** #define __CORTEX_M                (0x00)                                                       /*!<
+  54:./bsp/core_cm0.h **** 
+  55:./bsp/core_cm0.h **** #include <stdint.h>                           /* Include standard types */
+  56:./bsp/core_cm0.h **** 
+  57:./bsp/core_cm0.h **** #if defined (__ICCARM__)
+  58:./bsp/core_cm0.h ****   #include <intrinsics.h>                     /* IAR Intrinsics   */
+  59:./bsp/core_cm0.h **** #endif
+  60:./bsp/core_cm0.h **** 
+  61:./bsp/core_cm0.h **** 
+  62:./bsp/core_cm0.h **** #ifndef __NVIC_PRIO_BITS
+  63:./bsp/core_cm0.h ****   #define __NVIC_PRIO_BITS    2               /*!< standard definition for NVIC Priority Bits */
+  64:./bsp/core_cm0.h **** #endif
+  65:./bsp/core_cm0.h **** 
+  66:./bsp/core_cm0.h **** 
+  67:./bsp/core_cm0.h **** 
+  68:./bsp/core_cm0.h **** 
+  69:./bsp/core_cm0.h **** /**
+  70:./bsp/core_cm0.h ****  * IO definitions
+  71:./bsp/core_cm0.h ****  *
+  72:./bsp/core_cm0.h ****  * define access restrictions to peripheral registers
+  73:./bsp/core_cm0.h ****  */
+  74:./bsp/core_cm0.h **** 
+  75:./bsp/core_cm0.h **** #ifdef __cplusplus
+  76:./bsp/core_cm0.h ****   #define     __I     volatile                /*!< defines 'read only' permissions      */
+  77:./bsp/core_cm0.h **** #else
+  78:./bsp/core_cm0.h ****   #define     __I     volatile const          /*!< defines 'read only' permissions      */
+  79:./bsp/core_cm0.h **** #endif
+  80:./bsp/core_cm0.h **** #define     __O     volatile                  /*!< defines 'write only' permissions     */
+  81:./bsp/core_cm0.h **** #define     __IO    volatile                  /*!< defines 'read / write' permissions   */
+  82:./bsp/core_cm0.h **** 
+  83:./bsp/core_cm0.h **** /*******************************************************************************
+  84:./bsp/core_cm0.h ****  *                 Register Abstraction
+  85:./bsp/core_cm0.h ****  ******************************************************************************/
+  86:./bsp/core_cm0.h **** /** @addtogroup CMSIS_CM0_core_register CMSIS CM0 Core Register
+  87:./bsp/core_cm0.h ****  @{
+  88:./bsp/core_cm0.h **** */
+  89:./bsp/core_cm0.h **** 
+  90:./bsp/core_cm0.h **** 
+  91:./bsp/core_cm0.h **** /** @addtogroup CMSIS_CM0_NVIC CMSIS CM0 NVIC
+  92:./bsp/core_cm0.h ****   memory mapped structure for Nested Vectored Interrupt Controller (NVIC)
+  93:./bsp/core_cm0.h ****   @{
+  94:./bsp/core_cm0.h ****  */
+  95:./bsp/core_cm0.h **** typedef struct
+  96:./bsp/core_cm0.h **** {
+  97:./bsp/core_cm0.h ****   __IO uint32_t ISER[1];                      /*!< (Offset: 0x000) Interrupt Set Enable Register   
+  98:./bsp/core_cm0.h ****        uint32_t RESERVED0[31];
+  99:./bsp/core_cm0.h ****   __IO uint32_t ICER[1];                      /*!< (Offset: 0x080) Interrupt Clear Enable Register 
+ 100:./bsp/core_cm0.h ****        uint32_t RSERVED1[31];
+ 101:./bsp/core_cm0.h ****   __IO uint32_t ISPR[1];                      /*!< (Offset: 0x100) Interrupt Set Pending Register  
+ 102:./bsp/core_cm0.h ****        uint32_t RESERVED2[31];
+ 103:./bsp/core_cm0.h ****   __IO uint32_t ICPR[1];                      /*!< (Offset: 0x180) Interrupt Clear Pending Register
+ 104:./bsp/core_cm0.h ****        uint32_t RESERVED3[31];
+ 105:./bsp/core_cm0.h ****        uint32_t RESERVED4[64];
+ 106:./bsp/core_cm0.h ****   __IO uint32_t IPR[8];                       /*!< (Offset: 0x3EC) Interrupt Priority Register     
+ 107:./bsp/core_cm0.h **** }  NVIC_Type;
+ 108:./bsp/core_cm0.h **** /*@}*/ /* end of group CMSIS_CM0_NVIC */
+ 109:./bsp/core_cm0.h **** 
+ 110:./bsp/core_cm0.h **** 
+ 111:./bsp/core_cm0.h **** /** @addtogroup CMSIS_CM0_SCB CMSIS CM0 SCB
+ 112:./bsp/core_cm0.h ****   memory mapped structure for System Control Block (SCB)
+ 113:./bsp/core_cm0.h ****   @{
+ 114:./bsp/core_cm0.h ****  */
+ 115:./bsp/core_cm0.h **** typedef struct
+ 116:./bsp/core_cm0.h **** {
+ 117:./bsp/core_cm0.h ****   __I  uint32_t CPUID;                        /*!< Offset: 0x00  CPU ID Base Register              
+ 118:./bsp/core_cm0.h ****   __IO uint32_t ICSR;                         /*!< Offset: 0x04  Interrupt Control State Register  
+ 119:./bsp/core_cm0.h ****        uint32_t RESERVED0;                                      
+ 120:./bsp/core_cm0.h ****   __IO uint32_t AIRCR;                        /*!< Offset: 0x0C  Application Interrupt / Reset Cont
+ 121:./bsp/core_cm0.h ****   __IO uint32_t SCR;                          /*!< Offset: 0x10  System Control Register           
+ 122:./bsp/core_cm0.h ****   __IO uint32_t CCR;                          /*!< Offset: 0x14  Configuration Control Register    
+ 123:./bsp/core_cm0.h ****        uint32_t RESERVED1;                                      
+ 124:./bsp/core_cm0.h ****   __IO uint32_t SHP[2];                       /*!< Offset: 0x1C  System Handlers Priority Registers
+ 125:./bsp/core_cm0.h ****   __IO uint32_t SHCSR;                        /*!< Offset: 0x24  System Handler Control and State R
+ 126:./bsp/core_cm0.h ****        uint32_t RESERVED2[2];                                   
+ 127:./bsp/core_cm0.h ****   __IO uint32_t DFSR;                         /*!< Offset: 0x30  Debug Fault Status Register       
+ 128:./bsp/core_cm0.h **** } SCB_Type;                                                
+ 129:./bsp/core_cm0.h **** 
+ 130:./bsp/core_cm0.h **** /* SCB CPUID Register Definitions */
+ 131:./bsp/core_cm0.h **** #define SCB_CPUID_IMPLEMENTER_Pos          24                                             /*!< SCB 
+ 132:./bsp/core_cm0.h **** #define SCB_CPUID_IMPLEMENTER_Msk          (0xFFul << SCB_CPUID_IMPLEMENTER_Pos)          /*!< SCB 
+ 133:./bsp/core_cm0.h **** 
+ 134:./bsp/core_cm0.h **** #define SCB_CPUID_VARIANT_Pos              20                                             /*!< SCB 
+ 135:./bsp/core_cm0.h **** #define SCB_CPUID_VARIANT_Msk              (0xFul << SCB_CPUID_VARIANT_Pos)               /*!< SCB 
+ 136:./bsp/core_cm0.h **** 
+ 137:./bsp/core_cm0.h **** #define SCB_CPUID_ARCHITECTURE_Pos         16                                             /*!< SCB 
+ 138:./bsp/core_cm0.h **** #define SCB_CPUID_ARCHITECTURE_Msk         (0xFul << SCB_CPUID_ARCHITECTURE_Pos)          /*!< SCB 
+ 139:./bsp/core_cm0.h **** 
+ 140:./bsp/core_cm0.h **** #define SCB_CPUID_PARTNO_Pos                4                                             /*!< SCB 
+ 141:./bsp/core_cm0.h **** #define SCB_CPUID_PARTNO_Msk               (0xFFFul << SCB_CPUID_PARTNO_Pos)              /*!< SCB 
+ 142:./bsp/core_cm0.h **** 
+ 143:./bsp/core_cm0.h **** #define SCB_CPUID_REVISION_Pos              0                                             /*!< SCB 
+ 144:./bsp/core_cm0.h **** #define SCB_CPUID_REVISION_Msk             (0xFul << SCB_CPUID_REVISION_Pos)              /*!< SCB 
+ 145:./bsp/core_cm0.h **** 
+ 146:./bsp/core_cm0.h **** /* SCB Interrupt Control State Register Definitions */
+ 147:./bsp/core_cm0.h **** #define SCB_ICSR_NMIPENDSET_Pos            31                                             /*!< SCB 
+ 148:./bsp/core_cm0.h **** #define SCB_ICSR_NMIPENDSET_Msk            (1ul << SCB_ICSR_NMIPENDSET_Pos)               /*!< SCB 
+ 149:./bsp/core_cm0.h **** 
+ 150:./bsp/core_cm0.h **** #define SCB_ICSR_PENDSVSET_Pos             28                                             /*!< SCB 
+ 151:./bsp/core_cm0.h **** #define SCB_ICSR_PENDSVSET_Msk             (1ul << SCB_ICSR_PENDSVSET_Pos)                /*!< SCB 
+ 152:./bsp/core_cm0.h **** 
+ 153:./bsp/core_cm0.h **** #define SCB_ICSR_PENDSVCLR_Pos             27                                             /*!< SCB 
+ 154:./bsp/core_cm0.h **** #define SCB_ICSR_PENDSVCLR_Msk             (1ul << SCB_ICSR_PENDSVCLR_Pos)                /*!< SCB 
+ 155:./bsp/core_cm0.h **** 
+ 156:./bsp/core_cm0.h **** #define SCB_ICSR_PENDSTSET_Pos             26                                             /*!< SCB 
+ 157:./bsp/core_cm0.h **** #define SCB_ICSR_PENDSTSET_Msk             (1ul << SCB_ICSR_PENDSTSET_Pos)                /*!< SCB 
+ 158:./bsp/core_cm0.h **** 
+ 159:./bsp/core_cm0.h **** #define SCB_ICSR_PENDSTCLR_Pos             25                                             /*!< SCB 
+ 160:./bsp/core_cm0.h **** #define SCB_ICSR_PENDSTCLR_Msk             (1ul << SCB_ICSR_PENDSTCLR_Pos)                /*!< SCB 
+ 161:./bsp/core_cm0.h **** 
+ 162:./bsp/core_cm0.h **** #define SCB_ICSR_ISRPREEMPT_Pos            23                                             /*!< SCB 
+ 163:./bsp/core_cm0.h **** #define SCB_ICSR_ISRPREEMPT_Msk            (1ul << SCB_ICSR_ISRPREEMPT_Pos)               /*!< SCB 
+ 164:./bsp/core_cm0.h **** 
+ 165:./bsp/core_cm0.h **** #define SCB_ICSR_ISRPENDING_Pos            22                                             /*!< SCB 
+ 166:./bsp/core_cm0.h **** #define SCB_ICSR_ISRPENDING_Msk            (1ul << SCB_ICSR_ISRPENDING_Pos)               /*!< SCB 
+ 167:./bsp/core_cm0.h **** 
+ 168:./bsp/core_cm0.h **** #define SCB_ICSR_VECTPENDING_Pos           12                                             /*!< SCB 
+ 169:./bsp/core_cm0.h **** #define SCB_ICSR_VECTPENDING_Msk           (0x1FFul << SCB_ICSR_VECTPENDING_Pos)          /*!< SCB 
+ 170:./bsp/core_cm0.h **** 
+ 171:./bsp/core_cm0.h **** #define SCB_ICSR_VECTACTIVE_Pos             0                                             /*!< SCB 
+ 172:./bsp/core_cm0.h **** #define SCB_ICSR_VECTACTIVE_Msk            (0x1FFul << SCB_ICSR_VECTACTIVE_Pos)           /*!< SCB 
+ 173:./bsp/core_cm0.h **** 
+ 174:./bsp/core_cm0.h **** /* SCB Application Interrupt and Reset Control Register Definitions */
+ 175:./bsp/core_cm0.h **** #define SCB_AIRCR_VECTKEY_Pos              16                                             /*!< SCB 
+ 176:./bsp/core_cm0.h **** #define SCB_AIRCR_VECTKEY_Msk              (0xFFFFul << SCB_AIRCR_VECTKEY_Pos)            /*!< SCB 
+ 177:./bsp/core_cm0.h **** 
+ 178:./bsp/core_cm0.h **** #define SCB_AIRCR_VECTKEYSTAT_Pos          16                                             /*!< SCB 
+ 179:./bsp/core_cm0.h **** #define SCB_AIRCR_VECTKEYSTAT_Msk          (0xFFFFul << SCB_AIRCR_VECTKEYSTAT_Pos)        /*!< SCB 
+ 180:./bsp/core_cm0.h **** 
+ 181:./bsp/core_cm0.h **** #define SCB_AIRCR_ENDIANESS_Pos            15                                             /*!< SCB 
+ 182:./bsp/core_cm0.h **** #define SCB_AIRCR_ENDIANESS_Msk            (1ul << SCB_AIRCR_ENDIANESS_Pos)               /*!< SCB 
+ 183:./bsp/core_cm0.h **** 
+ 184:./bsp/core_cm0.h **** #define SCB_AIRCR_SYSRESETREQ_Pos           2                                             /*!< SCB 
+ 185:./bsp/core_cm0.h **** #define SCB_AIRCR_SYSRESETREQ_Msk          (1ul << SCB_AIRCR_SYSRESETREQ_Pos)             /*!< SCB 
+ 186:./bsp/core_cm0.h **** 
+ 187:./bsp/core_cm0.h **** #define SCB_AIRCR_VECTCLRACTIVE_Pos         1                                             /*!< SCB 
+ 188:./bsp/core_cm0.h **** #define SCB_AIRCR_VECTCLRACTIVE_Msk        (1ul << SCB_AIRCR_VECTCLRACTIVE_Pos)           /*!< SCB 
+ 189:./bsp/core_cm0.h **** 
+ 190:./bsp/core_cm0.h **** /* SCB System Control Register Definitions */
+ 191:./bsp/core_cm0.h **** #define SCB_SCR_SEVONPEND_Pos               4                                             /*!< SCB 
+ 192:./bsp/core_cm0.h **** #define SCB_SCR_SEVONPEND_Msk              (1ul << SCB_SCR_SEVONPEND_Pos)                 /*!< SCB 
+ 193:./bsp/core_cm0.h **** 
+ 194:./bsp/core_cm0.h **** #define SCB_SCR_SLEEPDEEP_Pos               2                                             /*!< SCB 
+ 195:./bsp/core_cm0.h **** #define SCB_SCR_SLEEPDEEP_Msk              (1ul << SCB_SCR_SLEEPDEEP_Pos)                 /*!< SCB 
+ 196:./bsp/core_cm0.h **** 
+ 197:./bsp/core_cm0.h **** #define SCB_SCR_SLEEPONEXIT_Pos             1                                             /*!< SCB 
+ 198:./bsp/core_cm0.h **** #define SCB_SCR_SLEEPONEXIT_Msk            (1ul << SCB_SCR_SLEEPONEXIT_Pos)               /*!< SCB 
+ 199:./bsp/core_cm0.h **** 
+ 200:./bsp/core_cm0.h **** /* SCB Configuration Control Register Definitions */
+ 201:./bsp/core_cm0.h **** #define SCB_CCR_STKALIGN_Pos                9                                             /*!< SCB 
+ 202:./bsp/core_cm0.h **** #define SCB_CCR_STKALIGN_Msk               (1ul << SCB_CCR_STKALIGN_Pos)                  /*!< SCB 
+ 203:./bsp/core_cm0.h **** 
+ 204:./bsp/core_cm0.h **** #define SCB_CCR_UNALIGN_TRP_Pos             3                                             /*!< SCB 
+ 205:./bsp/core_cm0.h **** #define SCB_CCR_UNALIGN_TRP_Msk            (1ul << SCB_CCR_UNALIGN_TRP_Pos)               /*!< SCB 
+ 206:./bsp/core_cm0.h **** 
+ 207:./bsp/core_cm0.h **** /* SCB System Handler Control and State Register Definitions */
+ 208:./bsp/core_cm0.h **** #define SCB_SHCSR_SVCALLPENDED_Pos         15                                             /*!< SCB 
+ 209:./bsp/core_cm0.h **** #define SCB_SHCSR_SVCALLPENDED_Msk         (1ul << SCB_SHCSR_SVCALLPENDED_Pos)            /*!< SCB 
+ 210:./bsp/core_cm0.h **** 
+ 211:./bsp/core_cm0.h **** /* SCB Debug Fault Status Register Definitions */
+ 212:./bsp/core_cm0.h **** #define SCB_DFSR_EXTERNAL_Pos               4                                             /*!< SCB 
+ 213:./bsp/core_cm0.h **** #define SCB_DFSR_EXTERNAL_Msk              (1ul << SCB_DFSR_EXTERNAL_Pos)                 /*!< SCB 
+ 214:./bsp/core_cm0.h **** 
+ 215:./bsp/core_cm0.h **** #define SCB_DFSR_VCATCH_Pos                 3                                             /*!< SCB 
+ 216:./bsp/core_cm0.h **** #define SCB_DFSR_VCATCH_Msk                (1ul << SCB_DFSR_VCATCH_Pos)                   /*!< SCB 
+ 217:./bsp/core_cm0.h **** 
+ 218:./bsp/core_cm0.h **** #define SCB_DFSR_DWTTRAP_Pos                2                                             /*!< SCB 
+ 219:./bsp/core_cm0.h **** #define SCB_DFSR_DWTTRAP_Msk               (1ul << SCB_DFSR_DWTTRAP_Pos)                  /*!< SCB 
+ 220:./bsp/core_cm0.h **** 
+ 221:./bsp/core_cm0.h **** #define SCB_DFSR_BKPT_Pos                   1                                             /*!< SCB 
+ 222:./bsp/core_cm0.h **** #define SCB_DFSR_BKPT_Msk                  (1ul << SCB_DFSR_BKPT_Pos)                     /*!< SCB 
+ 223:./bsp/core_cm0.h **** 
+ 224:./bsp/core_cm0.h **** #define SCB_DFSR_HALTED_Pos                 0                                             /*!< SCB 
+ 225:./bsp/core_cm0.h **** #define SCB_DFSR_HALTED_Msk                (1ul << SCB_DFSR_HALTED_Pos)                   /*!< SCB 
+ 226:./bsp/core_cm0.h **** /*@}*/ /* end of group CMSIS_CM0_SCB */
+ 227:./bsp/core_cm0.h **** 
+ 228:./bsp/core_cm0.h **** 
+ 229:./bsp/core_cm0.h **** /** @addtogroup CMSIS_CM0_SysTick CMSIS CM0 SysTick
+ 230:./bsp/core_cm0.h ****   memory mapped structure for SysTick
+ 231:./bsp/core_cm0.h ****   @{
+ 232:./bsp/core_cm0.h ****  */
+ 233:./bsp/core_cm0.h **** typedef struct
+ 234:./bsp/core_cm0.h **** {
+ 235:./bsp/core_cm0.h ****   __IO uint32_t CTRL;                         /*!< Offset: 0x00  SysTick Control and Status Registe
+ 236:./bsp/core_cm0.h ****   __IO uint32_t LOAD;                         /*!< Offset: 0x04  SysTick Reload Value Register     
+ 237:./bsp/core_cm0.h ****   __IO uint32_t VAL;                          /*!< Offset: 0x08  SysTick Current Value Register    
+ 238:./bsp/core_cm0.h ****   __I  uint32_t CALIB;                        /*!< Offset: 0x0C  SysTick Calibration Register      
+ 239:./bsp/core_cm0.h **** } SysTick_Type;
+ 240:./bsp/core_cm0.h **** 
+ 241:./bsp/core_cm0.h **** /* SysTick Control / Status Register Definitions */
+ 242:./bsp/core_cm0.h **** #define SysTick_CTRL_COUNTFLAG_Pos         16                                             /*!< SysT
+ 243:./bsp/core_cm0.h **** #define SysTick_CTRL_COUNTFLAG_Msk         (1ul << SysTick_CTRL_COUNTFLAG_Pos)            /*!< SysT
+ 244:./bsp/core_cm0.h **** 
+ 245:./bsp/core_cm0.h **** #define SysTick_CTRL_CLKSOURCE_Pos          2                                             /*!< SysT
+ 246:./bsp/core_cm0.h **** #define SysTick_CTRL_CLKSOURCE_Msk         (1ul << SysTick_CTRL_CLKSOURCE_Pos)            /*!< SysT
+ 247:./bsp/core_cm0.h **** 
+ 248:./bsp/core_cm0.h **** #define SysTick_CTRL_TICKINT_Pos            1                                             /*!< SysT
+ 249:./bsp/core_cm0.h **** #define SysTick_CTRL_TICKINT_Msk           (1ul << SysTick_CTRL_TICKINT_Pos)              /*!< SysT
+ 250:./bsp/core_cm0.h **** 
+ 251:./bsp/core_cm0.h **** #define SysTick_CTRL_ENABLE_Pos             0                                             /*!< SysT
+ 252:./bsp/core_cm0.h **** #define SysTick_CTRL_ENABLE_Msk            (1ul << SysTick_CTRL_ENABLE_Pos)               /*!< SysT
+ 253:./bsp/core_cm0.h **** 
+ 254:./bsp/core_cm0.h **** /* SysTick Reload Register Definitions */
+ 255:./bsp/core_cm0.h **** #define SysTick_LOAD_RELOAD_Pos             0                                             /*!< SysT
+ 256:./bsp/core_cm0.h **** #define SysTick_LOAD_RELOAD_Msk            (0xFFFFFFul << SysTick_LOAD_RELOAD_Pos)        /*!< SysT
+ 257:./bsp/core_cm0.h **** 
+ 258:./bsp/core_cm0.h **** /* SysTick Current Register Definitions */
+ 259:./bsp/core_cm0.h **** #define SysTick_VAL_CURRENT_Pos             0                                             /*!< SysT
+ 260:./bsp/core_cm0.h **** #define SysTick_VAL_CURRENT_Msk            (0xFFFFFFul << SysTick_VAL_CURRENT_Pos)        /*!< SysT
+ 261:./bsp/core_cm0.h **** 
+ 262:./bsp/core_cm0.h **** /* SysTick Calibration Register Definitions */
+ 263:./bsp/core_cm0.h **** #define SysTick_CALIB_NOREF_Pos            31                                             /*!< SysT
+ 264:./bsp/core_cm0.h **** #define SysTick_CALIB_NOREF_Msk            (1ul << SysTick_CALIB_NOREF_Pos)               /*!< SysT
+ 265:./bsp/core_cm0.h **** 
+ 266:./bsp/core_cm0.h **** #define SysTick_CALIB_SKEW_Pos             30                                             /*!< SysT
+ 267:./bsp/core_cm0.h **** #define SysTick_CALIB_SKEW_Msk             (1ul << SysTick_CALIB_SKEW_Pos)                /*!< SysT
+ 268:./bsp/core_cm0.h **** 
+ 269:./bsp/core_cm0.h **** #define SysTick_CALIB_TENMS_Pos             0                                             /*!< SysT
+ 270:./bsp/core_cm0.h **** #define SysTick_CALIB_TENMS_Msk            (0xFFFFFFul << SysTick_VAL_CURRENT_Pos)        /*!< SysT
+ 271:./bsp/core_cm0.h **** /*@}*/ /* end of group CMSIS_CM0_SysTick */
+ 272:./bsp/core_cm0.h **** 
+ 273:./bsp/core_cm0.h **** 
+ 274:./bsp/core_cm0.h **** /** @addtogroup CMSIS_CM0_CoreDebug CMSIS CM0 Core Debug
+ 275:./bsp/core_cm0.h ****   memory mapped structure for Core Debug Register
+ 276:./bsp/core_cm0.h ****   @{
+ 277:./bsp/core_cm0.h ****  */
+ 278:./bsp/core_cm0.h **** typedef struct
+ 279:./bsp/core_cm0.h **** {
+ 280:./bsp/core_cm0.h ****   __IO uint32_t DHCSR;                        /*!< Offset: 0x00  Debug Halting Control and Status R
+ 281:./bsp/core_cm0.h ****   __O  uint32_t DCRSR;                        /*!< Offset: 0x04  Debug Core Register Selector Regis
+ 282:./bsp/core_cm0.h ****   __IO uint32_t DCRDR;                        /*!< Offset: 0x08  Debug Core Register Data Register 
+ 283:./bsp/core_cm0.h ****   __IO uint32_t DEMCR;                        /*!< Offset: 0x0C  Debug Exception and Monitor Contro
+ 284:./bsp/core_cm0.h **** } CoreDebug_Type;
+ 285:./bsp/core_cm0.h **** 
+ 286:./bsp/core_cm0.h **** /* Debug Halting Control and Status Register */
+ 287:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_DBGKEY_Pos         16                                             /*!< Core
+ 288:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_DBGKEY_Msk         (0xFFFFul << CoreDebug_DHCSR_DBGKEY_Pos)       /*!< Core
+ 289:./bsp/core_cm0.h **** 
+ 290:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_RESET_ST_Pos     25                                             /*!< Core
+ 291:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_RESET_ST_Msk     (1ul << CoreDebug_DHCSR_S_RESET_ST_Pos)        /*!< Core
+ 292:./bsp/core_cm0.h **** 
+ 293:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_RETIRE_ST_Pos    24                                             /*!< Core
+ 294:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_RETIRE_ST_Msk    (1ul << CoreDebug_DHCSR_S_RETIRE_ST_Pos)       /*!< Core
+ 295:./bsp/core_cm0.h **** 
+ 296:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_LOCKUP_Pos       19                                             /*!< Core
+ 297:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_LOCKUP_Msk       (1ul << CoreDebug_DHCSR_S_LOCKUP_Pos)          /*!< Core
+ 298:./bsp/core_cm0.h **** 
+ 299:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_SLEEP_Pos        18                                             /*!< Core
+ 300:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_SLEEP_Msk        (1ul << CoreDebug_DHCSR_S_SLEEP_Pos)           /*!< Core
+ 301:./bsp/core_cm0.h **** 
+ 302:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_HALT_Pos         17                                             /*!< Core
+ 303:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_HALT_Msk         (1ul << CoreDebug_DHCSR_S_HALT_Pos)            /*!< Core
+ 304:./bsp/core_cm0.h **** 
+ 305:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_REGRDY_Pos       16                                             /*!< Core
+ 306:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_S_REGRDY_Msk       (1ul << CoreDebug_DHCSR_S_REGRDY_Pos)          /*!< Core
+ 307:./bsp/core_cm0.h **** 
+ 308:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_C_MASKINTS_Pos      3                                             /*!< Core
+ 309:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_C_MASKINTS_Msk     (1ul << CoreDebug_DHCSR_C_MASKINTS_Pos)        /*!< Core
+ 310:./bsp/core_cm0.h **** 
+ 311:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_C_STEP_Pos          2                                             /*!< Core
+ 312:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_C_STEP_Msk         (1ul << CoreDebug_DHCSR_C_STEP_Pos)            /*!< Core
+ 313:./bsp/core_cm0.h **** 
+ 314:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_C_HALT_Pos          1                                             /*!< Core
+ 315:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_C_HALT_Msk         (1ul << CoreDebug_DHCSR_C_HALT_Pos)            /*!< Core
+ 316:./bsp/core_cm0.h **** 
+ 317:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_C_DEBUGEN_Pos       0                                             /*!< Core
+ 318:./bsp/core_cm0.h **** #define CoreDebug_DHCSR_C_DEBUGEN_Msk      (1ul << CoreDebug_DHCSR_C_DEBUGEN_Pos)         /*!< Core
+ 319:./bsp/core_cm0.h **** 
+ 320:./bsp/core_cm0.h **** /* Debug Core Register Selector Register */
+ 321:./bsp/core_cm0.h **** #define CoreDebug_DCRSR_REGWnR_Pos         16                                             /*!< Core
+ 322:./bsp/core_cm0.h **** #define CoreDebug_DCRSR_REGWnR_Msk         (1ul << CoreDebug_DCRSR_REGWnR_Pos)            /*!< Core
+ 323:./bsp/core_cm0.h **** 
+ 324:./bsp/core_cm0.h **** #define CoreDebug_DCRSR_REGSEL_Pos          0                                             /*!< Core
+ 325:./bsp/core_cm0.h **** #define CoreDebug_DCRSR_REGSEL_Msk         (0x1Ful << CoreDebug_DCRSR_REGSEL_Pos)         /*!< Core
+ 326:./bsp/core_cm0.h **** 
+ 327:./bsp/core_cm0.h **** /* Debug Exception and Monitor Control Register */
+ 328:./bsp/core_cm0.h **** #define CoreDebug_DEMCR_DWTENA_Pos         24                                             /*!< Core
+ 329:./bsp/core_cm0.h **** #define CoreDebug_DEMCR_DWTENA_Msk         (1ul << CoreDebug_DEMCR_DWTENA_Pos)            /*!< Core
+ 330:./bsp/core_cm0.h **** 
+ 331:./bsp/core_cm0.h **** #define CoreDebug_DEMCR_VC_HARDERR_Pos     10                                             /*!< Core
+ 332:./bsp/core_cm0.h **** #define CoreDebug_DEMCR_VC_HARDERR_Msk     (1ul << CoreDebug_DEMCR_VC_HARDERR_Pos)        /*!< Core
+ 333:./bsp/core_cm0.h **** 
+ 334:./bsp/core_cm0.h **** #define CoreDebug_DEMCR_VC_CORERESET_Pos    0                                             /*!< Core
+ 335:./bsp/core_cm0.h **** #define CoreDebug_DEMCR_VC_CORERESET_Msk   (1ul << CoreDebug_DEMCR_VC_CORERESET_Pos)      /*!< Core
+ 336:./bsp/core_cm0.h **** /*@}*/ /* end of group CMSIS_CM0_CoreDebug */
+ 337:./bsp/core_cm0.h **** 
+ 338:./bsp/core_cm0.h **** 
+ 339:./bsp/core_cm0.h **** /* Memory mapping of Cortex-M0 Hardware */
+ 340:./bsp/core_cm0.h **** #define SCS_BASE            (0xE000E000)                              /*!< System Control Space Bas
+ 341:./bsp/core_cm0.h **** #define CoreDebug_BASE      (0xE000EDF0)                              /*!< Core Debug Base Address 
+ 342:./bsp/core_cm0.h **** #define SysTick_BASE        (SCS_BASE +  0x0010)                      /*!< SysTick Base Address    
+ 343:./bsp/core_cm0.h **** #define NVIC_BASE           (SCS_BASE +  0x0100)                      /*!< NVIC Base Address       
+ 344:./bsp/core_cm0.h **** #define SCB_BASE            (SCS_BASE +  0x0D00)                      /*!< System Control Block Bas
+ 345:./bsp/core_cm0.h **** 
+ 346:./bsp/core_cm0.h **** #define SCB                 ((SCB_Type *)           SCB_BASE)         /*!< SCB configuration struct
+ 347:./bsp/core_cm0.h **** #define SysTick             ((SysTick_Type *)       SysTick_BASE)     /*!< SysTick configuration st
+ 348:./bsp/core_cm0.h **** #define NVIC                ((NVIC_Type *)          NVIC_BASE)        /*!< NVIC configuration struc
+ 349:./bsp/core_cm0.h **** #define CoreDebug           ((CoreDebug_Type *)     CoreDebug_BASE)   /*!< Core Debug configuration
+ 350:./bsp/core_cm0.h **** 
+ 351:./bsp/core_cm0.h **** /*@}*/ /* end of group CMSIS_CM0_core_register */
+ 352:./bsp/core_cm0.h **** 
+ 353:./bsp/core_cm0.h **** 
+ 354:./bsp/core_cm0.h **** /*******************************************************************************
+ 355:./bsp/core_cm0.h ****  *                Hardware Abstraction Layer
+ 356:./bsp/core_cm0.h ****  ******************************************************************************/
+ 357:./bsp/core_cm0.h **** 
+ 358:./bsp/core_cm0.h **** 
+ 359:./bsp/core_cm0.h **** #if defined ( __CC_ARM   )
+ 360:./bsp/core_cm0.h ****   #define __ASM            __asm                                      /*!< asm keyword for ARM Comp
+ 361:./bsp/core_cm0.h ****   #define __INLINE         __inline                                   /*!< inline keyword for ARM C
+ 362:./bsp/core_cm0.h ****   #define __STATIC_INLINE  static __inline
+ 363:./bsp/core_cm0.h **** #elif defined ( __ICCARM__ )
+ 364:./bsp/core_cm0.h ****   #define __ASM           __asm                                       /*!< asm keyword for IAR Comp
+ 365:./bsp/core_cm0.h ****   #define __INLINE        inline                                      /*!< inline keyword for IAR C
+ 366:./bsp/core_cm0.h ****   #define __STATIC_INLINE  static inline
+ 367:./bsp/core_cm0.h **** #elif defined   (  __GNUC__  )
+ 368:./bsp/core_cm0.h ****   #define __ASM            __asm                                      /*!< asm keyword for GNU Comp
+ 369:./bsp/core_cm0.h ****   #define __INLINE         inline                                     /*!< inline keyword for GNU C
+ 370:./bsp/core_cm0.h ****   #define __STATIC_INLINE  static inline
+ 371:./bsp/core_cm0.h **** #elif defined   (  __TASKING__  )
+ 372:./bsp/core_cm0.h ****   #define __ASM            __asm                                      /*!< asm keyword for TASKING 
+ 373:./bsp/core_cm0.h ****   #define __INLINE         inline                                     /*!< inline keyword for TASKI
+ 374:./bsp/core_cm0.h ****   #define __STATIC_INLINE  static inline
+ 375:./bsp/core_cm0.h **** #endif
+ 376:./bsp/core_cm0.h **** 
+ 377:./bsp/core_cm0.h **** 
+ 378:./bsp/core_cm0.h **** /* ###################  Compiler specific Intrinsics  ########################### */
+ 379:./bsp/core_cm0.h **** 
+ 380:./bsp/core_cm0.h **** #if defined ( __CC_ARM   ) /*------------------RealView Compiler -----------------*/
+ 381:./bsp/core_cm0.h **** /* ARM armcc specific functions */
+ 382:./bsp/core_cm0.h **** 
+ 383:./bsp/core_cm0.h **** #define __enable_fault_irq                __enable_fiq
+ 384:./bsp/core_cm0.h **** #define __disable_fault_irq               __disable_fiq
+ 385:./bsp/core_cm0.h **** 
+ 386:./bsp/core_cm0.h **** #define __NOP                             __nop
+ 387:./bsp/core_cm0.h **** #define __WFI                             __wfi
+ 388:./bsp/core_cm0.h **** #define __WFE                             __wfe
+ 389:./bsp/core_cm0.h **** #define __SEV                             __sev
+ 390:./bsp/core_cm0.h **** #define __ISB()                           __isb(0)
+ 391:./bsp/core_cm0.h **** #define __DSB()                           __dsb(0)
+ 392:./bsp/core_cm0.h **** #define __DMB()                           __dmb(0)
+ 393:./bsp/core_cm0.h **** #define __REV                             __rev
+ 394:./bsp/core_cm0.h **** 
+ 395:./bsp/core_cm0.h **** 
+ 396:./bsp/core_cm0.h **** /* intrinsic void __enable_irq();     */
+ 397:./bsp/core_cm0.h **** /* intrinsic void __disable_irq();    */
+ 398:./bsp/core_cm0.h **** 
+ 399:./bsp/core_cm0.h **** 
+ 400:./bsp/core_cm0.h **** /**
+ 401:./bsp/core_cm0.h ****  * @brief  Return the Process Stack Pointer
+ 402:./bsp/core_cm0.h ****  *
+ 403:./bsp/core_cm0.h ****  * @return ProcessStackPointer
+ 404:./bsp/core_cm0.h ****  *
+ 405:./bsp/core_cm0.h ****  * Return the actual process stack pointer
+ 406:./bsp/core_cm0.h ****  */
+ 407:./bsp/core_cm0.h **** extern uint32_t __get_PSP(void);
+ 408:./bsp/core_cm0.h **** 
+ 409:./bsp/core_cm0.h **** /**
+ 410:./bsp/core_cm0.h ****  * @brief  Set the Process Stack Pointer
+ 411:./bsp/core_cm0.h ****  *
+ 412:./bsp/core_cm0.h ****  * @param  topOfProcStack  Process Stack Pointer
+ 413:./bsp/core_cm0.h ****  *
+ 414:./bsp/core_cm0.h ****  * Assign the value ProcessStackPointer to the MSP 
+ 415:./bsp/core_cm0.h ****  * (process stack pointer) Cortex processor register
+ 416:./bsp/core_cm0.h ****  */
+ 417:./bsp/core_cm0.h **** extern void __set_PSP(uint32_t topOfProcStack);
+ 418:./bsp/core_cm0.h **** 
+ 419:./bsp/core_cm0.h **** /**
+ 420:./bsp/core_cm0.h ****  * @brief  Return the Main Stack Pointer
+ 421:./bsp/core_cm0.h ****  *
+ 422:./bsp/core_cm0.h ****  * @return Main Stack Pointer
+ 423:./bsp/core_cm0.h ****  *
+ 424:./bsp/core_cm0.h ****  * Return the current value of the MSP (main stack pointer)
+ 425:./bsp/core_cm0.h ****  * Cortex processor register
+ 426:./bsp/core_cm0.h ****  */
+ 427:./bsp/core_cm0.h **** extern uint32_t __get_MSP(void);
+ 428:./bsp/core_cm0.h **** 
+ 429:./bsp/core_cm0.h **** /**
+ 430:./bsp/core_cm0.h ****  * @brief  Set the Main Stack Pointer
+ 431:./bsp/core_cm0.h ****  *
+ 432:./bsp/core_cm0.h ****  * @param  topOfMainStack  Main Stack Pointer
+ 433:./bsp/core_cm0.h ****  *
+ 434:./bsp/core_cm0.h ****  * Assign the value mainStackPointer to the MSP 
+ 435:./bsp/core_cm0.h ****  * (main stack pointer) Cortex processor register
+ 436:./bsp/core_cm0.h ****  */
+ 437:./bsp/core_cm0.h **** extern void __set_MSP(uint32_t topOfMainStack);
+ 438:./bsp/core_cm0.h **** 
+ 439:./bsp/core_cm0.h **** /**
+ 440:./bsp/core_cm0.h ****  * @brief  Reverse byte order in unsigned short value
+ 441:./bsp/core_cm0.h ****  *
+ 442:./bsp/core_cm0.h ****  * @param   value  value to reverse
+ 443:./bsp/core_cm0.h ****  * @return         reversed value
+ 444:./bsp/core_cm0.h ****  *
+ 445:./bsp/core_cm0.h ****  * Reverse byte order in unsigned short value
+ 446:./bsp/core_cm0.h ****  */
+ 447:./bsp/core_cm0.h **** extern uint32_t __REV16(uint16_t value);
+ 448:./bsp/core_cm0.h **** 
+ 449:./bsp/core_cm0.h **** /**
+ 450:./bsp/core_cm0.h ****  * @brief  Reverse byte order in signed short value with sign extension to integer
+ 451:./bsp/core_cm0.h ****  *
+ 452:./bsp/core_cm0.h ****  * @param   value  value to reverse
+ 453:./bsp/core_cm0.h ****  * @return         reversed value
+ 454:./bsp/core_cm0.h ****  *
+ 455:./bsp/core_cm0.h ****  * Reverse byte order in signed short value with sign extension to integer
+ 456:./bsp/core_cm0.h ****  */
+ 457:./bsp/core_cm0.h **** extern int32_t __REVSH(int16_t value);
+ 458:./bsp/core_cm0.h **** 
+ 459:./bsp/core_cm0.h **** 
+ 460:./bsp/core_cm0.h **** #if (__ARMCC_VERSION < 400000)
+ 461:./bsp/core_cm0.h **** 
+ 462:./bsp/core_cm0.h **** /**
+ 463:./bsp/core_cm0.h ****  * @brief  Return the Priority Mask value
+ 464:./bsp/core_cm0.h ****  *
+ 465:./bsp/core_cm0.h ****  * @return PriMask
+ 466:./bsp/core_cm0.h ****  *
+ 467:./bsp/core_cm0.h ****  * Return state of the priority mask bit from the priority mask register
+ 468:./bsp/core_cm0.h ****  */
+ 469:./bsp/core_cm0.h **** extern uint32_t __get_PRIMASK(void);
+ 470:./bsp/core_cm0.h **** 
+ 471:./bsp/core_cm0.h **** /**
+ 472:./bsp/core_cm0.h ****  * @brief  Set the Priority Mask value
+ 473:./bsp/core_cm0.h ****  *
+ 474:./bsp/core_cm0.h ****  * @param   priMask  PriMask
+ 475:./bsp/core_cm0.h ****  *
+ 476:./bsp/core_cm0.h ****  * Set the priority mask bit in the priority mask register
+ 477:./bsp/core_cm0.h ****  */
+ 478:./bsp/core_cm0.h **** extern void __set_PRIMASK(uint32_t priMask);
+ 479:./bsp/core_cm0.h **** 
+ 480:./bsp/core_cm0.h **** /**
+ 481:./bsp/core_cm0.h ****  * @brief  Return the Control Register value
+ 482:./bsp/core_cm0.h ****  * 
+ 483:./bsp/core_cm0.h ****  * @return Control value
+ 484:./bsp/core_cm0.h ****  *
+ 485:./bsp/core_cm0.h ****  * Return the content of the control register
+ 486:./bsp/core_cm0.h ****  */
+ 487:./bsp/core_cm0.h **** extern uint32_t __get_CONTROL(void);
+ 488:./bsp/core_cm0.h **** 
+ 489:./bsp/core_cm0.h **** /**
+ 490:./bsp/core_cm0.h ****  * @brief  Set the Control Register value
+ 491:./bsp/core_cm0.h ****  *
+ 492:./bsp/core_cm0.h ****  * @param  control  Control value
+ 493:./bsp/core_cm0.h ****  *
+ 494:./bsp/core_cm0.h ****  * Set the control register
+ 495:./bsp/core_cm0.h ****  */
+ 496:./bsp/core_cm0.h **** extern void __set_CONTROL(uint32_t control);
+ 497:./bsp/core_cm0.h **** 
+ 498:./bsp/core_cm0.h **** #else  /* (__ARMCC_VERSION >= 400000)  */
+ 499:./bsp/core_cm0.h **** 
+ 500:./bsp/core_cm0.h **** 
+ 501:./bsp/core_cm0.h **** /**
+ 502:./bsp/core_cm0.h ****  * @brief  Return the Priority Mask value
+ 503:./bsp/core_cm0.h ****  *
+ 504:./bsp/core_cm0.h ****  * @return PriMask
+ 505:./bsp/core_cm0.h ****  *
+ 506:./bsp/core_cm0.h ****  * Return state of the priority mask bit from the priority mask register
+ 507:./bsp/core_cm0.h ****  */
+ 508:./bsp/core_cm0.h **** static __INLINE uint32_t __get_PRIMASK(void)
+ 509:./bsp/core_cm0.h **** {
+ 510:./bsp/core_cm0.h ****   register uint32_t __regPriMask         __ASM("primask");
+ 511:./bsp/core_cm0.h ****   return(__regPriMask);
+ 512:./bsp/core_cm0.h **** }
+ 513:./bsp/core_cm0.h **** 
+ 514:./bsp/core_cm0.h **** /**
+ 515:./bsp/core_cm0.h ****  * @brief  Set the Priority Mask value
+ 516:./bsp/core_cm0.h ****  *
+ 517:./bsp/core_cm0.h ****  * @param  priMask  PriMask
+ 518:./bsp/core_cm0.h ****  *
+ 519:./bsp/core_cm0.h ****  * Set the priority mask bit in the priority mask register
+ 520:./bsp/core_cm0.h ****  */
+ 521:./bsp/core_cm0.h **** static __INLINE void __set_PRIMASK(uint32_t priMask)
+ 522:./bsp/core_cm0.h **** {
+ 523:./bsp/core_cm0.h ****   register uint32_t __regPriMask         __ASM("primask");
+ 524:./bsp/core_cm0.h ****   __regPriMask = (priMask);
+ 525:./bsp/core_cm0.h **** }
+ 526:./bsp/core_cm0.h **** 
+ 527:./bsp/core_cm0.h **** /**
+ 528:./bsp/core_cm0.h ****  * @brief  Return the Control Register value
+ 529:./bsp/core_cm0.h ****  * 
+ 530:./bsp/core_cm0.h ****  * @return Control value
+ 531:./bsp/core_cm0.h ****  *
+ 532:./bsp/core_cm0.h ****  * Return the content of the control register
+ 533:./bsp/core_cm0.h ****  */
+ 534:./bsp/core_cm0.h **** static __INLINE uint32_t __get_CONTROL(void)
+ 535:./bsp/core_cm0.h **** {
+ 536:./bsp/core_cm0.h ****   register uint32_t __regControl         __ASM("control");
+ 537:./bsp/core_cm0.h ****   return(__regControl);
+ 538:./bsp/core_cm0.h **** }
+ 539:./bsp/core_cm0.h **** 
+ 540:./bsp/core_cm0.h **** /**
+ 541:./bsp/core_cm0.h ****  * @brief  Set the Control Register value
+ 542:./bsp/core_cm0.h ****  *
+ 543:./bsp/core_cm0.h ****  * @param  control  Control value
+ 544:./bsp/core_cm0.h ****  *
+ 545:./bsp/core_cm0.h ****  * Set the control register
+ 546:./bsp/core_cm0.h ****  */
+ 547:./bsp/core_cm0.h **** static __INLINE void __set_CONTROL(uint32_t control)
+ 548:./bsp/core_cm0.h **** {
+ 549:./bsp/core_cm0.h ****   register uint32_t __regControl         __ASM("control");
+ 550:./bsp/core_cm0.h ****   __regControl = control;
+ 551:./bsp/core_cm0.h **** }
+ 552:./bsp/core_cm0.h **** 
+ 553:./bsp/core_cm0.h **** #endif /* __ARMCC_VERSION  */ 
+ 554:./bsp/core_cm0.h **** 
+ 555:./bsp/core_cm0.h **** 
+ 556:./bsp/core_cm0.h **** 
+ 557:./bsp/core_cm0.h **** #elif (defined (__ICCARM__)) /*------------------ ICC Compiler -------------------*/
+ 558:./bsp/core_cm0.h **** /* IAR iccarm specific functions */
+ 559:./bsp/core_cm0.h **** 
+ 560:./bsp/core_cm0.h **** #define __enable_irq                              __enable_interrupt        /*!< global Interrupt e
+ 561:./bsp/core_cm0.h **** #define __disable_irq                             __disable_interrupt       /*!< global Interrupt d
+ 562:./bsp/core_cm0.h **** 
+ 563:./bsp/core_cm0.h **** static __INLINE void __enable_fault_irq()         { __ASM ("cpsie f"); }
+ 564:./bsp/core_cm0.h **** static __INLINE void __disable_fault_irq()        { __ASM ("cpsid f"); }
+ 565:./bsp/core_cm0.h **** 
+ 566:./bsp/core_cm0.h **** #define __NOP                                     __no_operation            /*!< no operation intri
+ 567:./bsp/core_cm0.h **** static __INLINE  void __WFI()                     { __ASM ("wfi"); }
+ 568:./bsp/core_cm0.h **** static __INLINE  void __WFE()                     { __ASM ("wfe"); }
+ 569:./bsp/core_cm0.h **** static __INLINE  void __SEV()                     { __ASM ("sev"); }
+ 570:./bsp/core_cm0.h **** 
+ 571:./bsp/core_cm0.h **** /* intrinsic void __ISB(void)                                     */
+ 572:./bsp/core_cm0.h **** /* intrinsic void __DSB(void)                                     */
+ 573:./bsp/core_cm0.h **** /* intrinsic void __DMB(void)                                     */
+ 574:./bsp/core_cm0.h **** /* intrinsic void __set_PRIMASK();                                */
+ 575:./bsp/core_cm0.h **** /* intrinsic void __get_PRIMASK();                                */
+ 576:./bsp/core_cm0.h **** 
+ 577:./bsp/core_cm0.h **** 
+ 578:./bsp/core_cm0.h **** /* intrinsic uint32_t __REV(uint32_t value);                      */
+ 579:./bsp/core_cm0.h **** /* intrinsic uint32_t __REVSH(uint32_t value);                    */
+ 580:./bsp/core_cm0.h **** 
+ 581:./bsp/core_cm0.h **** 
+ 582:./bsp/core_cm0.h **** /**
+ 583:./bsp/core_cm0.h ****  * @brief  Return the Process Stack Pointer
+ 584:./bsp/core_cm0.h ****  *
+ 585:./bsp/core_cm0.h ****  * @return ProcessStackPointer
+ 586:./bsp/core_cm0.h ****  *
+ 587:./bsp/core_cm0.h ****  * Return the actual process stack pointer
+ 588:./bsp/core_cm0.h ****  */
+ 589:./bsp/core_cm0.h **** extern uint32_t __get_PSP(void);
+ 590:./bsp/core_cm0.h **** 
+ 591:./bsp/core_cm0.h **** /**
+ 592:./bsp/core_cm0.h ****  * @brief  Set the Process Stack Pointer
+ 593:./bsp/core_cm0.h ****  *
+ 594:./bsp/core_cm0.h ****  * @param  topOfProcStack  Process Stack Pointer
+ 595:./bsp/core_cm0.h ****  *
+ 596:./bsp/core_cm0.h ****  * Assign the value ProcessStackPointer to the MSP 
+ 597:./bsp/core_cm0.h ****  * (process stack pointer) Cortex processor register
+ 598:./bsp/core_cm0.h ****  */
+ 599:./bsp/core_cm0.h **** extern void __set_PSP(uint32_t topOfProcStack);
+ 600:./bsp/core_cm0.h **** 
+ 601:./bsp/core_cm0.h **** /**
+ 602:./bsp/core_cm0.h ****  * @brief  Return the Main Stack Pointer
+ 603:./bsp/core_cm0.h ****  *
+ 604:./bsp/core_cm0.h ****  * @return Main Stack Pointer
+ 605:./bsp/core_cm0.h ****  *
+ 606:./bsp/core_cm0.h ****  * Return the current value of the MSP (main stack pointer)
+ 607:./bsp/core_cm0.h ****  * Cortex processor register
+ 608:./bsp/core_cm0.h ****  */
+ 609:./bsp/core_cm0.h **** extern uint32_t __get_MSP(void);
+ 610:./bsp/core_cm0.h **** 
+ 611:./bsp/core_cm0.h **** /**
+ 612:./bsp/core_cm0.h ****  * @brief  Set the Main Stack Pointer
+ 613:./bsp/core_cm0.h ****  *
+ 614:./bsp/core_cm0.h ****  * @param  topOfMainStack  Main Stack Pointer
+ 615:./bsp/core_cm0.h ****  *
+ 616:./bsp/core_cm0.h ****  * Assign the value mainStackPointer to the MSP 
+ 617:./bsp/core_cm0.h ****  * (main stack pointer) Cortex processor register
+ 618:./bsp/core_cm0.h ****  */
+ 619:./bsp/core_cm0.h **** extern void __set_MSP(uint32_t topOfMainStack);
+ 620:./bsp/core_cm0.h **** 
+ 621:./bsp/core_cm0.h **** /**
+ 622:./bsp/core_cm0.h ****  * @brief  Reverse byte order in unsigned short value
+ 623:./bsp/core_cm0.h ****  *
+ 624:./bsp/core_cm0.h ****  * @param  value  value to reverse
+ 625:./bsp/core_cm0.h ****  * @return        reversed value
+ 626:./bsp/core_cm0.h ****  *
+ 627:./bsp/core_cm0.h ****  * Reverse byte order in unsigned short value
+ 628:./bsp/core_cm0.h ****  */
+ 629:./bsp/core_cm0.h **** extern uint32_t __REV16(uint16_t value);
+ 630:./bsp/core_cm0.h **** 
+ 631:./bsp/core_cm0.h **** 
+ 632:./bsp/core_cm0.h **** 
+ 633:./bsp/core_cm0.h **** 
+ 634:./bsp/core_cm0.h **** 
+ 635:./bsp/core_cm0.h **** #elif (defined (__GNUC__)) /*------------------ GNU Compiler ---------------------*/
+ 636:./bsp/core_cm0.h **** /* GNU gcc specific functions */
+ 637:./bsp/core_cm0.h **** 
+ 638:./bsp/core_cm0.h **** static __INLINE void __enable_irq()               { __ASM volatile ("cpsie i"); }
+ 639:./bsp/core_cm0.h **** static __INLINE void __disable_irq()              { __ASM volatile ("cpsid i"); }
+ 640:./bsp/core_cm0.h **** 
+ 641:./bsp/core_cm0.h **** static __INLINE void __enable_fault_irq()         { __ASM volatile ("cpsie f"); }
+ 642:./bsp/core_cm0.h **** static __INLINE void __disable_fault_irq()        { __ASM volatile ("cpsid f"); }
+ 643:./bsp/core_cm0.h **** 
+ 644:./bsp/core_cm0.h **** static __INLINE void __NOP()                      { __ASM volatile ("nop"); }
+ 645:./bsp/core_cm0.h **** static __INLINE void __WFI()                      { __ASM volatile ("wfi"); }
+ 646:./bsp/core_cm0.h **** static __INLINE void __WFE()                      { __ASM volatile ("wfe"); }
+ 647:./bsp/core_cm0.h **** static __INLINE void __SEV()                      { __ASM volatile ("sev"); }
+ 648:./bsp/core_cm0.h **** static __INLINE void __ISB()                      { __ASM volatile ("isb"); }
+ 649:./bsp/core_cm0.h **** static __INLINE void __DSB()                      { __ASM volatile ("dsb"); }
+ 650:./bsp/core_cm0.h **** static __INLINE void __DMB()                      { __ASM volatile ("dmb"); }
+ 651:./bsp/core_cm0.h **** 
+ 652:./bsp/core_cm0.h **** 
+ 653:./bsp/core_cm0.h **** /**
+ 654:./bsp/core_cm0.h ****  * @brief  Return the Process Stack Pointer
+ 655:./bsp/core_cm0.h ****  *
+ 656:./bsp/core_cm0.h ****  * @return ProcessStackPointer
+ 657:./bsp/core_cm0.h ****  *
+ 658:./bsp/core_cm0.h ****  * Return the actual process stack pointer
+ 659:./bsp/core_cm0.h ****  */
+ 660:./bsp/core_cm0.h **** extern uint32_t __get_PSP(void);
+ 661:./bsp/core_cm0.h **** 
+ 662:./bsp/core_cm0.h **** /**
+ 663:./bsp/core_cm0.h ****  * @brief  Set the Process Stack Pointer
+ 664:./bsp/core_cm0.h ****  *
+ 665:./bsp/core_cm0.h ****  * @param  topOfProcStack  Process Stack Pointer
+ 666:./bsp/core_cm0.h ****  *
+ 667:./bsp/core_cm0.h ****  * Assign the value ProcessStackPointer to the MSP 
+ 668:./bsp/core_cm0.h ****  * (process stack pointer) Cortex processor register
+ 669:./bsp/core_cm0.h ****  */
+ 670:./bsp/core_cm0.h **** extern void __set_PSP(uint32_t topOfProcStack);
+ 671:./bsp/core_cm0.h **** 
+ 672:./bsp/core_cm0.h **** /**
+ 673:./bsp/core_cm0.h ****  * @brief  Return the Main Stack Pointer
+ 674:./bsp/core_cm0.h ****  *
+ 675:./bsp/core_cm0.h ****  * @return Main Stack Pointer
+ 676:./bsp/core_cm0.h ****  *
+ 677:./bsp/core_cm0.h ****  * Return the current value of the MSP (main stack pointer)
+ 678:./bsp/core_cm0.h ****  * Cortex processor register
+ 679:./bsp/core_cm0.h ****  */
+ 680:./bsp/core_cm0.h **** extern uint32_t __get_MSP(void);
+ 681:./bsp/core_cm0.h **** 
+ 682:./bsp/core_cm0.h **** /**
+ 683:./bsp/core_cm0.h ****  * @brief  Set the Main Stack Pointer
+ 684:./bsp/core_cm0.h ****  *
+ 685:./bsp/core_cm0.h ****  * @param  topOfMainStack  Main Stack Pointer
+ 686:./bsp/core_cm0.h ****  *
+ 687:./bsp/core_cm0.h ****  * Assign the value mainStackPointer to the MSP 
+ 688:./bsp/core_cm0.h ****  * (main stack pointer) Cortex processor register
+ 689:./bsp/core_cm0.h ****  */
+ 690:./bsp/core_cm0.h **** extern void __set_MSP(uint32_t topOfMainStack);
+ 691:./bsp/core_cm0.h **** 
+ 692:./bsp/core_cm0.h **** /**
+ 693:./bsp/core_cm0.h ****  * @brief  Return the Priority Mask value
+ 694:./bsp/core_cm0.h ****  *
+ 695:./bsp/core_cm0.h ****  * @return PriMask
+ 696:./bsp/core_cm0.h ****  *
+ 697:./bsp/core_cm0.h ****  * Return state of the priority mask bit from the priority mask register
+ 698:./bsp/core_cm0.h ****  */
+ 699:./bsp/core_cm0.h **** extern uint32_t  __get_PRIMASK(void);
+ 700:./bsp/core_cm0.h **** 
+ 701:./bsp/core_cm0.h **** /**
+ 702:./bsp/core_cm0.h ****  * @brief  Set the Priority Mask value
+ 703:./bsp/core_cm0.h ****  *
+ 704:./bsp/core_cm0.h ****  * @param  priMask  PriMask
+ 705:./bsp/core_cm0.h ****  *
+ 706:./bsp/core_cm0.h ****  * Set the priority mask bit in the priority mask register
+ 707:./bsp/core_cm0.h ****  */
+ 708:./bsp/core_cm0.h **** extern void __set_PRIMASK(uint32_t priMask);
+ 709:./bsp/core_cm0.h **** 
+ 710:./bsp/core_cm0.h **** /**
+ 711:./bsp/core_cm0.h ****  * @brief  Return the Control Register value
+ 712:./bsp/core_cm0.h **** * 
+ 713:./bsp/core_cm0.h **** *  @return Control value
+ 714:./bsp/core_cm0.h ****  *
+ 715:./bsp/core_cm0.h ****  * Return the content of the control register
+ 716:./bsp/core_cm0.h ****  */
+ 717:./bsp/core_cm0.h **** extern uint32_t __get_CONTROL(void);
+ 718:./bsp/core_cm0.h **** 
+ 719:./bsp/core_cm0.h **** /**
+ 720:./bsp/core_cm0.h ****  * @brief  Set the Control Register value
+ 721:./bsp/core_cm0.h ****  *
+ 722:./bsp/core_cm0.h ****  * @param  control  Control value
+ 723:./bsp/core_cm0.h ****  *
+ 724:./bsp/core_cm0.h ****  * Set the control register
+ 725:./bsp/core_cm0.h ****  */
+ 726:./bsp/core_cm0.h **** extern void __set_CONTROL(uint32_t control);
+ 727:./bsp/core_cm0.h **** 
+ 728:./bsp/core_cm0.h **** /**
+ 729:./bsp/core_cm0.h ****  * @brief  Reverse byte order in integer value
+ 730:./bsp/core_cm0.h ****  *
+ 731:./bsp/core_cm0.h ****  * @param  value  value to reverse
+ 732:./bsp/core_cm0.h ****  * @return        reversed value
+ 733:./bsp/core_cm0.h ****  *
+ 734:./bsp/core_cm0.h ****  * Reverse byte order in integer value
+ 735:./bsp/core_cm0.h ****  */
+ 736:./bsp/core_cm0.h **** extern uint32_t __REV(uint32_t value);
+ 737:./bsp/core_cm0.h **** 
+ 738:./bsp/core_cm0.h **** /**
+ 739:./bsp/core_cm0.h ****  * @brief  Reverse byte order in unsigned short value
+ 740:./bsp/core_cm0.h ****  *
+ 741:./bsp/core_cm0.h ****  * @param  value  value to reverse
+ 742:./bsp/core_cm0.h ****  * @return        reversed value
+ 743:./bsp/core_cm0.h ****  *
+ 744:./bsp/core_cm0.h ****  * Reverse byte order in unsigned short value
+ 745:./bsp/core_cm0.h ****  */
+ 746:./bsp/core_cm0.h **** extern uint32_t __REV16(uint16_t value);
+ 747:./bsp/core_cm0.h **** 
+ 748:./bsp/core_cm0.h **** /**
+ 749:./bsp/core_cm0.h ****  * @brief  Reverse byte order in signed short value with sign extension to integer
+ 750:./bsp/core_cm0.h ****  *
+ 751:./bsp/core_cm0.h ****  * @param  value  value to reverse
+ 752:./bsp/core_cm0.h ****  * @return        reversed value
+ 753:./bsp/core_cm0.h ****  *
+ 754:./bsp/core_cm0.h ****  * Reverse byte order in signed short value with sign extension to integer
+ 755:./bsp/core_cm0.h ****  */
+ 756:./bsp/core_cm0.h **** extern int32_t __REVSH(int16_t value);
+ 757:./bsp/core_cm0.h **** 
+ 758:./bsp/core_cm0.h **** 
+ 759:./bsp/core_cm0.h **** #elif (defined (__TASKING__)) /*------------------ TASKING Compiler ---------------------*/
+ 760:./bsp/core_cm0.h **** /* TASKING carm specific functions */
+ 761:./bsp/core_cm0.h **** 
+ 762:./bsp/core_cm0.h **** /*
+ 763:./bsp/core_cm0.h ****  * The CMSIS functions have been implemented as intrinsics in the compiler.
+ 764:./bsp/core_cm0.h ****  * Please use "carm -?i" to get an up to date list of all instrinsics,
+ 765:./bsp/core_cm0.h ****  * Including the CMSIS ones.
+ 766:./bsp/core_cm0.h ****  */
+ 767:./bsp/core_cm0.h **** 
+ 768:./bsp/core_cm0.h **** #endif
+ 769:./bsp/core_cm0.h **** 
+ 770:./bsp/core_cm0.h **** 
+ 771:./bsp/core_cm0.h **** /** @addtogroup CMSIS_CM0_Core_FunctionInterface CMSIS CM0 Core Function Interface
+ 772:./bsp/core_cm0.h ****   Core  Function Interface containing:
+ 773:./bsp/core_cm0.h ****   - Core NVIC Functions
+ 774:./bsp/core_cm0.h ****   - Core SysTick Functions
+ 775:./bsp/core_cm0.h ****   - Core Reset Functions
+ 776:./bsp/core_cm0.h **** */
+ 777:./bsp/core_cm0.h **** /*@{*/
+ 778:./bsp/core_cm0.h **** 
+ 779:./bsp/core_cm0.h **** /* ##########################   NVIC functions  #################################### */
+ 780:./bsp/core_cm0.h **** 
+ 781:./bsp/core_cm0.h **** /* Interrupt Priorities are WORD accessible only under ARMv6M                   */
+ 782:./bsp/core_cm0.h **** /* The following MACROS handle generation of the register offset and byte masks */
+ 783:./bsp/core_cm0.h **** #define _BIT_SHIFT(IRQn)         (  (((uint32_t)(IRQn)       )    &  0x03) * 8 )
+ 784:./bsp/core_cm0.h **** #define _SHP_IDX(IRQn)           ( ((((uint32_t)(IRQn) & 0x0F)-8) >>    2)     )
+ 785:./bsp/core_cm0.h **** #define _IP_IDX(IRQn)            (   ((uint32_t)(IRQn)            >>    2)     )
+ 786:./bsp/core_cm0.h **** 
+ 787:./bsp/core_cm0.h **** 
+ 788:./bsp/core_cm0.h **** /**
+ 789:./bsp/core_cm0.h ****  * @brief  Enable Interrupt in NVIC Interrupt Controller
+ 790:./bsp/core_cm0.h ****  *
+ 791:./bsp/core_cm0.h ****  * @param  IRQn   The positive number of the external interrupt to enable
+ 792:./bsp/core_cm0.h ****  *
+ 793:./bsp/core_cm0.h ****  * Enable a device specific interupt in the NVIC interrupt controller.
+ 794:./bsp/core_cm0.h ****  * The interrupt number cannot be a negative value.
+ 795:./bsp/core_cm0.h ****  */
+ 796:./bsp/core_cm0.h **** static __INLINE void NVIC_EnableIRQ(IRQn_Type IRQn)
+ 797:./bsp/core_cm0.h **** {
+ 798:./bsp/core_cm0.h ****   NVIC->ISER[0] = (1 << ((uint32_t)(IRQn) & 0x1F)); /* enable interrupt */
+ 650              		.loc 2 798 0 is_stmt 1
+ 651 00d8 8021     		movs	r1, #128
+ 652 00da 154B     		ldr	r3, .L59+12
+ 653 00dc 4903     		lsls	r1, r1, #13
+ 654 00de 1960     		str	r1, [r3]
+ 655              	.LVL57:
+ 656              	.LBE14:
+ 657              	.LBE13:
+ 197:./drive/nuc_can.c **** 
+ 658              		.loc 1 197 0
+ 659 00e0 039B     		ldr	r3, [sp, #12]
+ 199:./drive/nuc_can.c ****     CAN_wrFilter( 0, 0, STANDARD_FORMAT); 
+ 660              		.loc 1 199 0
+ 661 00e2 2900     		movs	r1, r5
+ 662 00e4 2800     		movs	r0, r5
+ 197:./drive/nuc_can.c **** 
+ 663              		.loc 1 197 0
+ 664 00e6 1A60     		str	r2, [r3]
+ 199:./drive/nuc_can.c ****     CAN_wrFilter( 0, 0, STANDARD_FORMAT); 
+ 665              		.loc 1 199 0
+ 666 00e8 FFF7FEFF 		bl	CAN_wrFilter
+ 667              	.LVL58:
+ 200:./drive/nuc_can.c **** 
+ 668              		.loc 1 200 0
+ 669 00ec 2A00     		movs	r2, r5
+ 670 00ee 2900     		movs	r1, r5
+ 671 00f0 2800     		movs	r0, r5
+ 672 00f2 FFF7FEFF 		bl	CAN_wrFilter
+ 673              	.LVL59:
+ 202:./drive/nuc_can.c **** }
+ 674              		.loc 1 202 0
+ 675 00f6 3F22     		movs	r2, #63
+ 676              	.LBB15:
+ 677              	.LBB16:
+ 114:./drive/nuc_can.c ****     u8Tseg2 = (tCAN->BTIME & CAN_BTIME_TSEG2_Msk) >> CAN_BTIME_TSEG2_Pos;
+ 678              		.loc 1 114 0
+ 679 00f8 FD68     		ldr	r5, [r7, #12]
+ 680              	.LVL60:
+ 115:./drive/nuc_can.c ****     u32Bpr  = (tCAN->BTIME & CAN_BTIME_BRP_Msk) | (tCAN->BRPE << 6);
+ 681              		.loc 1 115 0
+ 682 00fa FC68     		ldr	r4, [r7, #12]
+ 683              	.LVL61:
+ 116:./drive/nuc_can.c **** 
+ 684              		.loc 1 116 0
+ 685 00fc F968     		ldr	r1, [r7, #12]
+ 686 00fe BB69     		ldr	r3, [r7, #24]
+ 687              	.LBE16:
+ 688              	.LBE15:
+ 202:./drive/nuc_can.c **** }
+ 689              		.loc 1 202 0
+ 690 0100 1140     		ands	r1, r2
+ 691 0102 9B01     		lsls	r3, r3, #6
+ 692 0104 1943     		orrs	r1, r3
+ 693 0106 029B     		ldr	r3, [sp, #8]
+ 694 0108 0131     		adds	r1, r1, #1
+ 695 010a 1868     		ldr	r0, [r3]
+ 696 010c FFF7FEFF 		bl	__aeabi_uidiv
+ 697              	.LVL62:
+ 698 0110 6404     		lsls	r4, r4, #17
+ 699              	.LVL63:
+ 700 0112 2905     		lsls	r1, r5, #20
+ 701 0114 640F     		lsrs	r4, r4, #29
+ 702 0116 090F     		lsrs	r1, r1, #28
+ 703 0118 0919     		adds	r1, r1, r4
+ 704 011a 0331     		adds	r1, r1, #3
+ 705 011c FFF7FEFF 		bl	__aeabi_uidiv
+ 706              	.LVL64:
+ 203:./drive/nuc_can.c **** 
+ 707              		.loc 1 203 0
+ 708 0120 05B0     		add	sp, sp, #20
+ 709              		@ sp needed
+ 710              	.LVL65:
+ 711 0122 F0BD     		pop	{r4, r5, r6, r7, pc}
+ 712              	.L60:
+ 713              		.align	2
+ 714              	.L59:
+ 715 0124 00001840 		.word	1075314688
+ 716 0128 00000000 		.word	SystemCoreClock
+ 717 012c 00000000 		.word	.LANCHOR0
+ 718 0130 00E100E0 		.word	-536813312
+ 719              		.cfi_endproc
+ 720              	.LFE60:
+ 722              		.section	.text.CAN_init,"ax",%progbits
+ 723              		.align	1
+ 724              		.global	CAN_init
+ 725              		.code	16
+ 726              		.thumb_func
+ 728              	CAN_init:
+ 729              	.LFB61:
+ 206:./drive/nuc_can.c ****     can_baudrate = baud;
+ 730              		.loc 1 206 0
+ 731              		.cfi_startproc
+ 732              		@ args = 0, pretend = 0, frame = 0
+ 733              		@ frame_needed = 0, uses_anonymous_args = 0
+ 734              	.LVL66:
+ 735 0000 10B5     		push	{r4, lr}
+ 736              	.LCFI4:
+ 737              		.cfi_def_cfa_offset 8
+ 738              		.cfi_offset 4, -8
+ 739              		.cfi_offset 14, -4
+ 207:./drive/nuc_can.c ****     return CAN_setup();
+ 740              		.loc 1 207 0
+ 741 0002 024B     		ldr	r3, .L62
+ 209:./drive/nuc_can.c **** 
+ 742              		.loc 1 209 0
+ 743              		@ sp needed
+ 207:./drive/nuc_can.c ****     return CAN_setup();
+ 744              		.loc 1 207 0
+ 745 0004 5860     		str	r0, [r3, #4]
+ 208:./drive/nuc_can.c **** }
+ 746              		.loc 1 208 0
+ 747 0006 FFF7FEFF 		bl	CAN_setup
+ 748              	.LVL67:
+ 209:./drive/nuc_can.c **** 
+ 749              		.loc 1 209 0
+ 750 000a 10BD     		pop	{r4, pc}
+ 751              	.L63:
+ 752              		.align	2
+ 753              	.L62:
+ 754 000c 00000000 		.word	.LANCHOR0
+ 755              		.cfi_endproc
+ 756              	.LFE61:
+ 758              		.section	.text.CAN_Init,"ax",%progbits
+ 759              		.align	1
+ 760              		.global	CAN_Init
+ 761              		.code	16
+ 762              		.thumb_func
+ 764              	CAN_Init:
+ 765              	.LFB62:
+ 212:./drive/nuc_can.c ****     LIST_BUF_RESET( canList_rx );
+ 766              		.loc 1 212 0
+ 767              		.cfi_startproc
+ 768              		@ args = 0, pretend = 0, frame = 0
+ 769              		@ frame_needed = 0, uses_anonymous_args = 0
+ 770              	.LVL68:
+ 213:./drive/nuc_can.c ****     CAN_init( baud );
+ 771              		.loc 1 213 0
+ 772 0000 0022     		movs	r2, #0
+ 212:./drive/nuc_can.c ****     LIST_BUF_RESET( canList_rx );
+ 773              		.loc 1 212 0
+ 774 0002 10B5     		push	{r4, lr}
+ 775              	.LCFI5:
+ 776              		.cfi_def_cfa_offset 8
+ 777              		.cfi_offset 4, -8
+ 778              		.cfi_offset 14, -4
+ 213:./drive/nuc_can.c ****     CAN_init( baud );
+ 779              		.loc 1 213 0
+ 780 0004 044B     		ldr	r3, .L65
+ 214:./drive/nuc_can.c **** }
+ 781              		.loc 1 214 0
+ 782 0006 0800     		movs	r0, r1
+ 783              	.LVL69:
+ 213:./drive/nuc_can.c ****     CAN_init( baud );
+ 784              		.loc 1 213 0
+ 785 0008 FE33     		adds	r3, r3, #254
+ 786 000a 5A80     		strh	r2, [r3, #2]
+ 787 000c DA80     		strh	r2, [r3, #6]
+ 788 000e 9A80     		strh	r2, [r3, #4]
+ 215:./drive/nuc_can.c **** 
+ 789              		.loc 1 215 0
+ 790              		@ sp needed
+ 214:./drive/nuc_can.c **** }
+ 791              		.loc 1 214 0
+ 792 0010 FFF7FEFF 		bl	CAN_init
+ 793              	.LVL70:
+ 215:./drive/nuc_can.c **** 
+ 794              		.loc 1 215 0
+ 795 0014 10BD     		pop	{r4, pc}
+ 796              	.L66:
+ 797 0016 C046     		.align	2
+ 798              	.L65:
+ 799 0018 00000000 		.word	canList_rx
+ 800              		.cfi_endproc
+ 801              	.LFE62:
+ 803              		.section	.text.CAN_GetErr,"ax",%progbits
+ 804              		.align	1
+ 805              		.global	CAN_GetErr
+ 806              		.code	16
+ 807              		.thumb_func
+ 809              	CAN_GetErr:
+ 810              	.LFB66:
+ 243:./drive/nuc_can.c **** 
+ 811              		.loc 1 243 0
+ 812              		.cfi_startproc
+ 813              		@ args = 0, pretend = 0, frame = 8
+ 814              		@ frame_needed = 0, uses_anonymous_args = 0
+ 815              	.LVL71:
+ 246:./drive/nuc_can.c **** 	volatile int i, time = 100;
+ 816              		.loc 1 246 0
+ 817 0000 184B     		ldr	r3, .L78
+ 243:./drive/nuc_can.c **** 
+ 818              		.loc 1 243 0
+ 819 0002 F7B5     		push	{r0, r1, r2, r4, r5, r6, r7, lr}
+ 820              	.LCFI6:
+ 821              		.cfi_def_cfa_offset 32
+ 822              		.cfi_offset 0, -32
+ 823              		.cfi_offset 1, -28
+ 824              		.cfi_offset 2, -24
+ 825              		.cfi_offset 4, -20
+ 826              		.cfi_offset 5, -16
+ 827              		.cfi_offset 6, -12
+ 828              		.cfi_offset 7, -8
+ 829              		.cfi_offset 14, -4
+ 246:./drive/nuc_can.c **** 	volatile int i, time = 100;
+ 830              		.loc 1 246 0
+ 831 0004 5D68     		ldr	r5, [r3, #4]
+ 832              	.LVL72:
+ 247:./drive/nuc_can.c **** 	
+ 833              		.loc 1 247 0
+ 834 0006 6422     		movs	r2, #100
+ 249:./drive/nuc_can.c ****     {
+ 835              		.loc 1 249 0
+ 836 0008 2800     		movs	r0, r5
+ 837              	.LVL73:
+ 247:./drive/nuc_can.c **** 	
+ 838              		.loc 1 247 0
+ 839 000a 0192     		str	r2, [sp, #4]
+ 249:./drive/nuc_can.c ****     {
+ 840              		.loc 1 249 0
+ 841 000c 1C32     		adds	r2, r2, #28
+ 842 000e 1040     		ands	r0, r2
+ 843 0010 154C     		ldr	r4, .L78+4
+ 844 0012 24D0     		beq	.L68
+ 252:./drive/nuc_can.c ****         if( errCnt > 30 )
+ 845              		.loc 1 252 0
+ 846 0014 A168     		ldr	r1, [r4, #8]
+ 847 0016 0131     		adds	r1, r1, #1
+ 253:./drive/nuc_can.c ****         {
+ 848              		.loc 1 253 0
+ 849 0018 1E29     		cmp	r1, #30
+ 850 001a 04DC     		bgt	.L69
+ 252:./drive/nuc_can.c ****         if( errCnt > 30 )
+ 851              		.loc 1 252 0
+ 852 001c A160     		str	r1, [r4, #8]
+ 262:./drive/nuc_can.c **** 			for(i=0; i<10000;i++);
+ 853              		.loc 1 262 0
+ 854 001e 0120     		movs	r0, #1
+ 263:./drive/nuc_can.c **** 			if(!( tCAN->STATUS & _STAT_BOFF )) break;
+ 855              		.loc 1 263 0
+ 856 0020 0024     		movs	r4, #0
+ 857 0022 124E     		ldr	r6, .L78+8
+ 858 0024 0BE0     		b	.L70
+ 859              	.L69:
+ 255:./drive/nuc_can.c **** 			CAN_setup();
+ 860              		.loc 1 255 0
+ 861 0026 0023     		movs	r3, #0
+ 862 0028 A360     		str	r3, [r4, #8]
+ 256:./drive/nuc_can.c **** 			CAN_TxRdy = 1;
+ 863              		.loc 1 256 0
+ 864 002a FFF7FEFF 		bl	CAN_setup
+ 865              	.LVL74:
+ 257:./drive/nuc_can.c ****             return state;
+ 866              		.loc 1 257 0
+ 867 002e 0123     		movs	r3, #1
+ 868 0030 2360     		str	r3, [r4]
+ 869 0032 02E0     		b	.L75
+ 870              	.L77:
+ 264:./drive/nuc_can.c **** 		}
+ 871              		.loc 1 264 0
+ 872 0034 5968     		ldr	r1, [r3, #4]
+ 873 0036 1142     		tst	r1, r2
+ 874 0038 01D1     		bne	.L70
+ 875              	.L75:
+ 266:./drive/nuc_can.c ****     }
+ 876              		.loc 1 266 0
+ 877 003a 2800     		movs	r0, r5
+ 878 003c 10E0     		b	.L71
+ 879              	.L70:
+ 260:./drive/nuc_can.c **** 		{
+ 880              		.loc 1 260 0
+ 881 003e 0199     		ldr	r1, [sp, #4]
+ 882 0040 4F1E     		subs	r7, r1, #1
+ 883 0042 0197     		str	r7, [sp, #4]
+ 884 0044 0029     		cmp	r1, #0
+ 885 0046 F8D0     		beq	.L75
+ 262:./drive/nuc_can.c **** 			for(i=0; i<10000;i++);
+ 886              		.loc 1 262 0
+ 887 0048 1968     		ldr	r1, [r3]
+ 888 004a 8143     		bics	r1, r0
+ 889 004c 1960     		str	r1, [r3]
+ 263:./drive/nuc_can.c **** 			if(!( tCAN->STATUS & _STAT_BOFF )) break;
+ 890              		.loc 1 263 0
+ 891 004e 0094     		str	r4, [sp]
+ 892              	.L72:
+ 263:./drive/nuc_can.c **** 			if(!( tCAN->STATUS & _STAT_BOFF )) break;
+ 893              		.loc 1 263 0 is_stmt 0 discriminator 1
+ 894 0050 0099     		ldr	r1, [sp]
+ 895 0052 B142     		cmp	r1, r6
+ 896 0054 EEDC     		bgt	.L77
+ 263:./drive/nuc_can.c **** 			if(!( tCAN->STATUS & _STAT_BOFF )) break;
+ 897              		.loc 1 263 0 discriminator 3
+ 898 0056 0099     		ldr	r1, [sp]
+ 899 0058 0131     		adds	r1, r1, #1
+ 900 005a 0091     		str	r1, [sp]
+ 901 005c F8E7     		b	.L72
+ 902              	.L68:
+ 268:./drive/nuc_can.c ****     return 0;
+ 903              		.loc 1 268 0 is_stmt 1
+ 904 005e A060     		str	r0, [r4, #8]
+ 905              	.L71:
+ 270:./drive/nuc_can.c **** 
+ 906              		.loc 1 270 0
+ 907              		@ sp needed
+ 908              	.LVL75:
+ 909 0060 FEBD     		pop	{r1, r2, r3, r4, r5, r6, r7, pc}
+ 910              	.L79:
+ 911 0062 C046     		.align	2
+ 912              	.L78:
+ 913 0064 00001840 		.word	1075314688
+ 914 0068 00000000 		.word	.LANCHOR0
+ 915 006c 0F270000 		.word	9999
+ 916              		.cfi_endproc
+ 917              	.LFE66:
+ 919              		.section	.after_vectors,"ax",%progbits
+ 920              		.align	1
+ 921              		.global	CAN0_IRQHandler
+ 922              		.code	16
+ 923              		.thumb_func
+ 925              	CAN0_IRQHandler:
+ 926              	.LFB71:
+ 427:./drive/nuc_can.c **** 
+ 428:./drive/nuc_can.c **** 
+ 429:./drive/nuc_can.c **** __AFTER__
+ 430:./drive/nuc_can.c **** void CAN0_IRQHandler(void);
+ 431:./drive/nuc_can.c **** void CAN0_IRQHandler(void)
+ 432:./drive/nuc_can.c **** {
+ 927              		.loc 1 432 0
+ 928              		.cfi_startproc
+ 929              		@ args = 0, pretend = 0, frame = 24
+ 930              		@ frame_needed = 0, uses_anonymous_args = 0
+ 931 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+ 932              	.LCFI7:
+ 933              		.cfi_def_cfa_offset 20
+ 934              		.cfi_offset 4, -20
+ 935              		.cfi_offset 5, -16
+ 936              		.cfi_offset 6, -12
+ 937              		.cfi_offset 7, -8
+ 938              		.cfi_offset 14, -4
+ 433:./drive/nuc_can.c ****    
+ 434:./drive/nuc_can.c ****     volatile uint32_t can_int, can_stat;
+ 435:./drive/nuc_can.c ****     uint32_t can_msgObj;
+ 436:./drive/nuc_can.c **** 
+ 437:./drive/nuc_can.c ****     can_int = tCAN->IIDR;                          /* read interrupt status */
+ 939              		.loc 1 437 0
+ 940 0002 494B     		ldr	r3, .L105
+ 432:./drive/nuc_can.c ****    
+ 941              		.loc 1 432 0
+ 942 0004 87B0     		sub	sp, sp, #28
+ 943              	.LCFI8:
+ 944              		.cfi_def_cfa_offset 48
+ 945              		.loc 1 437 0
+ 946 0006 1A69     		ldr	r2, [r3, #16]
+ 947 0008 0492     		str	r2, [sp, #16]
+ 438:./drive/nuc_can.c ****     switch (can_int) {
+ 948              		.loc 1 438 0
+ 949 000a 0499     		ldr	r1, [sp, #16]
+ 950 000c 0029     		cmp	r1, #0
+ 951 000e 00D1     		bne	.LCB815
+ 952 0010 87E0     		b	.L80	@long jump
+ 953              	.LCB815:
+ 954 0012 8022     		movs	r2, #128
+ 955 0014 1202     		lsls	r2, r2, #8
+ 956 0016 9142     		cmp	r1, r2
+ 957 0018 10D1     		bne	.L103
+ 439:./drive/nuc_can.c ****         case 0x0000:                                   /* no interrupt */
+ 440:./drive/nuc_can.c ****             ;
+ 441:./drive/nuc_can.c ****             break;
+ 442:./drive/nuc_can.c ****         case 0x8000:                                   /* status interrupt */
+ 443:./drive/nuc_can.c ****             can_stat = tCAN->STATUS;
+ 444:./drive/nuc_can.c **** 
+ 445:./drive/nuc_can.c ****             if (can_stat & _STAT_TXOK) {                   /* TXOK       */
+ 958              		.loc 1 445 0
+ 959 001a 0821     		movs	r1, #8
+ 443:./drive/nuc_can.c **** 
+ 960              		.loc 1 443 0
+ 961 001c 5A68     		ldr	r2, [r3, #4]
+ 962 001e 0592     		str	r2, [sp, #20]
+ 963              		.loc 1 445 0
+ 964 0020 059A     		ldr	r2, [sp, #20]
+ 965 0022 0A42     		tst	r2, r1
+ 966 0024 02D0     		beq	.L84
+ 446:./drive/nuc_can.c ****                 tCAN->STATUS &= ~_STAT_TXOK;                /* reset TXOK */
+ 967              		.loc 1 446 0
+ 968 0026 5A68     		ldr	r2, [r3, #4]
+ 969 0028 8A43     		bics	r2, r1
+ 970 002a 5A60     		str	r2, [r3, #4]
+ 971              	.L84:
+ 447:./drive/nuc_can.c ****             }	  
+ 448:./drive/nuc_can.c ****             if (can_stat & _STAT_RXOK) {                   /* RXOK       */	 // got this never to w
+ 972              		.loc 1 448 0
+ 973 002c 1021     		movs	r1, #16
+ 974 002e 059A     		ldr	r2, [sp, #20]
+ 975 0030 0A42     		tst	r2, r1
+ 976 0032 76D0     		beq	.L80
+ 449:./drive/nuc_can.c ****                 tCAN->STATUS &= ~_STAT_RXOK;                /* reset RXOK */
+ 977              		.loc 1 449 0
+ 978 0034 5A68     		ldr	r2, [r3, #4]
+ 979 0036 8A43     		bics	r2, r1
+ 980 0038 5A60     		str	r2, [r3, #4]
+ 981 003a 72E0     		b	.L80
+ 982              	.L103:
+ 450:./drive/nuc_can.c ****             }	  
+ 451:./drive/nuc_can.c ****             break;
+ 452:./drive/nuc_can.c ****         default:                                      /* message object interrupt */
+ 453:./drive/nuc_can.c ****             can_msgObj = can_int & 0x7FFF;
+ 983              		.loc 1 453 0
+ 984 003c 049B     		ldr	r3, [sp, #16]
+ 985 003e 5B04     		lsls	r3, r3, #17
+ 986 0040 5B0C     		lsrs	r3, r3, #17
+ 987 0042 0193     		str	r3, [sp, #4]
+ 988              	.LVL76:
+ 454:./drive/nuc_can.c ****             if ((can_msgObj >=  1) &&   (can_msgObj <= 32)   )
+ 989              		.loc 1 454 0
+ 990 0044 013B     		subs	r3, r3, #1
+ 991              	.LVL77:
+ 992 0046 1F2B     		cmp	r3, #31
+ 993 0048 6BD8     		bhi	.L80
+ 994              	.LBB19:
+ 995              	.LBB20:
+ 334:./drive/nuc_can.c ****     tCAN->IF[1].CMASK = _CMDMASK_RD     | _CMDMASK_MASK | _CMDMASK_ARB   | _CMDMASK_CTRL |
+ 996              		.loc 1 334 0
+ 997 004a 3848     		ldr	r0, .L105+4
+ 998              	.L97:
+ 999 004c C36F     		ldr	r3, [r0, #124]
+ 1000 004e 3749     		ldr	r1, .L105+4
+ 1001 0050 1342     		tst	r3, r2
+ 1002 0052 FBD1     		bne	.L97
+ 335:./drive/nuc_can.c ****         _CMDMASK_INTPND | _CMDMASK_TREQ | _CMDMASK_DATAA | _CMDMASK_DATAB;	
+ 1003              		.loc 1 335 0
+ 1004 0054 7F22     		movs	r2, #127
+ 1005 0056 364B     		ldr	r3, .L105+8
+ 1006 0058 DA67     		str	r2, [r3, #124]
+ 337:./drive/nuc_can.c ****     while (tCAN->IF[1].CREQ & _CMDREQ_BUSY);
+ 1007              		.loc 1 337 0
+ 1008 005a 019A     		ldr	r2, [sp, #4]
+ 1009 005c CA67     		str	r2, [r1, #124]
+ 338:./drive/nuc_can.c **** 
+ 1010              		.loc 1 338 0
+ 1011 005e 8022     		movs	r2, #128
+ 1012 0060 0393     		str	r3, [sp, #12]
+ 1013 0062 1202     		lsls	r2, r2, #8
+ 1014              	.L88:
+ 1015 0064 CB6F     		ldr	r3, [r1, #124]
+ 1016 0066 1340     		ands	r3, r2
+ 1017 0068 FCD1     		bne	.L88
+ 341:./drive/nuc_can.c ****         CAN_TxRdy = 1;                          /*  set transmit flag   */
+ 1018              		.loc 1 341 0
+ 1019 006a 3248     		ldr	r0, .L105+12
+ 1020 006c 324C     		ldr	r4, .L105+16
+ 1021 006e 0268     		ldr	r2, [r0]
+ 1022 0070 A446     		mov	ip, r4
+ 1023 0072 0292     		str	r2, [sp, #8]
+ 1024 0074 029C     		ldr	r4, [sp, #8]
+ 1025 0076 0700     		movs	r7, r0
+ 1026 0078 304A     		ldr	r2, .L105+20
+ 1027 007a 314E     		ldr	r6, .L105+24
+ 1028 007c 314D     		ldr	r5, .L105+28
+ 1029 007e 2405     		lsls	r4, r4, #20
+ 1030 0080 1CD5     		bpl	.L89
+ 342:./drive/nuc_can.c ****         /* release message obect */
+ 1031              		.loc 1 342 0
+ 1032 0082 0124     		movs	r4, #1
+ 1033 0084 304F     		ldr	r7, .L105+32
+ 1034 0086 3C60     		str	r4, [r7]
+ 344:./drive/nuc_can.c ****             _CMDMASK_DATAA | _CMDMASK_DATAB;
+ 1035              		.loc 1 344 0
+ 1036 0088 F327     		movs	r7, #243
+ 1037 008a 039C     		ldr	r4, [sp, #12]
+ 1038 008c E767     		str	r7, [r4, #124]
+ 346:./drive/nuc_can.c **** 
+ 1039              		.loc 1 346 0
+ 1040 008e 0360     		str	r3, [r0]
+ 348:./drive/nuc_can.c ****         tCAN->IF[1].MASK2   = 0x0000;
+ 1041              		.loc 1 348 0
+ 1042 0090 2E48     		ldr	r0, .L105+36
+ 1043 0092 0360     		str	r3, [r0]
+ 349:./drive/nuc_can.c **** 
+ 1044              		.loc 1 349 0
+ 1045 0094 2E48     		ldr	r0, .L105+40
+ 1046 0096 0360     		str	r3, [r0]
+ 351:./drive/nuc_can.c ****         tCAN->IF[1].ARB2   = 0x0000;
+ 1047              		.loc 1 351 0
+ 1048 0098 2E48     		ldr	r0, .L105+44
+ 1049 009a 0360     		str	r3, [r0]
+ 352:./drive/nuc_can.c **** 
+ 1050              		.loc 1 352 0
+ 1051 009c 1360     		str	r3, [r2]
+ 355:./drive/nuc_can.c ****         tCAN->IF[1].DAT_B1    = 0x0000;
+ 1052              		.loc 1 355 0
+ 1053 009e 6246     		mov	r2, ip
+ 354:./drive/nuc_can.c ****         tCAN->IF[1].DAT_A2    = 0x0000;
+ 1054              		.loc 1 354 0
+ 1055 00a0 3360     		str	r3, [r6]
+ 355:./drive/nuc_can.c ****         tCAN->IF[1].DAT_B1    = 0x0000;
+ 1056              		.loc 1 355 0
+ 1057 00a2 1360     		str	r3, [r2]
+ 357:./drive/nuc_can.c **** 
+ 1058              		.loc 1 357 0
+ 1059 00a4 2C4A     		ldr	r2, .L105+48
+ 356:./drive/nuc_can.c ****         tCAN->IF[1].DAT_B2    = 0x0000;
+ 1060              		.loc 1 356 0
+ 1061 00a6 2B60     		str	r3, [r5]
+ 357:./drive/nuc_can.c **** 
+ 1062              		.loc 1 357 0
+ 1063 00a8 1360     		str	r3, [r2]
+ 359:./drive/nuc_can.c ****         while( tCAN->IF[1].CREQ & _CMDREQ_BUSY );
+ 1064              		.loc 1 359 0
+ 1065 00aa 204B     		ldr	r3, .L105+4
+ 1066 00ac 019A     		ldr	r2, [sp, #4]
+ 1067 00ae DA67     		str	r2, [r3, #124]
+ 360:./drive/nuc_can.c ****     }
+ 1068              		.loc 1 360 0
+ 1069 00b0 8023     		movs	r3, #128
+ 1070 00b2 1B02     		lsls	r3, r3, #8
+ 1071              	.L90:
+ 1072 00b4 CA6F     		ldr	r2, [r1, #124]
+ 1073 00b6 1A42     		tst	r2, r3
+ 1074 00b8 FCD1     		bne	.L90
+ 1075 00ba 32E0     		b	.L80
+ 1076              	.L89:
+ 363:./drive/nuc_can.c ****             CAN_RxMsg.id = ((tCAN->IF[1].ARB2 & _ARB2_ID) << 16) | tCAN->IF[1].ARB1;
+ 1077              		.loc 1 363 0
+ 1078 00bc 1168     		ldr	r1, [r2]
+ 1079 00be 274B     		ldr	r3, .L105+52
+ 364:./drive/nuc_can.c ****         }
+ 1080              		.loc 1 364 0
+ 1081 00c0 1268     		ldr	r2, [r2]
+ 363:./drive/nuc_can.c ****             CAN_RxMsg.id = ((tCAN->IF[1].ARB2 & _ARB2_ID) << 16) | tCAN->IF[1].ARB1;
+ 1082              		.loc 1 363 0
+ 1083 00c2 4904     		lsls	r1, r1, #17
+ 1084 00c4 06D5     		bpl	.L91
+ 364:./drive/nuc_can.c ****         }
+ 1085              		.loc 1 364 0
+ 1086 00c6 2349     		ldr	r1, .L105+44
+ 1087 00c8 2548     		ldr	r0, .L105+56
+ 1088 00ca 0968     		ldr	r1, [r1]
+ 1089 00cc 1204     		lsls	r2, r2, #16
+ 1090 00ce 0240     		ands	r2, r0
+ 1091 00d0 0A43     		orrs	r2, r1
+ 1092 00d2 01E0     		b	.L104
+ 1093              	.L91:
+ 367:./drive/nuc_can.c ****         }
+ 1094              		.loc 1 367 0
+ 1095 00d4 D204     		lsls	r2, r2, #19
+ 1096 00d6 520D     		lsrs	r2, r2, #21
+ 1097              	.L104:
+ 1098 00d8 1A60     		str	r2, [r3]
+ 370:./drive/nuc_can.c ****         CAN_RxMsg.buff16[0] = tCAN->IF[1].DAT_A1;
+ 1099              		.loc 1 370 0
+ 1100 00da 0F22     		movs	r2, #15
+ 1101 00dc 3968     		ldr	r1, [r7]
+ 1102 00de 0A40     		ands	r2, r1
+ 1103 00e0 1A73     		strb	r2, [r3, #12]
+ 371:./drive/nuc_can.c ****         CAN_RxMsg.buff16[1] = tCAN->IF[1].DAT_A2;
+ 1104              		.loc 1 371 0
+ 1105 00e2 3268     		ldr	r2, [r6]
+ 1106 00e4 9A80     		strh	r2, [r3, #4]
+ 372:./drive/nuc_can.c ****         CAN_RxMsg.buff16[2] = tCAN->IF[1].DAT_B1;
+ 1107              		.loc 1 372 0
+ 1108 00e6 6246     		mov	r2, ip
+ 1109 00e8 1268     		ldr	r2, [r2]
+ 1110 00ea DA80     		strh	r2, [r3, #6]
+ 373:./drive/nuc_can.c ****         CAN_RxMsg.buff16[3] = tCAN->IF[1].DAT_B2;
+ 1111              		.loc 1 373 0
+ 1112 00ec 2A68     		ldr	r2, [r5]
+ 1113 00ee 1A81     		strh	r2, [r3, #8]
+ 374:./drive/nuc_can.c **** 
+ 1114              		.loc 1 374 0
+ 1115 00f0 194A     		ldr	r2, .L105+48
+ 1116 00f2 1268     		ldr	r2, [r2]
+ 1117 00f4 5A81     		strh	r2, [r3, #10]
+ 376:./drive/nuc_can.c ****         {
+ 1118              		.loc 1 376 0
+ 1119 00f6 1B4A     		ldr	r2, .L105+60
+ 1120 00f8 1000     		movs	r0, r2
+ 1121 00fa FE30     		adds	r0, r0, #254
+ 1122 00fc C188     		ldrh	r1, [r0, #6]
+ 1123 00fe 0F29     		cmp	r1, #15
+ 1124 0100 0FD8     		bhi	.L80
+ 378:./drive/nuc_can.c ****         }
+ 1125              		.loc 1 378 0
+ 1126 0102 0131     		adds	r1, r1, #1
+ 1127 0104 C180     		strh	r1, [r0, #6]
+ 1128 0106 4188     		ldrh	r1, [r0, #2]
+ 1129 0108 4C1C     		adds	r4, r1, #1
+ 1130 010a A4B2     		uxth	r4, r4
+ 1131 010c 0901     		lsls	r1, r1, #4
+ 1132 010e 4480     		strh	r4, [r0, #2]
+ 1133 0110 5218     		adds	r2, r2, r1
+ 1134 0112 62CB     		ldmia	r3!, {r1, r5, r6}
+ 1135 0114 62C2     		stmia	r2!, {r1, r5, r6}
+ 1136 0116 1B68     		ldr	r3, [r3]
+ 1137 0118 1360     		str	r3, [r2]
+ 1138 011a 0F2C     		cmp	r4, #15
+ 1139 011c 01D9     		bls	.L80
+ 1140 011e 0023     		movs	r3, #0
+ 1141 0120 4380     		strh	r3, [r0, #2]
+ 1142              	.LVL78:
+ 1143              	.L80:
+ 1144              	.LBE20:
+ 1145              	.LBE19:
+ 455:./drive/nuc_can.c ****             {                /*   valid msgObj number */
+ 456:./drive/nuc_can.c ****                 CAN_ISRmsg (can_msgObj);      /*  read the message  */
+ 457:./drive/nuc_can.c ****             }
+ 458:./drive/nuc_can.c ****             break;
+ 459:./drive/nuc_can.c ****     }
+ 460:./drive/nuc_can.c **** }
+ 1146              		.loc 1 460 0
+ 1147 0122 07B0     		add	sp, sp, #28
+ 1148              		@ sp needed
+ 1149 0124 F0BD     		pop	{r4, r5, r6, r7, pc}
+ 1150              	.L106:
+ 1151 0126 C046     		.align	2
+ 1152              	.L105:
+ 1153 0128 00001840 		.word	1075314688
+ 1154 012c 04001840 		.word	1075314692
+ 1155 0130 08001840 		.word	1075314696
+ 1156 0134 98001840 		.word	1075314840
+ 1157 0138 A0001840 		.word	1075314848
+ 1158 013c 94001840 		.word	1075314836
+ 1159 0140 9C001840 		.word	1075314844
+ 1160 0144 A4001840 		.word	1075314852
+ 1161 0148 00000000 		.word	.LANCHOR0
+ 1162 014c 88001840 		.word	1075314824
+ 1163 0150 8C001840 		.word	1075314828
+ 1164 0154 90001840 		.word	1075314832
+ 1165 0158 A8001840 		.word	1075314856
+ 1166 015c 00000000 		.word	CAN_RxMsg
+ 1167 0160 0000FF1F 		.word	536805376
+ 1168 0164 00000000 		.word	canList_rx
+ 1169              		.cfi_endproc
+ 1170              	.LFE71:
+ 1172              		.section	.text.CAN_rdMSG,"ax",%progbits
+ 1173              		.align	1
+ 1174              		.global	CAN_rdMSG
+ 1175              		.code	16
+ 1176              		.thumb_func
+ 1178              	CAN_rdMSG:
+ 1179              	.LFB72:
+ 461:./drive/nuc_can.c **** 
+ 462:./drive/nuc_can.c **** /*
+ 463:./drive/nuc_can.c ****  * CAN_ReadMsg
+ 464:./drive/nuc_can.c ****  * 从can总线的接收缓存中读取一组数据。
+ 465:./drive/nuc_can.c ****  */
+ 466:./drive/nuc_can.c **** int CAN_rdMSG(CAN_msg *pMsg)
+ 467:./drive/nuc_can.c **** {
+ 1180              		.loc 1 467 0
+ 1181              		.cfi_startproc
+ 1182              		@ args = 0, pretend = 0, frame = 8
+ 1183              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1184              	.LVL79:
+ 1185 0000 F7B5     		push	{r0, r1, r2, r4, r5, r6, r7, lr}
+ 1186              	.LCFI9:
+ 1187              		.cfi_def_cfa_offset 32
+ 1188              		.cfi_offset 0, -32
+ 1189              		.cfi_offset 1, -28
+ 1190              		.cfi_offset 2, -24
+ 1191              		.cfi_offset 4, -20
+ 1192              		.cfi_offset 5, -16
+ 1193              		.cfi_offset 6, -12
+ 1194              		.cfi_offset 7, -8
+ 1195              		.cfi_offset 14, -4
+ 468:./drive/nuc_can.c ****     if( LIST_BUF_COUNT( canList_rx ) )
+ 1196              		.loc 1 468 0
+ 1197 0002 0F4A     		ldr	r2, .L112
+ 469:./drive/nuc_can.c ****     {
+ 470:./drive/nuc_can.c ****         LIST_BUF_RD( canList_rx , *pMsg);
+ 471:./drive/nuc_can.c ****         return TRUE;
+ 472:./drive/nuc_can.c ****     }
+ 473:./drive/nuc_can.c ****     return FALSE;
+ 1198              		.loc 1 473 0
+ 1199 0004 0026     		movs	r6, #0
+ 468:./drive/nuc_can.c ****     if( LIST_BUF_COUNT( canList_rx ) )
+ 1200              		.loc 1 468 0
+ 1201 0006 1400     		movs	r4, r2
+ 1202 0008 FE34     		adds	r4, r4, #254
+ 1203 000a E388     		ldrh	r3, [r4, #6]
+ 1204 000c 0192     		str	r2, [sp, #4]
+ 1205 000e 9C46     		mov	ip, r3
+ 1206 0010 B342     		cmp	r3, r6
+ 1207 0012 12D0     		beq	.L108
+ 470:./drive/nuc_can.c ****         return TRUE;
+ 1208              		.loc 1 470 0
+ 1209 0014 A388     		ldrh	r3, [r4, #4]
+ 1210 0016 5D1C     		adds	r5, r3, #1
+ 1211 0018 ADB2     		uxth	r5, r5
+ 1212 001a 1B01     		lsls	r3, r3, #4
+ 1213 001c A580     		strh	r5, [r4, #4]
+ 1214 001e D318     		adds	r3, r2, r3
+ 1215 0020 86CB     		ldmia	r3!, {r1, r2, r7}
+ 1216 0022 86C0     		stmia	r0!, {r1, r2, r7}
+ 1217              	.LVL80:
+ 1218 0024 1B68     		ldr	r3, [r3]
+ 1219 0026 0360     		str	r3, [r0]
+ 1220 0028 0F2D     		cmp	r5, #15
+ 1221 002a 00D9     		bls	.L109
+ 470:./drive/nuc_can.c ****         return TRUE;
+ 1222              		.loc 1 470 0 is_stmt 0 discriminator 1
+ 1223 002c A680     		strh	r6, [r4, #4]
+ 1224              	.L109:
+ 470:./drive/nuc_can.c ****         return TRUE;
+ 1225              		.loc 1 470 0 discriminator 3
+ 1226 002e 6146     		mov	r1, ip
+ 471:./drive/nuc_can.c ****     }
+ 1227              		.loc 1 471 0 is_stmt 1 discriminator 3
+ 1228 0030 0126     		movs	r6, #1
+ 470:./drive/nuc_can.c ****         return TRUE;
+ 1229              		.loc 1 470 0 discriminator 3
+ 1230 0032 019A     		ldr	r2, [sp, #4]
+ 1231 0034 0139     		subs	r1, r1, #1
+ 1232 0036 FE32     		adds	r2, r2, #254
+ 1233 0038 D180     		strh	r1, [r2, #6]
+ 1234              	.LVL81:
+ 1235              	.L108:
+ 474:./drive/nuc_can.c **** }
+ 1236              		.loc 1 474 0
+ 1237 003a 3000     		movs	r0, r6
+ 1238              		@ sp needed
+ 1239 003c FEBD     		pop	{r1, r2, r3, r4, r5, r6, r7, pc}
+ 1240              	.L113:
+ 1241 003e C046     		.align	2
+ 1242              	.L112:
+ 1243 0040 00000000 		.word	canList_rx
+ 1244              		.cfi_endproc
+ 1245              	.LFE72:
+ 1247              		.section	.text.CAN_wrMSG,"ax",%progbits
+ 1248              		.align	1
+ 1249              		.global	CAN_wrMSG
+ 1250              		.code	16
+ 1251              		.thumb_func
+ 1253              	CAN_wrMSG:
+ 1254              	.LFB73:
+ 475:./drive/nuc_can.c **** 
+ 476:./drive/nuc_can.c **** int CAN_wrMSG( CAN_msg *pMsg )
+ 477:./drive/nuc_can.c **** {
+ 1255              		.loc 1 477 0
+ 1256              		.cfi_startproc
+ 1257              		@ args = 0, pretend = 0, frame = 0
+ 1258              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1259              	.LVL82:
+ 1260 0000 0023     		movs	r3, #0
+ 478:./drive/nuc_can.c ****     if( CAN_TxRdy == 0 || pMsg == NULL )
+ 1261              		.loc 1 478 0
+ 1262 0002 064A     		ldr	r2, .L119
+ 477:./drive/nuc_can.c ****     if( CAN_TxRdy == 0 || pMsg == NULL )
+ 1263              		.loc 1 477 0
+ 1264 0004 10B5     		push	{r4, lr}
+ 1265              	.LCFI10:
+ 1266              		.cfi_def_cfa_offset 8
+ 1267              		.cfi_offset 4, -8
+ 1268              		.cfi_offset 14, -4
+ 1269              		.loc 1 478 0
+ 1270 0006 1168     		ldr	r1, [r2]
+ 1271 0008 9942     		cmp	r1, r3
+ 1272 000a 05D0     		beq	.L115
+ 1273              		.loc 1 478 0 is_stmt 0 discriminator 1
+ 1274 000c 9842     		cmp	r0, r3
+ 1275 000e 03D0     		beq	.L115
+ 479:./drive/nuc_can.c ****         return FALSE;
+ 480:./drive/nuc_can.c ****     CAN_TxRdy = 0;
+ 1276              		.loc 1 480 0 is_stmt 1
+ 1277 0010 1360     		str	r3, [r2]
+ 481:./drive/nuc_can.c ****     CAN_wrMsg( pMsg );
+ 1278              		.loc 1 481 0
+ 1279 0012 FFF7FEFF 		bl	CAN_wrMsg
+ 1280              	.LVL83:
+ 482:./drive/nuc_can.c ****     return TRUE;
+ 1281              		.loc 1 482 0
+ 1282 0016 0123     		movs	r3, #1
+ 1283              	.L115:
+ 483:./drive/nuc_can.c **** }
+ 1284              		.loc 1 483 0
+ 1285 0018 1800     		movs	r0, r3
+ 1286              		@ sp needed
+ 1287 001a 10BD     		pop	{r4, pc}
+ 1288              	.L120:
+ 1289              		.align	2
+ 1290              	.L119:
+ 1291 001c 00000000 		.word	.LANCHOR0
+ 1292              		.cfi_endproc
+ 1293              	.LFE73:
+ 1295              		.global	CAN_TxRdy
+ 1296              		.comm	CAN_RxMsg,16,4
+ 1297              		.comm	CAN_TxMsg,16,4
+ 1298              		.comm	canList_rx,264,4
+ 1299              		.bss
+ 1300              		.align	2
+ 1301              		.set	.LANCHOR0,. + 0
+ 1304              	CAN_TxRdy:
+ 1305 0000 00000000 		.space	4
+ 1308              	can_baudrate:
+ 1309 0004 00000000 		.space	4
+ 1312              	errCnt.5766:
+ 1313 0008 00000000 		.space	4
+ 1314              		.text
+ 1315              	.Letext0:
+ 1316              		.file 3 "d:\\wingcc\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 1317              		.file 4 "d:\\wingcc\\arm-none-eabi\\include\\sys\\_stdint.h"
+ 1318              		.file 5 "./bsp/mytype.h"
+ 1319              		.file 6 "./bsp/NUC131.h"
+ 1320              		.file 7 "./drive/nuc_can.h"
+ 1321              		.file 8 "./bsp/system_NUC131.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 nuc_can.c
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:20     .text.CAN_testmode:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:25     .text.CAN_testmode:00000000 CAN_testmode
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:37     .text.CAN_start:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:42     .text.CAN_start:00000000 CAN_start
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:57     .text.CAN_waitReady:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:62     .text.CAN_waitReady:00000000 CAN_waitReady
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:81     .text.CAN_waitReady:00000008 $d
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:86     .text.CAN_GetErrCnt:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:91     .text.CAN_GetErrCnt:00000000 CAN_GetErrCnt
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:116    .text.CAN_GetErrCnt:00000010 $d
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:121    .text.CAN_wrMsg:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:126    .text.CAN_wrMsg:00000000 CAN_wrMsg
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:282    .text.CAN_wrMsg:000000b0 $d
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:290    .text.CAN_wrFilter:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:295    .text.CAN_wrFilter:00000000 CAN_wrFilter
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:426    .text.CAN_wrFilter:00000074 $d
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:436    .text.CAN_setup:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:440    .text.CAN_setup:00000000 CAN_setup
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:715    .text.CAN_setup:00000124 $d
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:723    .text.CAN_init:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:728    .text.CAN_init:00000000 CAN_init
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:754    .text.CAN_init:0000000c $d
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:759    .text.CAN_Init:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:764    .text.CAN_Init:00000000 CAN_Init
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:799    .text.CAN_Init:00000018 $d
+                            *COM*:00000108 canList_rx
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:804    .text.CAN_GetErr:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:809    .text.CAN_GetErr:00000000 CAN_GetErr
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:913    .text.CAN_GetErr:00000064 $d
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:920    .after_vectors:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:925    .after_vectors:00000000 CAN0_IRQHandler
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:1153   .after_vectors:00000128 $d
+                            *COM*:00000010 CAN_RxMsg
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:1173   .text.CAN_rdMSG:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:1178   .text.CAN_rdMSG:00000000 CAN_rdMSG
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:1243   .text.CAN_rdMSG:00000040 $d
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:1248   .text.CAN_wrMSG:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:1253   .text.CAN_wrMSG:00000000 CAN_wrMSG
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:1291   .text.CAN_wrMSG:0000001c $d
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:1304   .bss:00000000 CAN_TxRdy
+                            *COM*:00000010 CAN_TxMsg
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:1300   .bss:00000000 $d
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:1308   .bss:00000004 can_baudrate
+C:\Users\beyond\AppData\Local\Temp\ccQunmEh.s:1312   .bss:00000008 errCnt.5766
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+__aeabi_uidiv
+__aeabi_uidivmod
+SystemCoreClockUpdate
+SystemCoreClock

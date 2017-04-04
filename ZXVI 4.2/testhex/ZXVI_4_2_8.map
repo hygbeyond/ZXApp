@@ -1,0 +1,2009 @@
+Archive member included to satisfy reference by file (symbol)
+
+../mylib_t\libos_m0.a(os_cpu_a.o)
+                              obj/main.o (OS_CPU_SR_Save)
+../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+                              obj/main.o (OSTaskCreateExt)
+../mylib_t\libos_m0.a(OSTimeDly.o)
+                              obj/main.o (OSTimeDly)
+../mylib_t\libos_m0.a(os_cpu_c.o)
+                              ../mylib_t\libos_m0.a(OSTaskCreateExt.o) (OSTaskStkInit)
+../mylib_t\libos_m0.a(OSIntExit.o)
+                              ../mylib_t\libos_m0.a(os_cpu_c.o) (OSIntExit)
+../mylib_t\libos_m0.a(OSSched.o)
+                              ../mylib_t\libos_m0.a(OSTaskCreateExt.o) (OSSched)
+../mylib_t\libosc_m0.a(vsnprintf.o)
+                              obj/debug.o (OS_vsnprintf)
+../mylib_t\libosc_m0.a(vfprintf.o)
+                              ../mylib_t\libosc_m0.a(vsnprintf.o) (OS_vfprintf)
+../mylib_t\libosc_m0.a(printk.o)
+                              obj/main.o (printk_set)
+../mylib_t\libosc_m0.a(atoi.o)
+                              obj/debug.o (OS_atoi)
+../mylib_t\libosc_m0.a(strtol.o)
+                              ../mylib_t\libosc_m0.a(atoi.o) (OS_strtol)
+../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+                              obj/protocol.o (crc16_XMODEM)
+../mylib_t\libosc_m0.a(memset.o)
+                              obj/nuc_adc.o (OSmemset)
+../mylib_t\libosc_m0.a(strcmp.o)
+                              obj/debug.o (OSstrcmp)
+../mylib_t\libosc_m0.a(strncpy.o)
+                              ../mylib_t\libos_m0.a(OSTaskCreateExt.o) (OSstrncpy)
+../mylib_t\libosc_m0.a(pcommand.o)
+                              obj/shell.o (PCMD_string)
+../mylib_t\libosc_m0.a(shellSort.o)
+                              obj/data.o (shellSort16)
+d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv6-m\libc.a(lib_a-memcpy-stub.o)
+                              obj/system_NUC131.o (memcpy)
+d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_thumb1_case_uqi.o)
+                              obj/data.o (__gnu_thumb1_case_uqi)
+d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_udivsi3.o)
+                              obj/main.o (__aeabi_uidiv)
+d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_divsi3.o)
+                              obj/debug.o (__aeabi_idiv)
+d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_dvmd_tls.o)
+                              d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_udivsi3.o) (__aeabi_idiv0)
+
+Allocating common symbols
+Common symbol       size              file
+
+OSReturnTbl         0x4               obj/OS_lib.o
+CAN_TxMsg           0x10              obj/nuc_can.o
+OS_TCBHighRdy       0x4               obj/OS_lib.o
+userSave            0x33              obj/user.o
+OSRunning           0x1               obj/OS_lib.o
+OSIdleCtr           0x4               obj/OS_lib.o
+ulADCBuf            0x4               obj/nuc_adc.o
+OSIdle_TaskStk      0x80              obj/OS_lib.o
+Dis_TaskStk         0x400             obj/main.o
+wValue              0x4               obj/data.o
+ADCsize             0x4               obj/nuc_adc.o
+SetAddress          0x4               obj/protocol.o
+BD_disable          0x1               obj/data.o
+Can_TaskStk         0x300             obj/main.o
+OSCtxSwCtr          0x4               obj/OS_lib.o
+OSTimeCnt           0x4               obj/OS_lib.o
+ADCFlag             0x4               obj/nuc_adc.o
+canList_rx          0x108             obj/nuc_can.o
+OS_TCBCur           0x4               obj/OS_lib.o
+ProCanError         0x4               obj/protocol.o
+pro                 0x88              obj/protocol.o
+OS_EventFreeList    0x4               obj/OS_lib.o
+OSCreateTbl         0x4               obj/OS_lib.o
+OS_TCBTbl           0xfc              obj/OS_lib.o
+CAN_RxMsg           0x10              obj/nuc_can.o
+DataCJ_TaskStk      0x180             obj/main.o
+OSIntNesting        0x1               obj/OS_lib.o
+led_out             0x1               obj/hardware.o
+lADCBuff            0x20              obj/nuc_adc.o
+ADCchannel          0x4               obj/nuc_adc.o
+SPI_Sem             0x4               obj/hardware.o
+
+Discarded input sections
+
+ .text          0x00000000        0x0 obj/main.o
+ .data          0x00000000        0x0 obj/main.o
+ .bss           0x00000000        0x0 obj/main.o
+ .text          0x00000000        0x0 obj/shell.o
+ .data          0x00000000        0x0 obj/shell.o
+ .text          0x00000000        0x0 obj/debug.o
+ .text.OSTaskStatHook
+                0x00000000       0x24 obj/debug.o
+ .text          0x00000000        0x0 obj/OS_lib.o
+ .data          0x00000000        0x0 obj/OS_lib.o
+ .bss           0x00000000        0x0 obj/OS_lib.o
+ .text.OSTableGetRdy
+                0x00000000        0x8 obj/OS_lib.o
+ .text.OSTableClean
+                0x00000000        0xa obj/OS_lib.o
+ .text.OSEventTaskTo
+                0x00000000       0x24 obj/OS_lib.o
+ .text.OSTaskFindIdleID
+                0x00000000       0x1c obj/OS_lib.o
+ .text.OSGetPID
+                0x00000000        0xc obj/OS_lib.o
+ .text.OSEventTaskWait
+                0x00000000       0x3c obj/OS_lib.o
+ .text.OSEventTaskRdy
+                0x00000000       0x40 obj/OS_lib.o
+ .text.OSGetTime
+                0x00000000       0x18 obj/OS_lib.o
+ .text.OSSetTime
+                0x00000000       0x18 obj/OS_lib.o
+ .text.OSTaskStatHook
+                0x00000000        0x2 obj/OS_lib.o
+ .text          0x00000000        0x0 obj/data.o
+ .data          0x00000000        0x0 obj/data.o
+ .bss           0x00000000        0x0 obj/data.o
+ .text          0x00000000        0x0 obj/dataV.o
+ .data          0x00000000        0x0 obj/dataV.o
+ .text          0x00000000        0x0 obj/dataW.o
+ .data          0x00000000        0x0 obj/dataW.o
+ .bss           0x00000000        0x0 obj/dataW.o
+ .text.JZPtValue
+                0x00000000       0x48 obj/dataW.o
+ .text.UserWDJZ
+                0x00000000       0x44 obj/dataW.o
+ .text          0x00000000        0x0 obj/protocol.o
+ .data          0x00000000        0x0 obj/protocol.o
+ .text.BJ_Trans
+                0x00000000       0x7c obj/protocol.o
+ .text.AutoTrans
+                0x00000000       0x18 obj/protocol.o
+ .text          0x00000000        0x0 obj/user.o
+ .bss           0x00000000        0x0 obj/user.o
+ .text          0x00000000        0x0 obj/fmc_rw.o
+ .data          0x00000000        0x0 obj/fmc_rw.o
+ .bss           0x00000000        0x0 obj/fmc_rw.o
+ .text          0x00000000        0x0 obj/hardware.o
+ .data          0x00000000        0x0 obj/hardware.o
+ .bss           0x00000000        0x0 obj/hardware.o
+ COMMON         0x00000000        0x8 obj/hardware.o
+ .text          0x00000000        0x0 obj/nuc_adc.o
+ .data          0x00000000        0x0 obj/nuc_adc.o
+ .bss           0x00000000        0x0 obj/nuc_adc.o
+ .text.ADCInit  0x00000000       0x10 obj/nuc_adc.o
+ .text.ADC_Get  0x00000000       0x60 obj/nuc_adc.o
+ .text          0x00000000        0x0 obj/nuc_can.o
+ .data          0x00000000        0x0 obj/nuc_can.o
+ .text.CAN_testmode
+                0x00000000        0x2 obj/nuc_can.o
+ .text.CAN_start
+                0x00000000        0x2 obj/nuc_can.o
+ .text.CAN_waitReady
+                0x00000000        0xc obj/nuc_can.o
+ .text.CAN_GetErrCnt
+                0x00000000       0x14 obj/nuc_can.o
+ .text          0x00000000        0x0 obj/nuc_i2c.o
+ .data          0x00000000        0x0 obj/nuc_i2c.o
+ .bss           0x00000000        0x0 obj/nuc_i2c.o
+ .text.i2c_init
+                0x00000000       0x64 obj/nuc_i2c.o
+ .text.i2c_start
+                0x00000000       0x24 obj/nuc_i2c.o
+ .text.i2c_writebyte
+                0x00000000       0x1c obj/nuc_i2c.o
+ .text.i2c_readbyte
+                0x00000000       0x2c obj/nuc_i2c.o
+ .text.i2c_stop
+                0x00000000       0x24 obj/nuc_i2c.o
+ .text.i2c_Write
+                0x00000000       0x42 obj/nuc_i2c.o
+ .text.i2c_Read
+                0x00000000       0x54 obj/nuc_i2c.o
+ .debug_info    0x00000000      0x724 obj/nuc_i2c.o
+ .debug_abbrev  0x00000000      0x191 obj/nuc_i2c.o
+ .debug_loc     0x00000000      0x228 obj/nuc_i2c.o
+ .debug_aranges
+                0x00000000       0x50 obj/nuc_i2c.o
+ .debug_ranges  0x00000000       0x58 obj/nuc_i2c.o
+ .debug_line    0x00000000      0x1d6 obj/nuc_i2c.o
+ .debug_str     0x00000000      0x404 obj/nuc_i2c.o
+ .comment       0x00000000       0x6f obj/nuc_i2c.o
+ .debug_frame   0x00000000       0xbc obj/nuc_i2c.o
+ .ARM.attributes
+                0x00000000       0x31 obj/nuc_i2c.o
+ .text          0x00000000        0x0 obj/nuc_uart0.o
+ .data          0x00000000        0x0 obj/nuc_uart0.o
+ .text.Uart_SendString
+                0x00000000       0x14 obj/nuc_uart0.o
+ .text          0x00000000        0x0 obj/nuc_wdt.o
+ .data          0x00000000        0x0 obj/nuc_wdt.o
+ .bss           0x00000000        0x0 obj/nuc_wdt.o
+ .text          0x00000000        0x0 obj/bsp.o
+ .data          0x00000000        0x0 obj/bsp.o
+ .bss           0x00000000        0x0 obj/bsp.o
+ .text          0x00000000        0x0 obj/bsp_int.o
+ .data          0x00000000        0x0 obj/bsp_int.o
+ .bss           0x00000000      0x200 obj/bsp_int.o
+ .text.svc_handler_export
+                0x00000000       0x34 obj/bsp_int.o
+ .text.HardFaultHandle_c
+                0x00000000        0x2 obj/bsp_int.o
+ .debug_info    0x00000000      0x17d obj/bsp_int.o
+ .debug_abbrev  0x00000000       0xfd obj/bsp_int.o
+ .debug_loc     0x00000000       0xd3 obj/bsp_int.o
+ .debug_aranges
+                0x00000000       0x28 obj/bsp_int.o
+ .debug_ranges  0x00000000       0x18 obj/bsp_int.o
+ .debug_line    0x00000000       0x6a obj/bsp_int.o
+ .debug_str     0x00000000      0x1bf obj/bsp_int.o
+ .comment       0x00000000       0x6f obj/bsp_int.o
+ .debug_frame   0x00000000       0x40 obj/bsp_int.o
+ .ARM.attributes
+                0x00000000       0x31 obj/bsp_int.o
+ .text          0x00000000        0x0 obj/core_cm0.o
+ .data          0x00000000        0x0 obj/core_cm0.o
+ .bss           0x00000000        0x0 obj/core_cm0.o
+ .text.__get_PSP
+                0x00000000        0x8 obj/core_cm0.o
+ .text.__set_PSP
+                0x00000000        0x6 obj/core_cm0.o
+ .text.__get_MSP
+                0x00000000        0x8 obj/core_cm0.o
+ .text.__set_MSP
+                0x00000000        0x6 obj/core_cm0.o
+ .text.__get_PRIMASK
+                0x00000000        0x6 obj/core_cm0.o
+ .text.__set_PRIMASK
+                0x00000000        0x6 obj/core_cm0.o
+ .text.__get_CONTROL
+                0x00000000        0x6 obj/core_cm0.o
+ .text.__set_CONTROL
+                0x00000000        0x6 obj/core_cm0.o
+ .text.__REV    0x00000000        0x4 obj/core_cm0.o
+ .text.__REV16  0x00000000        0x4 obj/core_cm0.o
+ .text.__REVSH  0x00000000        0x4 obj/core_cm0.o
+ .debug_info    0x00000000      0x2e1 obj/core_cm0.o
+ .debug_abbrev  0x00000000       0xb6 obj/core_cm0.o
+ .debug_loc     0x00000000      0x13c obj/core_cm0.o
+ .debug_aranges
+                0x00000000       0x70 obj/core_cm0.o
+ .debug_ranges  0x00000000       0x60 obj/core_cm0.o
+ .debug_line    0x00000000      0x16c obj/core_cm0.o
+ .debug_str     0x00000000      0x236 obj/core_cm0.o
+ .comment       0x00000000       0x6f obj/core_cm0.o
+ .debug_frame   0x00000000       0xc0 obj/core_cm0.o
+ .ARM.attributes
+                0x00000000       0x31 obj/core_cm0.o
+ .text          0x00000000        0x0 obj/cr_startup_NUC131.o
+ .data          0x00000000        0x0 obj/cr_startup_NUC131.o
+ .bss           0x00000000        0x0 obj/cr_startup_NUC131.o
+ .text          0x00000000        0x0 obj/system_NUC131.o
+ .bss           0x00000000        0x0 obj/system_NUC131.o
+ .data          0x00000000        0x0 ../mylib_t\libos_m0.a(os_cpu_a.o)
+ .bss           0x00000000        0x0 ../mylib_t\libos_m0.a(os_cpu_a.o)
+ .text          0x00000000        0x0 ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+ .data          0x00000000        0x0 ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+ .bss           0x00000000        0x0 ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+ .text          0x00000000        0x0 ../mylib_t\libos_m0.a(OSTimeDly.o)
+ .data          0x00000000        0x0 ../mylib_t\libos_m0.a(OSTimeDly.o)
+ .bss           0x00000000        0x0 ../mylib_t\libos_m0.a(OSTimeDly.o)
+ .text          0x00000000        0x0 ../mylib_t\libos_m0.a(os_cpu_c.o)
+ .data          0x00000000        0x0 ../mylib_t\libos_m0.a(os_cpu_c.o)
+ .bss           0x00000000        0x0 ../mylib_t\libos_m0.a(os_cpu_c.o)
+ .text          0x00000000        0x0 ../mylib_t\libos_m0.a(OSIntExit.o)
+ .data          0x00000000        0x0 ../mylib_t\libos_m0.a(OSIntExit.o)
+ .bss           0x00000000        0x0 ../mylib_t\libos_m0.a(OSIntExit.o)
+ .text          0x00000000        0x0 ../mylib_t\libos_m0.a(OSSched.o)
+ .data          0x00000000        0x0 ../mylib_t\libos_m0.a(OSSched.o)
+ .bss           0x00000000        0x0 ../mylib_t\libos_m0.a(OSSched.o)
+ .text          0x00000000        0x0 ../mylib_t\libosc_m0.a(vsnprintf.o)
+ .data          0x00000000        0x0 ../mylib_t\libosc_m0.a(vsnprintf.o)
+ .bss           0x00000000        0x0 ../mylib_t\libosc_m0.a(vsnprintf.o)
+ .text          0x00000000        0x0 ../mylib_t\libosc_m0.a(vfprintf.o)
+ .data          0x00000000        0x0 ../mylib_t\libosc_m0.a(vfprintf.o)
+ .bss           0x00000000        0xc ../mylib_t\libosc_m0.a(vfprintf.o)
+ .text          0x00000000        0x0 ../mylib_t\libosc_m0.a(printk.o)
+ .data          0x00000000        0x0 ../mylib_t\libosc_m0.a(printk.o)
+ .text.GetChar  0x00000000       0x1c ../mylib_t\libosc_m0.a(printk.o)
+ .text.kGetChar
+                0x00000000       0x1c ../mylib_t\libosc_m0.a(printk.o)
+ .text.kPutBuff
+                0x00000000       0x28 ../mylib_t\libosc_m0.a(printk.o)
+ .text          0x00000000        0x0 ../mylib_t\libosc_m0.a(atoi.o)
+ .data          0x00000000        0x0 ../mylib_t\libosc_m0.a(atoi.o)
+ .bss           0x00000000        0x0 ../mylib_t\libosc_m0.a(atoi.o)
+ .text          0x00000000        0x0 ../mylib_t\libosc_m0.a(strtol.o)
+ .data          0x00000000        0x0 ../mylib_t\libosc_m0.a(strtol.o)
+ .bss           0x00000000        0x0 ../mylib_t\libosc_m0.a(strtol.o)
+ .text          0x00000000        0x0 ../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+ .data          0x00000000        0x0 ../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+ .bss           0x00000000        0x0 ../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+ .text          0x00000000        0x0 ../mylib_t\libosc_m0.a(memset.o)
+ .data          0x00000000        0x0 ../mylib_t\libosc_m0.a(memset.o)
+ .bss           0x00000000        0x0 ../mylib_t\libosc_m0.a(memset.o)
+ .text          0x00000000        0x0 ../mylib_t\libosc_m0.a(strcmp.o)
+ .data          0x00000000        0x0 ../mylib_t\libosc_m0.a(strcmp.o)
+ .bss           0x00000000        0x0 ../mylib_t\libosc_m0.a(strcmp.o)
+ .text          0x00000000        0x0 ../mylib_t\libosc_m0.a(strncpy.o)
+ .data          0x00000000        0x0 ../mylib_t\libosc_m0.a(strncpy.o)
+ .bss           0x00000000        0x0 ../mylib_t\libosc_m0.a(strncpy.o)
+ .text          0x00000000        0x0 ../mylib_t\libosc_m0.a(pcommand.o)
+ .data          0x00000000        0x0 ../mylib_t\libosc_m0.a(pcommand.o)
+ .text          0x00000000        0x0 ../mylib_t\libosc_m0.a(shellSort.o)
+ .data          0x00000000        0x0 ../mylib_t\libosc_m0.a(shellSort.o)
+ .bss           0x00000000        0x0 ../mylib_t\libosc_m0.a(shellSort.o)
+ .text.shellSort8
+                0x00000000       0x50 ../mylib_t\libosc_m0.a(shellSort.o)
+ .text.shellSort32
+                0x00000000       0x64 ../mylib_t\libosc_m0.a(shellSort.o)
+ .text          0x00000000        0x0 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv6-m\libc.a(lib_a-memcpy-stub.o)
+ .data          0x00000000        0x0 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv6-m\libc.a(lib_a-memcpy-stub.o)
+ .bss           0x00000000        0x0 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv6-m\libc.a(lib_a-memcpy-stub.o)
+ .data          0x00000000        0x0 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_thumb1_case_uqi.o)
+ .bss           0x00000000        0x0 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_thumb1_case_uqi.o)
+ .data          0x00000000        0x0 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_udivsi3.o)
+ .bss           0x00000000        0x0 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_udivsi3.o)
+ .data          0x00000000        0x0 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_divsi3.o)
+ .bss           0x00000000        0x0 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_divsi3.o)
+ .data          0x00000000        0x0 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_dvmd_tls.o)
+ .bss           0x00000000        0x0 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_dvmd_tls.o)
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+FLASH            0x00000000         0x00008000         xr
+SRAM             0x20000000         0x00002000         xrw
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+LOAD obj/main.o
+LOAD obj/shell.o
+LOAD obj/debug.o
+LOAD obj/OS_lib.o
+LOAD obj/data.o
+LOAD obj/dataV.o
+LOAD obj/dataW.o
+LOAD obj/protocol.o
+LOAD obj/user.o
+LOAD obj/fmc_rw.o
+LOAD obj/hardware.o
+LOAD obj/nuc_adc.o
+LOAD obj/nuc_can.o
+LOAD obj/nuc_i2c.o
+LOAD obj/nuc_uart0.o
+LOAD obj/nuc_wdt.o
+LOAD obj/bsp.o
+LOAD obj/bsp_int.o
+LOAD obj/core_cm0.o
+LOAD obj/cr_startup_NUC131.o
+LOAD obj/system_NUC131.o
+LOAD ../mylib_t\libos_m0.a
+LOAD ../mylib_t\libosc_m0.a
+LOAD ../mylib_t\libHgui_m0.a
+LOAD d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv6-m\libm.a
+LOAD d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv6-m\libc.a
+LOAD d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a
+START GROUP
+LOAD d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a
+LOAD d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv6-m\libc.a
+END GROUP
+                0x00002000                __ram_size__ = LENGTH (SRAM)
+                0x20002000                __ram_top_stack__ = (ORIGIN (SRAM) + __ram_size__)
+                0x20002000                __stack_end__ = __ram_top_stack__
+                0x00008000                __flash_32k = (ORIGIN (FLASH) + 0x8000)
+                0x0000f000                __flash_60k = (ORIGIN (FLASH) + 0xf000)
+                0x00010000                __flash_64k = (ORIGIN (FLASH) + 0x10000)
+                0x00020000                __flash_128k = (ORIGIN (FLASH) + 0x20000)
+                0x00040000                __flash_256k = (ORIGIN (FLASH) + 0x40000)
+                0x00008000                __flash_end = (ORIGIN (FLASH) + LENGTH (FLASH))
+                0x00008000                __DataFlash = __flash_end
+                0x00009000                __DataFlash_end = (__DataFlash + 0x1000)
+
+.text           0x00000000     0x3a20
+ FILL mask 0xff
+ *(.isr_vector .isr_vector.*)
+ .isr_vector    0x00000000       0xc0 obj/cr_startup_NUC131.o
+                0x00000000                g_pfnVectors
+ *(.after_vectors .after_vectors.*)
+ .after_vectors
+                0x000000c0       0x40 obj/debug.o
+                0x000000c0                HardFault_Handler
+ .after_vectors
+                0x00000100       0x70 obj/nuc_adc.o
+                0x00000100                TMR0_IRQHandler
+                0x0000012c                ADC_IRQHandler
+ .after_vectors
+                0x00000170      0x168 obj/nuc_can.o
+                0x00000170                CAN0_IRQHandler
+ .after_vectors
+                0x000002d8       0x2c obj/nuc_wdt.o
+                0x000002d8                WDT_IRQHandler
+ .after_vectors
+                0x00000304       0x80 obj/cr_startup_NUC131.o
+                0x00000304                NMI_Handler
+                0x00000308                SVCall_Handler
+                0x0000030e                PWM1_IRQHandler
+                0x0000030e                I2C0_IRQHandler
+                0x0000030e                BRAKE0_IRQHandler
+                0x0000030e                I2C1_IRQHandler
+                0x0000030e                UART1_IRQHandler
+                0x0000030e                CAN1_IRQHandler
+                0x0000030e                BRAKE1_IRQHandler
+                0x0000030e                IntDefaultHandler
+                0x0000030e                RTC_IRQHandler
+                0x0000030e                PWRWU_IRQHandler
+                0x0000030e                UART5_IRQHandler
+                0x0000030e                BPWM1_IRQHandler
+                0x0000030e                EINT1_IRQHandler
+                0x0000030e                UART4_IRQHandler
+                0x0000030e                Default_Handler
+                0x0000030e                TMR2_IRQHandler
+                0x0000030e                BPWM0_IRQHandler
+                0x0000030e                BOD_IRQHandler
+                0x0000030e                GPAB_IRQHandler
+                0x0000030e                EINT0_IRQHandler
+                0x0000030e                PWM0_IRQHandler
+                0x0000030e                TMR3_IRQHandler
+                0x0000030e                GPCDEF_IRQHandler
+                0x0000030e                SPI0_IRQHandler
+                0x0000030e                UART3_IRQHandler
+                0x0000030e                TMR1_IRQHandler
+                0x00000310                ResetISR
+ .after_vectors
+                0x00000384       0x38 ../mylib_t\libos_m0.a(os_cpu_a.o)
+                0x00000384                OS_CPU_PendSVHandler
+                0x00000384                PendSV_Handler
+ .after_vectors
+                0x000003bc       0x20 ../mylib_t\libos_m0.a(os_cpu_c.o)
+                0x000003bc                SysTick_Handler
+ *(.text .text.*)
+ .text.Can_Task
+                0x000003dc       0x60 obj/main.o
+                0x000003dc                Can_Task
+ .text.printk_put
+                0x0000043c       0x18 obj/main.o
+ .text.reset_cmd
+                0x00000454       0x14 obj/main.o
+                0x00000454                reset_cmd
+ .text.startup.main
+                0x00000468       0x34 obj/main.o
+                0x00000468                main
+ .text.Init_Devices
+                0x0000049c       0x50 obj/main.o
+                0x0000049c                Init_Devices
+ .text.Dis_Task
+                0x000004ec      0x170 obj/main.o
+                0x000004ec                Dis_Task
+ .text.OS_TaskIdle_Hook
+                0x0000065c        0x4 obj/main.o
+                0x0000065c                OS_TaskIdle_Hook
+ .text.shell    0x00000660       0x8c obj/shell.o
+                0x00000660                shell
+ .text.dbg_print
+                0x000006ec       0x44 obj/debug.o
+                0x000006ec                dbg_print
+ .text.debug_cmd
+                0x00000730       0x88 obj/debug.o
+ .text.OS_cmd   0x000007b8       0xc4 obj/debug.o
+                0x000007b8                OS_cmd
+ .text.OSTableWait
+                0x0000087c       0x10 obj/OS_lib.o
+                0x0000087c                OSTableWait
+ .text.OSTableRdy
+                0x0000088c       0x10 obj/OS_lib.o
+                0x0000088c                OSTableRdy
+ .text.OSRdyTblRdy
+                0x0000089c       0x10 obj/OS_lib.o
+                0x0000089c                OSRdyTblRdy
+ .text.OSRdyTblWait
+                0x000008ac       0x10 obj/OS_lib.o
+                0x000008ac                OSRdyTblWait
+ .text.OSDataClean
+                0x000008bc       0x1c obj/OS_lib.o
+                0x000008bc                OSDataClean
+ .text.OSGetTabePro8
+                0x000008d8       0x18 obj/OS_lib.o
+                0x000008d8                OSGetTabePro8
+ .text.OSGetTablePro
+                0x000008f0       0x24 obj/OS_lib.o
+                0x000008f0                OSGetTablePro
+ .text.OS_SchedNew
+                0x00000914       0x24 obj/OS_lib.o
+                0x00000914                OS_SchedNew
+ .text.OSTimeTick
+                0x00000938       0x40 obj/OS_lib.o
+                0x00000938                OSTimeTick
+ .text.OSInit   0x00000978       0xac obj/OS_lib.o
+                0x00000978                OSInit
+ .text.OSStart  0x00000a24       0x1c obj/OS_lib.o
+                0x00000a24                OSStart
+ .text.OSTaskSwHook
+                0x00000a40       0x1c obj/OS_lib.o
+                0x00000a40                OSTaskSwHook
+ .text.OSTaskDelHook
+                0x00000a5c        0x2 obj/OS_lib.o
+                0x00000a5c                OSTaskDelHook
+ *fill*         0x00000a5e        0x2 ff
+ .text.OSIdle_Task
+                0x00000a60       0x20 obj/OS_lib.o
+                0x00000a60                OSIdle_Task
+ .text.data_cmd
+                0x00000a80       0x74 obj/data.o
+                0x00000a80                data_cmd
+ .text.Data_Init
+                0x00000af4      0x188 obj/data.o
+                0x00000af4                Data_Init
+ .text.DataCJgetValue
+                0x00000c7c       0x9c obj/data.o
+                0x00000c7c                DataCJgetValue
+ .text.DataCJ_Task
+                0x00000d18       0xd4 obj/data.o
+                0x00000d18                DataCJ_Task
+ .text.Data_PD  0x00000dec      0x210 obj/data.o
+                0x00000dec                Data_PD
+ .text.Data_Trans
+                0x00000ffc      0x20c obj/data.o
+                0x00000ffc                Data_Trans
+ .text.GetObjName
+                0x00001208       0x28 obj/data.o
+                0x00001208                GetObjName
+ .text.jz_cmd   0x00001230       0xa8 obj/dataV.o
+                0x00001230                jz_cmd
+ .text.createWJZ
+                0x000012d8       0xd4 obj/dataV.o
+                0x000012d8                createWJZ
+ .text.GetWJZValue
+                0x000013ac       0x1c obj/dataV.o
+                0x000013ac                GetWJZValue
+ .text.GetValueWV
+                0x000013c8       0x4c obj/dataV.o
+                0x000013c8                GetValueWV
+ .text.GetValueWV_JZ
+                0x00001414       0x40 obj/dataV.o
+                0x00001414                GetValueWV_JZ
+ .text.GetValueVD
+                0x00001454       0x60 obj/dataV.o
+                0x00001454                GetValueVD
+ .text.GetValueV
+                0x000014b4       0x50 obj/dataV.o
+                0x000014b4                GetValueV
+ .text.GetValueV_JZ
+                0x00001504       0x40 obj/dataV.o
+                0x00001504                GetValueV_JZ
+ .text.UserVJZ  0x00001544       0xac obj/dataV.o
+                0x00001544                UserVJZ
+ .text.jzV_cmd  0x000015f0       0x14 obj/dataV.o
+ .text.WValue   0x00001604       0x44 obj/dataW.o
+                0x00001604                WValue
+ .text.get_cmd  0x00001648       0xd0 obj/protocol.o
+ .text.Pro_Init
+                0x00001718       0x2c obj/protocol.o
+                0x00001718                Pro_Init
+ .text.GZ_Trans
+                0x00001744       0x84 obj/protocol.o
+                0x00001744                GZ_Trans
+ .text.TK_Trans
+                0x000017c8       0x94 obj/protocol.o
+                0x000017c8                TK_Trans
+ .text.TT_Trans
+                0x0000185c       0x9c obj/protocol.o
+                0x0000185c                TT_Trans
+ .text.CAN_WriteAll
+                0x000018f8      0x1d8 obj/protocol.o
+                0x000018f8                CAN_WriteAll
+ .text.CanCmdMsg
+                0x00001ad0      0x268 obj/protocol.o
+                0x00001ad0                CanCmdMsg
+ .text.UsrRead  0x00001d38       0x3c obj/user.o
+                0x00001d38                UsrRead
+ .text.UsrWrite
+                0x00001d74       0x30 obj/user.o
+                0x00001d74                UsrWrite
+ .text.UsrSetAddr
+                0x00001da4       0x30 obj/user.o
+                0x00001da4                UsrSetAddr
+ .text.UsrSetDelay
+                0x00001dd4       0x1c obj/user.o
+                0x00001dd4                UsrSetDelay
+ .text.UsrSetDelayI
+                0x00001df0       0x1c obj/user.o
+                0x00001df0                UsrSetDelayI
+ .text.UsrSetIed
+                0x00001e0c       0x2c obj/user.o
+                0x00001e0c                UsrSetIed
+ .text.UsrSetIbj
+                0x00001e38       0x34 obj/user.o
+                0x00001e38                UsrSetIbj
+ .text.UsrSetVbj
+                0x00001e6c       0x28 obj/user.o
+                0x00001e6c                UsrSetVbj
+ .text.UsrSetVqy
+                0x00001e94       0x28 obj/user.o
+                0x00001e94                UsrSetVqy
+ .text.UsrSetCnt
+                0x00001ebc       0x1c obj/user.o
+                0x00001ebc                UsrSetCnt
+ .text.UsrSetBD
+                0x00001ed8       0x2c obj/user.o
+                0x00001ed8                UsrSetBD
+ .text.UsrSetWDJZ
+                0x00001f04       0x2c obj/user.o
+                0x00001f04                UsrSetWDJZ
+ .text.UsrSetType
+                0x00001f30       0x88 obj/user.o
+                0x00001f30                UsrSetType
+ .text.UserSetDef
+                0x00001fb8       0x24 obj/user.o
+                0x00001fb8                UserSetDef
+ .text.UsrDefault
+                0x00001fdc       0xa4 obj/user.o
+                0x00001fdc                UsrDefault
+ .text.UsrInit  0x00002080       0x30 obj/user.o
+                0x00002080                UsrInit
+ .text.user_cmd
+                0x000020b0       0x94 obj/user.o
+ .text.UsrSetWbj
+                0x00002144       0x30 obj/user.o
+                0x00002144                UsrSetWbj
+ .text.UsrSetSbj
+                0x00002174       0x38 obj/user.o
+                0x00002174                UsrSetSbj
+ .text.FMC_Write
+                0x000021ac       0x20 obj/fmc_rw.o
+ .text.FMC_Erase
+                0x000021cc       0x24 obj/fmc_rw.o
+ .text.fmc_open
+                0x000021f0       0x2c obj/fmc_rw.o
+ .text.fmc_Init
+                0x0000221c       0x94 obj/fmc_rw.o
+                0x0000221c                fmc_Init
+ .text.fmc_Write
+                0x000022b0       0x8c obj/fmc_rw.o
+                0x000022b0                fmc_Write
+ .text.fmc_Read
+                0x0000233c       0x14 obj/fmc_rw.o
+                0x0000233c                fmc_Read
+ .text.IO_Init  0x00002350       0x88 obj/hardware.o
+                0x00002350                IO_Init
+ .text.ADC_Enable
+                0x000023d8       0x7c obj/nuc_adc.o
+                0x000023d8                ADC_Enable
+ .text.ADC_Disable
+                0x00002454       0x34 obj/nuc_adc.o
+                0x00002454                ADC_Disable
+ .text.ADC_Flag
+                0x00002488       0x14 obj/nuc_adc.o
+                0x00002488                ADC_Flag
+ .text.ADC_GetExt
+                0x0000249c       0x44 obj/nuc_adc.o
+                0x0000249c                ADC_GetExt
+ .text.CAN_wrMsg
+                0x000024e0       0xc0 obj/nuc_can.o
+                0x000024e0                CAN_wrMsg
+ .text.CAN_wrFilter
+                0x000025a0       0x84 obj/nuc_can.o
+                0x000025a0                CAN_wrFilter
+ .text.CAN_setup
+                0x00002624      0x134 obj/nuc_can.o
+ .text.CAN_init
+                0x00002758       0x10 obj/nuc_can.o
+                0x00002758                CAN_init
+ .text.CAN_Init
+                0x00002768       0x1c obj/nuc_can.o
+                0x00002768                CAN_Init
+ .text.CAN_GetErr
+                0x00002784       0x70 obj/nuc_can.o
+                0x00002784                CAN_GetErr
+ .text.CAN_rdMSG
+                0x000027f4       0x44 obj/nuc_can.o
+                0x000027f4                CAN_rdMSG
+ .text.CAN_wrMSG
+                0x00002838       0x20 obj/nuc_can.o
+                0x00002838                CAN_wrMSG
+ .text.U1_Isr   0x00002858        0x2 obj/nuc_uart0.o
+                0x00002858                U1_Isr
+ *fill*         0x0000285a        0x2 ff
+ .text.U0_Isr   0x0000285c       0x98 obj/nuc_uart0.o
+                0x0000285c                U0_Isr
+ .text.UART02_IRQHandler
+                0x000028f4        0xc obj/nuc_uart0.o
+                0x000028f4                UART02_IRQHandler
+ .text.Uart_Init
+                0x00002900       0xb0 obj/nuc_uart0.o
+                0x00002900                Uart_Init
+ .text.Uart_GetChar_nb
+                0x000029b0       0x40 obj/nuc_uart0.o
+                0x000029b0                Uart_GetChar_nb
+ .text.Uart_SendByte
+                0x000029f0       0x28 obj/nuc_uart0.o
+                0x000029f0                Uart_SendByte
+ .text.Uart_SendBuff
+                0x00002a18       0x70 obj/nuc_uart0.o
+                0x00002a18                Uart_SendBuff
+ .text.SYS_UnlockReg
+                0x00002a88       0x20 obj/nuc_wdt.o
+ .text.wdt_init
+                0x00002aa8       0x5c obj/nuc_wdt.o
+                0x00002aa8                wdt_init
+ .text.wdt_reset
+                0x00002b04       0x24 obj/nuc_wdt.o
+                0x00002b04                wdt_reset
+ .text.BSP_Init
+                0x00002b28        0x8 obj/bsp.o
+                0x00002b28                BSP_Init
+ .text.BSP_Reset
+                0x00002b30       0x14 obj/bsp.o
+                0x00002b30                BSP_Reset
+ .text.SystemCoreClockUpdate
+                0x00002b44       0x94 obj/system_NUC131.o
+                0x00002b44                SystemCoreClockUpdate
+ .text.SystemInit
+                0x00002bd8       0x78 obj/system_NUC131.o
+                0x00002bd8                SystemInit
+ .text          0x00002c50       0x50 ../mylib_t\libos_m0.a(os_cpu_a.o)
+                0x00002c50                OS_CPU_SR_Save
+                0x00002c58                OS_CPU_SR_Restore
+                0x00002c5e                OSStartHighRdy
+                0x00002c7a                OSCtxSw
+                0x00002c82                OSIntCtxSw
+ .text.OSTaskCreateExt
+                0x00002ca0       0x9c ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+                0x00002ca0                OSTaskCreateExt
+ .text.OSTimeDly
+                0x00002d3c       0x2c ../mylib_t\libos_m0.a(OSTimeDly.o)
+                0x00002d3c                OSTimeDly
+ .text.OS_TaskReturn
+                0x00002d68        0xa ../mylib_t\libos_m0.a(os_cpu_c.o)
+                0x00002d68                OS_TaskReturn
+ *fill*         0x00002d72        0x2 ff
+ .text.OSTaskStkInit
+                0x00002d74       0x4c ../mylib_t\libos_m0.a(os_cpu_c.o)
+                0x00002d74                OSTaskStkInit
+ .text.OS_CPU_SysTickInit
+                0x00002dc0       0x44 ../mylib_t\libos_m0.a(os_cpu_c.o)
+                0x00002dc0                OS_CPU_SysTickInit
+ .text.OSIntExit
+                0x00002e04       0x50 ../mylib_t\libos_m0.a(OSIntExit.o)
+                0x00002e04                OSIntExit
+ .text.OSSched  0x00002e54       0x38 ../mylib_t\libos_m0.a(OSSched.o)
+                0x00002e54                OSSched
+ .text.libc     0x00002e8c       0x3a ../mylib_t\libosc_m0.a(vsnprintf.o)
+                0x00002e8c                OS_vsnprintf
+ *fill*         0x00002ec6        0x2 ff
+ .text.libc     0x00002ec8      0x354 ../mylib_t\libosc_m0.a(vfprintf.o)
+                0x00002ec8                OS_fputc
+                0x00003038                OS_vfprintf
+ .text.kPutChar
+                0x0000321c       0x28 ../mylib_t\libosc_m0.a(printk.o)
+                0x0000321c                kPutChar
+ .text.printk_set
+                0x00003244       0x38 ../mylib_t\libosc_m0.a(printk.o)
+                0x00003244                printk_set
+ .text.printk   0x0000327c       0x20 ../mylib_t\libosc_m0.a(printk.o)
+                0x0000327c                printk
+ .text.__error  0x0000329c       0x14 ../mylib_t\libosc_m0.a(printk.o)
+                0x0000329c                __error
+ .text.libc     0x000032b0        0xc ../mylib_t\libosc_m0.a(atoi.o)
+                0x000032b0                OS_atoi
+ .text.libc     0x000032bc      0x148 ../mylib_t\libosc_m0.a(strtol.o)
+                0x000032bc                OS_strtol
+ .text.crc16_XMODEM
+                0x00003404       0x38 ../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+                0x00003404                crc16_XMODEM
+ .text.OSmemset
+                0x0000343c       0x6a ../mylib_t\libosc_m0.a(memset.o)
+                0x0000343c                OSmemset
+ .text.OSstrcmp
+                0x000034a6       0x18 ../mylib_t\libosc_m0.a(strcmp.o)
+                0x000034a6                OSstrcmp
+ .text.OSstrncpy
+                0x000034be       0x28 ../mylib_t\libosc_m0.a(strncpy.o)
+                0x000034be                OSstrncpy
+ *fill*         0x000034e6        0x2 ff
+ .text.CMD_exe  0x000034e8       0x5c ../mylib_t\libosc_m0.a(pcommand.o)
+ .text.help_func
+                0x00003544       0x94 ../mylib_t\libosc_m0.a(pcommand.o)
+ .text.PCMD_string
+                0x000035d8       0x6c ../mylib_t\libosc_m0.a(pcommand.o)
+                0x000035d8                PCMD_string
+ .text.shellSort16
+                0x00003644       0x60 ../mylib_t\libosc_m0.a(shellSort.o)
+                0x00003644                shellSort16
+ .text.memcpy   0x000036a4       0x7c d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv6-m\libc.a(lib_a-memcpy-stub.o)
+                0x000036a4                memcpy
+ .text          0x00003720       0x14 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_thumb1_case_uqi.o)
+                0x00003720                __gnu_thumb1_case_uqi
+ .text          0x00003734      0x114 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_udivsi3.o)
+                0x00003734                __aeabi_uidiv
+                0x00003734                __udivsi3
+                0x00003840                __aeabi_uidivmod
+ .text          0x00003848      0x1d4 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_divsi3.o)
+                0x00003848                __divsi3
+                0x00003848                __aeabi_idiv
+                0x00003a14                __aeabi_idivmod
+ .text          0x00003a1c        0x4 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_dvmd_tls.o)
+                0x00003a1c                __aeabi_idiv0
+                0x00003a1c                __aeabi_ldiv0
+ *(.gnu.linkonce.t.*)
+ *(.glue_7)
+ .glue_7        0x00003a20        0x0 linker stubs
+ *(.glue_7t)
+ .glue_7t       0x00003a20        0x0 linker stubs
+ *(.gcc_except_table)
+                0x00003a20                . = ALIGN (0x4)
+ *(.gnu.linkonce.r.*)
+
+.vfp11_veneer   0x00003a20        0x0
+ .vfp11_veneer  0x00003a20        0x0 linker stubs
+
+.v4_bx          0x00003a20        0x0
+ .v4_bx         0x00003a20        0x0 linker stubs
+
+.iplt           0x00003a20        0x0
+ .iplt          0x00003a20        0x0 obj/main.o
+
+.rodata         0x00003a20      0x52c
+ *(.rodata .rodata.* .gnu.linkonce.r.*)
+ .rodata        0x00003a20        0xc obj/main.o
+ .rodata.str1.1
+                0x00003a2c       0x43 obj/main.o
+ .rodata.str1.1
+                0x00003a6f       0x43 obj/shell.o
+                                  0x5 (size before relaxing)
+ .rodata        0x00003a6f       0x24 obj/debug.o
+ .rodata.str1.1
+                0x00003a93      0x117 obj/debug.o
+ .rodata        0x00003baa       0x20 obj/OS_lib.o
+                0x00003baa                OSMapTbl_L
+                0x00003bba                OSMapTbl_H
+ .rodata.str1.1
+                0x00003bca       0x1b obj/OS_lib.o
+ *fill*         0x00003be5        0x3 
+ .rodata        0x00003be8       0x82 obj/data.o
+                0x00003be8                OBJname
+ .rodata.str1.1
+                0x00003c6a       0x95 obj/data.o
+                                 0xa0 (size before relaxing)
+ *fill*         0x00003cff        0x1 
+ .rodata        0x00003d00       0xb4 obj/dataV.o
+                0x00003d00                WDlist
+                0x00003d30                WVDataList
+                0x00003d64                CVDataList
+                0x00003da8                VDDataList
+ .rodata        0x00003db4       0x30 obj/dataW.o
+                0x00003db4                ptlist
+ .rodata        0x00003de4        0x8 obj/protocol.o
+ .rodata.str1.1
+                0x00003dec       0x28 obj/protocol.o
+ .rodata        0x00003e14       0x8e obj/user.o
+                0x00003e14                userCMD
+ .rodata.str1.1
+                0x00003ea2       0x16 obj/user.o
+ .rodata.str1.1
+                0x00003eb8        0xb obj/nuc_wdt.o
+ .rodata        0x00003ec3        0x4 obj/system_NUC131.o
+ .rodata.str1.1
+                0x00003ec7        0x7 ../mylib_t\libosc_m0.a(vfprintf.o)
+ .rodata.str1.1
+                0x00003ece       0x1e ../mylib_t\libosc_m0.a(printk.o)
+ .rodata        0x00003eec       0x20 ../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+ .rodata        0x00003f0c        0xe ../mylib_t\libosc_m0.a(pcommand.o)
+ .rodata.str1.1
+                0x00003f1a       0x32 ../mylib_t\libosc_m0.a(pcommand.o)
+                                 0x34 (size before relaxing)
+
+.rel.dyn        0x00003f4c        0x0
+ .rel.iplt      0x00003f4c        0x0 obj/main.o
+
+.shell          0x00003f4c       0x6c
+ *(.shell .shell.*)
+ .shell         0x00003f4c        0xc obj/main.o
+                0x00003f4c                cmd_reset
+ .shell         0x00003f58       0x18 obj/debug.o
+                0x00003f58                cmd_os
+                0x00003f64                cmd_debug
+ .shell         0x00003f70        0xc obj/data.o
+                0x00003f70                cmd_data
+ .shell         0x00003f7c       0x18 obj/dataV.o
+                0x00003f7c                cmd_jzV
+                0x00003f88                cmd_jz
+ .shell         0x00003f94        0xc obj/protocol.o
+                0x00003f94                cmd_get
+ .shell         0x00003fa0        0xc obj/user.o
+                0x00003fa0                cmd_user
+ .shell         0x00003fac        0xc ../mylib_t\libosc_m0.a(pcommand.o)
+                0x00003fac                cmd_help
+                0x00003fb8                PROVIDE (shell_end, .)
+                0x00003f4c                PROVIDE (shell_start, LOADADDR (.shell))
+                0x0000006c                PROVIDE (shell_size, SIZEOF (.shell))
+
+.drive          0x00003fb8        0x0
+ *(.drive .drive.*)
+                [!provide]                PROVIDE (drive_end, .)
+                [!provide]                PROVIDE (drive_start, LOADADDR (.drive))
+                [!provide]                PROVIDE (drive_size, SIZEOF (.drive))
+
+.ARM.extab
+ *(.ARM.extab* .gnu.linkonce.armextab.*)
+                0x00003fb8                __exidx_start = .
+
+.ARM.exidx
+ *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+
+.ctors          0x00003fb8        0x0
+                [!provide]                PROVIDE (__ctors_start__, .)
+ *(SORT(.ctors.*))
+ *(.ctors)
+                0x00003fb8                . = ALIGN (0x4)
+                [!provide]                PROVIDE (__ctors_end__, .)
+                0x00003fb8                . = ALIGN (0x4)
+
+.dtors          0x00003fb8        0x0
+                [!provide]                PROVIDE (__dtors_start__, .)
+ *(SORT(.dtors.*))
+ *(.dtors)
+                0x00003fb8                . = ALIGN (0x4)
+                [!provide]                PROVIDE (__dtors_end__, .)
+                0x00003fb8                . = ALIGN (0x4)
+                0x00003fb8                __exidx_end = .
+                0x00003fb8                _etext = .
+
+.data           0x20000000       0x34 load address 0x00003fb8
+                0x20000000                _data = .
+ *(vtable vtable.*)
+ *(.data .data.*)
+ .data          0x20000000        0x4 obj/debug.o
+                0x20000000                debug_en
+ .data          0x20000004        0x4 obj/user.o
+                0x20000004                pUsrCfg
+ .data          0x20000008       0x2c obj/system_NUC131.o
+                0x20000008                PllClock
+                0x2000000c                gau32ClkSrcTbl
+                0x2000002c                SystemCoreClock
+                0x20000030                CyclesPerUs
+ *(.gnu.linkonce.d*)
+                0x20000034                . = ALIGN (0x4)
+                0x20000034                _edata = .
+
+.igot.plt       0x20000034        0x0 load address 0x00003fec
+ .igot.plt      0x20000034        0x0 obj/main.o
+
+.bss            0x20000034      0xe6c load address 0x00003fec
+                0x20000034                _bss = .
+ *(.bss .bss.*)
+ .bss           0x20000034       0x44 obj/shell.o
+ .bss           0x20000078       0x40 obj/debug.o
+ .bss           0x200000b8        0xc obj/dataV.o
+ .bss           0x200000c4       0x98 obj/protocol.o
+ .bss           0x2000015c        0xc obj/nuc_can.o
+                0x2000015c                CAN_TxRdy
+ .bss           0x20000168       0x90 obj/nuc_uart0.o
+ .bss           0x200001f8       0x20 ../mylib_t\libosc_m0.a(printk.o)
+                0x200001fc                printk_file
+ .bss           0x20000218       0x40 ../mylib_t\libosc_m0.a(pcommand.o)
+ *(.gnu.linkonce.b*)
+ *(COMMON)
+ COMMON         0x20000258      0x880 obj/main.o
+                0x20000258                Dis_TaskStk
+                0x20000658                Can_TaskStk
+                0x20000958                DataCJ_TaskStk
+ COMMON         0x20000ad8      0x1a1 obj/OS_lib.o
+                0x20000ad8                OSReturnTbl
+                0x20000adc                OS_TCBHighRdy
+                0x20000ae0                OSRunning
+                0x20000ae4                OSIdleCtr
+                0x20000ae8                OSIdle_TaskStk
+                0x20000b68                OSCtxSwCtr
+                0x20000b6c                OSTimeCnt
+                0x20000b70                OS_TCBCur
+                0x20000b74                OS_EventFreeList
+                0x20000b78                OSCreateTbl
+                0x20000b7c                OS_TCBTbl
+                0x20000c78                OSIntNesting
+ *fill*         0x20000c79        0x3 
+ COMMON         0x20000c7c        0x5 obj/data.o
+                0x20000c7c                wValue
+                0x20000c80                BD_disable
+ *fill*         0x20000c81        0x3 
+ COMMON         0x20000c84       0x90 obj/protocol.o
+                0x20000c84                SetAddress
+                0x20000c88                ProCanError
+                0x20000c8c                pro
+ COMMON         0x20000d14       0x33 obj/user.o
+                0x20000d14                userSave
+ *fill*         0x20000d47        0x1 
+ COMMON         0x20000d48       0x30 obj/nuc_adc.o
+                0x20000d48                ulADCBuf
+                0x20000d4c                ADCsize
+                0x20000d50                ADCFlag
+                0x20000d54                lADCBuff
+                0x20000d74                ADCchannel
+ COMMON         0x20000d78      0x128 obj/nuc_can.o
+                0x20000d78                CAN_TxMsg
+                0x20000d88                canList_rx
+                0x20000e90                CAN_RxMsg
+                0x20000ea0                _ebss = .
+
+.udata          0x20000ea0       0x64 load address 0x00004e58
+ *(.udata)
+ .udata         0x20000ea0       0x64 obj/OS_lib.o
+                0x20000ea0                OSRdyTbl
+                0x20000ea4                OS_EventTbl
+                0x20000f04                __udata_end = .
+                [!provide]                PROVIDE (_udata_end, .)
+
+.ndata
+ *(.ndata)
+                0x20000f04                __ndata_end = .
+                [!provide]                PROVIDE (_ndata_end, .)
+
+.noinit         0x20000f04      0x10c load address 0x00004ebc
+                [!provide]                PROVIDE (__noinit_start, .)
+ *(.noinit)
+ .noinit        0x20000f04        0x2 obj/main.o
+                0x20000f04                MemStart
+ *fill*         0x20000f06        0x2 
+ .noinit        0x20000f08      0x108 obj/data.o
+                0x20000f08                data
+                0x20001008                MKState
+
+.stack          0x20001020      0x100 load address 0x00004fe0
+                [!provide]                PROVIDE (stack_start, .)
+ *(.stack*)
+ .stack         0x20001020      0x100 obj/cr_startup_NUC131.o
+                [!provide]                PROVIDE (_stack, .)
+                0x20001120                . = ALIGN (0x4)
+                0x20001120                _end = .
+                [!provide]                PROVIDE (__end, .)
+                [!provide]                PROVIDE (_stack_end, __stack_end__)
+                [!provide]                PROVIDE (_ram_top, __ram_top_stack__)
+OUTPUT(testhex/ZXVI_4_2_8.elf elf32-littlearm)
+
+.debug_info     0x00000000     0xde37
+ .debug_info    0x00000000     0x10a5 obj/main.o
+ .debug_info    0x000010a5      0x2aa obj/shell.o
+ .debug_info    0x0000134f      0x7ff obj/debug.o
+ .debug_info    0x00001b4e      0xb85 obj/OS_lib.o
+ .debug_info    0x000026d3      0xd7b obj/data.o
+ .debug_info    0x0000344e      0xbd2 obj/dataV.o
+ .debug_info    0x00004020      0x7d1 obj/dataW.o
+ .debug_info    0x000047f1     0x1a72 obj/protocol.o
+ .debug_info    0x00006263      0xcab obj/user.o
+ .debug_info    0x00006f0e      0x75e obj/fmc_rw.o
+ .debug_info    0x0000766c      0x5a5 obj/hardware.o
+ .debug_info    0x00007c11      0x881 obj/nuc_adc.o
+ .debug_info    0x00008492      0xe74 obj/nuc_can.o
+ .debug_info    0x00009306      0xab5 obj/nuc_uart0.o
+ .debug_info    0x00009dbb      0x70f obj/nuc_wdt.o
+ .debug_info    0x0000a4ca      0x20c obj/bsp.o
+ .debug_info    0x0000a6d6      0x42d obj/cr_startup_NUC131.o
+ .debug_info    0x0000ab03      0x59f obj/system_NUC131.o
+ .debug_info    0x0000b0a2      0x441 ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+ .debug_info    0x0000b4e3      0x2a7 ../mylib_t\libos_m0.a(OSTimeDly.o)
+ .debug_info    0x0000b78a      0x668 ../mylib_t\libos_m0.a(os_cpu_c.o)
+ .debug_info    0x0000bdf2      0x2b8 ../mylib_t\libos_m0.a(OSIntExit.o)
+ .debug_info    0x0000c0aa      0x2ab ../mylib_t\libos_m0.a(OSSched.o)
+ .debug_info    0x0000c355      0x254 ../mylib_t\libosc_m0.a(vsnprintf.o)
+ .debug_info    0x0000c5a9      0x6a2 ../mylib_t\libosc_m0.a(vfprintf.o)
+ .debug_info    0x0000cc4b      0x436 ../mylib_t\libosc_m0.a(printk.o)
+ .debug_info    0x0000d081      0x105 ../mylib_t\libosc_m0.a(atoi.o)
+ .debug_info    0x0000d186      0x131 ../mylib_t\libosc_m0.a(strtol.o)
+ .debug_info    0x0000d2b7      0x126 ../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+ .debug_info    0x0000d3dd      0x133 ../mylib_t\libosc_m0.a(memset.o)
+ .debug_info    0x0000d510       0xca ../mylib_t\libosc_m0.a(strcmp.o)
+ .debug_info    0x0000d5da      0x114 ../mylib_t\libosc_m0.a(strncpy.o)
+ .debug_info    0x0000d6ee      0x56b ../mylib_t\libosc_m0.a(pcommand.o)
+ .debug_info    0x0000dc59      0x1de ../mylib_t\libosc_m0.a(shellSort.o)
+
+.debug_abbrev   0x00000000     0x426f
+ .debug_abbrev  0x00000000      0x2ad obj/main.o
+ .debug_abbrev  0x000002ad      0x176 obj/shell.o
+ .debug_abbrev  0x00000423      0x2b5 obj/debug.o
+ .debug_abbrev  0x000006d8      0x437 obj/OS_lib.o
+ .debug_abbrev  0x00000b0f      0x343 obj/data.o
+ .debug_abbrev  0x00000e52      0x2c6 obj/dataV.o
+ .debug_abbrev  0x00001118      0x237 obj/dataW.o
+ .debug_abbrev  0x0000134f      0x448 obj/protocol.o
+ .debug_abbrev  0x00001797      0x334 obj/user.o
+ .debug_abbrev  0x00001acb      0x2c3 obj/fmc_rw.o
+ .debug_abbrev  0x00001d8e      0x18f obj/hardware.o
+ .debug_abbrev  0x00001f1d      0x2ae obj/nuc_adc.o
+ .debug_abbrev  0x000021cb      0x3ec obj/nuc_can.o
+ .debug_abbrev  0x000025b7      0x2dd obj/nuc_uart0.o
+ .debug_abbrev  0x00002894      0x1c8 obj/nuc_wdt.o
+ .debug_abbrev  0x00002a5c      0x126 obj/bsp.o
+ .debug_abbrev  0x00002b82      0x15e obj/cr_startup_NUC131.o
+ .debug_abbrev  0x00002ce0      0x170 obj/system_NUC131.o
+ .debug_abbrev  0x00002e50      0x1f6 ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+ .debug_abbrev  0x00003046      0x18b ../mylib_t\libos_m0.a(OSTimeDly.o)
+ .debug_abbrev  0x000031d1      0x23a ../mylib_t\libos_m0.a(os_cpu_c.o)
+ .debug_abbrev  0x0000340b      0x187 ../mylib_t\libos_m0.a(OSIntExit.o)
+ .debug_abbrev  0x00003592      0x187 ../mylib_t\libos_m0.a(OSSched.o)
+ .debug_abbrev  0x00003719      0x102 ../mylib_t\libosc_m0.a(vsnprintf.o)
+ .debug_abbrev  0x0000381b      0x286 ../mylib_t\libosc_m0.a(vfprintf.o)
+ .debug_abbrev  0x00003aa1      0x191 ../mylib_t\libosc_m0.a(printk.o)
+ .debug_abbrev  0x00003c32       0x9a ../mylib_t\libosc_m0.a(atoi.o)
+ .debug_abbrev  0x00003ccc       0x85 ../mylib_t\libosc_m0.a(strtol.o)
+ .debug_abbrev  0x00003d51       0xa4 ../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+ .debug_abbrev  0x00003df5       0xb0 ../mylib_t\libosc_m0.a(memset.o)
+ .debug_abbrev  0x00003ea5       0x67 ../mylib_t\libosc_m0.a(strcmp.o)
+ .debug_abbrev  0x00003f0c       0x92 ../mylib_t\libosc_m0.a(strncpy.o)
+ .debug_abbrev  0x00003f9e      0x239 ../mylib_t\libosc_m0.a(pcommand.o)
+ .debug_abbrev  0x000041d7       0x98 ../mylib_t\libosc_m0.a(shellSort.o)
+
+.debug_loc      0x00000000     0x5454
+ .debug_loc     0x00000000      0x21e obj/main.o
+ .debug_loc     0x0000021e      0x14f obj/shell.o
+ .debug_loc     0x0000036d      0x2b1 obj/debug.o
+ .debug_loc     0x0000061e      0x61f obj/OS_lib.o
+ .debug_loc     0x00000c3d      0x629 obj/data.o
+ .debug_loc     0x00001266      0x761 obj/dataV.o
+ .debug_loc     0x000019c7      0x354 obj/dataW.o
+ .debug_loc     0x00001d1b      0x676 obj/protocol.o
+ .debug_loc     0x00002391      0x5a5 obj/user.o
+ .debug_loc     0x00002936      0x2aa obj/fmc_rw.o
+ .debug_loc     0x00002be0       0x20 obj/hardware.o
+ .debug_loc     0x00002c00      0x33a obj/nuc_adc.o
+ .debug_loc     0x00002f3a      0x5c2 obj/nuc_can.o
+ .debug_loc     0x000034fc      0x29b obj/nuc_uart0.o
+ .debug_loc     0x00003797       0x94 obj/nuc_wdt.o
+ .debug_loc     0x0000382b       0x20 obj/bsp.o
+ .debug_loc     0x0000384b       0x4b obj/cr_startup_NUC131.o
+ .debug_loc     0x00003896      0x12c obj/system_NUC131.o
+ .debug_loc     0x000039c2      0x1cd ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+ .debug_loc     0x00003b8f       0x5f ../mylib_t\libos_m0.a(OSTimeDly.o)
+ .debug_loc     0x00003bee      0x26a ../mylib_t\libos_m0.a(os_cpu_c.o)
+ .debug_loc     0x00003e58       0x3e ../mylib_t\libos_m0.a(OSIntExit.o)
+ .debug_loc     0x00003e96       0x3e ../mylib_t\libos_m0.a(OSSched.o)
+ .debug_loc     0x00003ed4       0xe0 ../mylib_t\libosc_m0.a(vsnprintf.o)
+ .debug_loc     0x00003fb4      0x798 ../mylib_t\libosc_m0.a(vfprintf.o)
+ .debug_loc     0x0000474c      0x21b ../mylib_t\libosc_m0.a(printk.o)
+ .debug_loc     0x00004967       0x41 ../mylib_t\libosc_m0.a(atoi.o)
+ .debug_loc     0x000049a8      0x2ab ../mylib_t\libosc_m0.a(strtol.o)
+ .debug_loc     0x00004c53       0xe3 ../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+ .debug_loc     0x00004d36      0x1ad ../mylib_t\libosc_m0.a(memset.o)
+ .debug_loc     0x00004ee3       0x3c ../mylib_t\libosc_m0.a(strcmp.o)
+ .debug_loc     0x00004f1f       0xc0 ../mylib_t\libosc_m0.a(strncpy.o)
+ .debug_loc     0x00004fdf      0x2a6 ../mylib_t\libosc_m0.a(pcommand.o)
+ .debug_loc     0x00005285      0x1cf ../mylib_t\libosc_m0.a(shellSort.o)
+
+.debug_aranges  0x00000000      0x868
+ .debug_aranges
+                0x00000000       0x50 obj/main.o
+ .debug_aranges
+                0x00000050       0x20 obj/shell.o
+ .debug_aranges
+                0x00000070       0x40 obj/debug.o
+ .debug_aranges
+                0x000000b0       0xd0 obj/OS_lib.o
+ .debug_aranges
+                0x00000180       0x50 obj/data.o
+ .debug_aranges
+                0x000001d0       0x68 obj/dataV.o
+ .debug_aranges
+                0x00000238       0x30 obj/dataW.o
+ .debug_aranges
+                0x00000268       0x60 obj/protocol.o
+ .debug_aranges
+                0x000002c8       0xb0 obj/user.o
+ .debug_aranges
+                0x00000378       0x48 obj/fmc_rw.o
+ .debug_aranges
+                0x000003c0       0x20 obj/hardware.o
+ .debug_aranges
+                0x000003e0       0x58 obj/nuc_adc.o
+ .debug_aranges
+                0x00000438       0x78 obj/nuc_can.o
+ .debug_aranges
+                0x000004b0       0x58 obj/nuc_uart0.o
+ .debug_aranges
+                0x00000508       0x38 obj/nuc_wdt.o
+ .debug_aranges
+                0x00000540       0x28 obj/bsp.o
+ .debug_aranges
+                0x00000568       0x50 obj/cr_startup_NUC131.o
+ .debug_aranges
+                0x000005b8       0x28 obj/system_NUC131.o
+ .debug_aranges
+                0x000005e0       0x20 ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+ .debug_aranges
+                0x00000600       0x20 ../mylib_t\libos_m0.a(OSTimeDly.o)
+ .debug_aranges
+                0x00000620       0x38 ../mylib_t\libos_m0.a(os_cpu_c.o)
+ .debug_aranges
+                0x00000658       0x20 ../mylib_t\libos_m0.a(OSIntExit.o)
+ .debug_aranges
+                0x00000678       0x20 ../mylib_t\libos_m0.a(OSSched.o)
+ .debug_aranges
+                0x00000698       0x20 ../mylib_t\libosc_m0.a(vsnprintf.o)
+ .debug_aranges
+                0x000006b8       0x40 ../mylib_t\libosc_m0.a(vfprintf.o)
+ .debug_aranges
+                0x000006f8       0x50 ../mylib_t\libosc_m0.a(printk.o)
+ .debug_aranges
+                0x00000748       0x20 ../mylib_t\libosc_m0.a(atoi.o)
+ .debug_aranges
+                0x00000768       0x20 ../mylib_t\libosc_m0.a(strtol.o)
+ .debug_aranges
+                0x00000788       0x20 ../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+ .debug_aranges
+                0x000007a8       0x20 ../mylib_t\libosc_m0.a(memset.o)
+ .debug_aranges
+                0x000007c8       0x20 ../mylib_t\libosc_m0.a(strcmp.o)
+ .debug_aranges
+                0x000007e8       0x20 ../mylib_t\libosc_m0.a(strncpy.o)
+ .debug_aranges
+                0x00000808       0x30 ../mylib_t\libosc_m0.a(pcommand.o)
+ .debug_aranges
+                0x00000838       0x30 ../mylib_t\libosc_m0.a(shellSort.o)
+
+.debug_ranges   0x00000000      0x918
+ .debug_ranges  0x00000000       0x40 obj/main.o
+ .debug_ranges  0x00000040       0x28 obj/shell.o
+ .debug_ranges  0x00000068       0x48 obj/debug.o
+ .debug_ranges  0x000000b0       0xe0 obj/OS_lib.o
+ .debug_ranges  0x00000190       0x40 obj/data.o
+ .debug_ranges  0x000001d0       0x58 obj/dataV.o
+ .debug_ranges  0x00000228       0x50 obj/dataW.o
+ .debug_ranges  0x00000278       0xa8 obj/protocol.o
+ .debug_ranges  0x00000320       0xd0 obj/user.o
+ .debug_ranges  0x000003f0       0xd8 obj/fmc_rw.o
+ .debug_ranges  0x000004c8       0x28 obj/hardware.o
+ .debug_ranges  0x000004f0       0x90 obj/nuc_adc.o
+ .debug_ranges  0x00000580       0x88 obj/nuc_can.o
+ .debug_ranges  0x00000608       0x48 obj/nuc_uart0.o
+ .debug_ranges  0x00000650       0x40 obj/nuc_wdt.o
+ .debug_ranges  0x00000690       0x18 obj/bsp.o
+ .debug_ranges  0x000006a8       0x40 obj/cr_startup_NUC131.o
+ .debug_ranges  0x000006e8       0x18 obj/system_NUC131.o
+ .debug_ranges  0x00000700       0x10 ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+ .debug_ranges  0x00000710       0x10 ../mylib_t\libos_m0.a(OSTimeDly.o)
+ .debug_ranges  0x00000720       0x68 ../mylib_t\libos_m0.a(os_cpu_c.o)
+ .debug_ranges  0x00000788       0x10 ../mylib_t\libos_m0.a(OSIntExit.o)
+ .debug_ranges  0x00000798       0x10 ../mylib_t\libos_m0.a(OSSched.o)
+ .debug_ranges  0x000007a8       0x10 ../mylib_t\libosc_m0.a(vsnprintf.o)
+ .debug_ranges  0x000007b8       0x60 ../mylib_t\libosc_m0.a(vfprintf.o)
+ .debug_ranges  0x00000818       0x40 ../mylib_t\libosc_m0.a(printk.o)
+ .debug_ranges  0x00000858       0x10 ../mylib_t\libosc_m0.a(atoi.o)
+ .debug_ranges  0x00000868       0x10 ../mylib_t\libosc_m0.a(strtol.o)
+ .debug_ranges  0x00000878       0x10 ../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+ .debug_ranges  0x00000888       0x10 ../mylib_t\libosc_m0.a(memset.o)
+ .debug_ranges  0x00000898       0x10 ../mylib_t\libosc_m0.a(strcmp.o)
+ .debug_ranges  0x000008a8       0x10 ../mylib_t\libosc_m0.a(strncpy.o)
+ .debug_ranges  0x000008b8       0x40 ../mylib_t\libosc_m0.a(pcommand.o)
+ .debug_ranges  0x000008f8       0x20 ../mylib_t\libosc_m0.a(shellSort.o)
+
+.debug_line     0x00000000     0x33c2
+ .debug_line    0x00000000      0x2ae obj/main.o
+ .debug_line    0x000002ae      0x11a obj/shell.o
+ .debug_line    0x000003c8      0x233 obj/debug.o
+ .debug_line    0x000005fb      0x32c obj/OS_lib.o
+ .debug_line    0x00000927      0x3da obj/data.o
+ .debug_line    0x00000d01      0x210 obj/dataV.o
+ .debug_line    0x00000f11       0xe7 obj/dataW.o
+ .debug_line    0x00000ff8      0x3d8 obj/protocol.o
+ .debug_line    0x000013d0      0x378 obj/user.o
+ .debug_line    0x00001748      0x274 obj/fmc_rw.o
+ .debug_line    0x000019bc      0x155 obj/hardware.o
+ .debug_line    0x00001b11      0x26e obj/nuc_adc.o
+ .debug_line    0x00001d7f      0x329 obj/nuc_can.o
+ .debug_line    0x000020a8      0x249 obj/nuc_uart0.o
+ .debug_line    0x000022f1      0x1a7 obj/nuc_wdt.o
+ .debug_line    0x00002498       0xe4 obj/bsp.o
+ .debug_line    0x0000257c      0x12d obj/cr_startup_NUC131.o
+ .debug_line    0x000026a9      0x152 obj/system_NUC131.o
+ .debug_line    0x000027fb       0xaf ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+ .debug_line    0x000028aa       0x78 ../mylib_t\libos_m0.a(OSTimeDly.o)
+ .debug_line    0x00002922      0x189 ../mylib_t\libos_m0.a(os_cpu_c.o)
+ .debug_line    0x00002aab       0x7a ../mylib_t\libos_m0.a(OSIntExit.o)
+ .debug_line    0x00002b25       0x75 ../mylib_t\libos_m0.a(OSSched.o)
+ .debug_line    0x00002b9a       0xb6 ../mylib_t\libosc_m0.a(vsnprintf.o)
+ .debug_line    0x00002c50      0x1d4 ../mylib_t\libosc_m0.a(vfprintf.o)
+ .debug_line    0x00002e24      0x138 ../mylib_t\libosc_m0.a(printk.o)
+ .debug_line    0x00002f5c       0x51 ../mylib_t\libosc_m0.a(atoi.o)
+ .debug_line    0x00002fad       0xc0 ../mylib_t\libosc_m0.a(strtol.o)
+ .debug_line    0x0000306d       0x60 ../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+ .debug_line    0x000030cd       0x6d ../mylib_t\libosc_m0.a(memset.o)
+ .debug_line    0x0000313a       0x4d ../mylib_t\libosc_m0.a(strcmp.o)
+ .debug_line    0x00003187       0x5c ../mylib_t\libosc_m0.a(strncpy.o)
+ .debug_line    0x000031e3       0xf6 ../mylib_t\libosc_m0.a(pcommand.o)
+ .debug_line    0x000032d9       0xe9 ../mylib_t\libosc_m0.a(shellSort.o)
+
+.debug_str      0x00000000     0x1ef8
+ .debug_str     0x00000000      0x63f obj/main.o
+                                0x6ee (size before relaxing)
+ .debug_str     0x0000063f       0x3f obj/shell.o
+                                0x1c0 (size before relaxing)
+ .debug_str     0x0000067e      0x17f obj/debug.o
+                                0x394 (size before relaxing)
+ .debug_str     0x000007fd      0x22e obj/OS_lib.o
+                                0x4f5 (size before relaxing)
+ .debug_str     0x00000a2b      0x17c obj/data.o
+                                0x588 (size before relaxing)
+ .debug_str     0x00000ba7       0xe2 obj/dataV.o
+                                0x512 (size before relaxing)
+ .debug_str     0x00000c89       0x49 obj/dataW.o
+                                0x41d (size before relaxing)
+ .debug_str     0x00000cd2      0x1d1 obj/protocol.o
+                                0x7eb (size before relaxing)
+ .debug_str     0x00000ea3       0x9e obj/user.o
+                                0x50d (size before relaxing)
+ .debug_str     0x00000f41      0x1ce obj/fmc_rw.o
+                                0x3aa (size before relaxing)
+ .debug_str     0x0000110f       0xd9 obj/hardware.o
+                                0x385 (size before relaxing)
+ .debug_str     0x000011e8      0x313 obj/nuc_adc.o
+                                0x4ca (size before relaxing)
+ .debug_str     0x000014fb      0x1f4 obj/nuc_can.o
+                                0x6ee (size before relaxing)
+ .debug_str     0x000016ef       0xc3 obj/nuc_uart0.o
+                                0x60c (size before relaxing)
+ .debug_str     0x000017b2       0x42 obj/nuc_wdt.o
+                                0x516 (size before relaxing)
+ .debug_str     0x000017f4       0x5d obj/bsp.o
+                                0x1e7 (size before relaxing)
+ .debug_str     0x00001851       0xb1 obj/cr_startup_NUC131.o
+                                0x326 (size before relaxing)
+ .debug_str     0x00001902       0x9d obj/system_NUC131.o
+                                0x39a (size before relaxing)
+ .debug_str     0x0000199f      0x107 ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+                                0x2e3 (size before relaxing)
+ .debug_str     0x00001aa6       0x12 ../mylib_t\libos_m0.a(OSTimeDly.o)
+                                0x263 (size before relaxing)
+ .debug_str     0x00001ab8      0x1d3 ../mylib_t\libos_m0.a(os_cpu_c.o)
+                                0x4f5 (size before relaxing)
+ .debug_str     0x00001c8b       0x17 ../mylib_t\libos_m0.a(OSIntExit.o)
+                                0x28a (size before relaxing)
+ .debug_str     0x00001ca2        0xa ../mylib_t\libos_m0.a(OSSched.o)
+                                0x27c (size before relaxing)
+ .debug_str     0x00001cac       0x33 ../mylib_t\libosc_m0.a(vsnprintf.o)
+                                0x1c4 (size before relaxing)
+ .debug_str     0x00001cdf       0x78 ../mylib_t\libosc_m0.a(vfprintf.o)
+                                0x22c (size before relaxing)
+ .debug_str     0x00001d57       0x42 ../mylib_t\libosc_m0.a(printk.o)
+                                0x217 (size before relaxing)
+ .debug_str     0x00001d99       0x18 ../mylib_t\libosc_m0.a(atoi.o)
+                                0x159 (size before relaxing)
+ .debug_str     0x00001db1       0x28 ../mylib_t\libosc_m0.a(strtol.o)
+                                0x170 (size before relaxing)
+ .debug_str     0x00001dd9       0x1d ../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+                                0x174 (size before relaxing)
+ .debug_str     0x00001df6       0x24 ../mylib_t\libosc_m0.a(memset.o)
+                                0x174 (size before relaxing)
+ .debug_str     0x00001e1a       0x10 ../mylib_t\libosc_m0.a(strcmp.o)
+                                0x152 (size before relaxing)
+ .debug_str     0x00001e2a       0x27 ../mylib_t\libosc_m0.a(strncpy.o)
+                                0x17e (size before relaxing)
+ .debug_str     0x00001e51       0x7d ../mylib_t\libosc_m0.a(pcommand.o)
+                                0x22a (size before relaxing)
+ .debug_str     0x00001ece       0x2a ../mylib_t\libosc_m0.a(shellSort.o)
+                                0x17e (size before relaxing)
+
+.comment        0x00000000       0xde
+ .comment       0x00000000       0x6e obj/main.o
+                                 0x6f (size before relaxing)
+ .comment       0x0000006e       0x6f obj/shell.o
+ .comment       0x0000006e       0x6f obj/debug.o
+ .comment       0x0000006e       0x6f obj/OS_lib.o
+ .comment       0x0000006e       0x6f obj/data.o
+ .comment       0x0000006e       0x6f obj/dataV.o
+ .comment       0x0000006e       0x6f obj/dataW.o
+ .comment       0x0000006e       0x6f obj/protocol.o
+ .comment       0x0000006e       0x6f obj/user.o
+ .comment       0x0000006e       0x6f obj/fmc_rw.o
+ .comment       0x0000006e       0x6f obj/hardware.o
+ .comment       0x0000006e       0x6f obj/nuc_adc.o
+ .comment       0x0000006e       0x6f obj/nuc_can.o
+ .comment       0x0000006e       0x6f obj/nuc_uart0.o
+ .comment       0x0000006e       0x6f obj/nuc_wdt.o
+ .comment       0x0000006e       0x6f obj/bsp.o
+ .comment       0x0000006e       0x6f obj/cr_startup_NUC131.o
+ .comment       0x0000006e       0x6f obj/system_NUC131.o
+ .comment       0x0000006e       0x70 ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+                                 0x71 (size before relaxing)
+ .comment       0x000000de       0x71 ../mylib_t\libos_m0.a(OSTimeDly.o)
+ .comment       0x000000de       0x71 ../mylib_t\libos_m0.a(os_cpu_c.o)
+ .comment       0x000000de       0x71 ../mylib_t\libos_m0.a(OSIntExit.o)
+ .comment       0x000000de       0x71 ../mylib_t\libos_m0.a(OSSched.o)
+ .comment       0x000000de       0x71 ../mylib_t\libosc_m0.a(vsnprintf.o)
+ .comment       0x000000de       0x71 ../mylib_t\libosc_m0.a(vfprintf.o)
+ .comment       0x000000de       0x71 ../mylib_t\libosc_m0.a(printk.o)
+ .comment       0x000000de       0x71 ../mylib_t\libosc_m0.a(atoi.o)
+ .comment       0x000000de       0x71 ../mylib_t\libosc_m0.a(strtol.o)
+ .comment       0x000000de       0x71 ../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+ .comment       0x000000de       0x71 ../mylib_t\libosc_m0.a(memset.o)
+ .comment       0x000000de       0x71 ../mylib_t\libosc_m0.a(strcmp.o)
+ .comment       0x000000de       0x71 ../mylib_t\libosc_m0.a(strncpy.o)
+ .comment       0x000000de       0x71 ../mylib_t\libosc_m0.a(pcommand.o)
+ .comment       0x000000de       0x71 ../mylib_t\libosc_m0.a(shellSort.o)
+
+.ARM.attributes
+                0x00000000       0x2f
+ .ARM.attributes
+                0x00000000       0x31 obj/main.o
+ .ARM.attributes
+                0x00000031       0x31 obj/shell.o
+ .ARM.attributes
+                0x00000062       0x31 obj/debug.o
+ .ARM.attributes
+                0x00000093       0x31 obj/OS_lib.o
+ .ARM.attributes
+                0x000000c4       0x31 obj/data.o
+ .ARM.attributes
+                0x000000f5       0x31 obj/dataV.o
+ .ARM.attributes
+                0x00000126       0x31 obj/dataW.o
+ .ARM.attributes
+                0x00000157       0x31 obj/protocol.o
+ .ARM.attributes
+                0x00000188       0x31 obj/user.o
+ .ARM.attributes
+                0x000001b9       0x31 obj/fmc_rw.o
+ .ARM.attributes
+                0x000001ea       0x31 obj/hardware.o
+ .ARM.attributes
+                0x0000021b       0x31 obj/nuc_adc.o
+ .ARM.attributes
+                0x0000024c       0x31 obj/nuc_can.o
+ .ARM.attributes
+                0x0000027d       0x31 obj/nuc_uart0.o
+ .ARM.attributes
+                0x000002ae       0x31 obj/nuc_wdt.o
+ .ARM.attributes
+                0x000002df       0x31 obj/bsp.o
+ .ARM.attributes
+                0x00000310       0x31 obj/cr_startup_NUC131.o
+ .ARM.attributes
+                0x00000341       0x31 obj/system_NUC131.o
+ .ARM.attributes
+                0x00000372       0x21 ../mylib_t\libos_m0.a(os_cpu_a.o)
+ .ARM.attributes
+                0x00000393       0x31 ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+ .ARM.attributes
+                0x000003c4       0x31 ../mylib_t\libos_m0.a(OSTimeDly.o)
+ .ARM.attributes
+                0x000003f5       0x31 ../mylib_t\libos_m0.a(os_cpu_c.o)
+ .ARM.attributes
+                0x00000426       0x31 ../mylib_t\libos_m0.a(OSIntExit.o)
+ .ARM.attributes
+                0x00000457       0x31 ../mylib_t\libos_m0.a(OSSched.o)
+ .ARM.attributes
+                0x00000488       0x31 ../mylib_t\libosc_m0.a(vsnprintf.o)
+ .ARM.attributes
+                0x000004b9       0x31 ../mylib_t\libosc_m0.a(vfprintf.o)
+ .ARM.attributes
+                0x000004ea       0x31 ../mylib_t\libosc_m0.a(printk.o)
+ .ARM.attributes
+                0x0000051b       0x31 ../mylib_t\libosc_m0.a(atoi.o)
+ .ARM.attributes
+                0x0000054c       0x31 ../mylib_t\libosc_m0.a(strtol.o)
+ .ARM.attributes
+                0x0000057d       0x31 ../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+ .ARM.attributes
+                0x000005ae       0x31 ../mylib_t\libosc_m0.a(memset.o)
+ .ARM.attributes
+                0x000005df       0x31 ../mylib_t\libosc_m0.a(strcmp.o)
+ .ARM.attributes
+                0x00000610       0x31 ../mylib_t\libosc_m0.a(strncpy.o)
+ .ARM.attributes
+                0x00000641       0x31 ../mylib_t\libosc_m0.a(pcommand.o)
+ .ARM.attributes
+                0x00000672       0x31 ../mylib_t\libosc_m0.a(shellSort.o)
+ .ARM.attributes
+                0x000006a3       0x2c d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv6-m\libc.a(lib_a-memcpy-stub.o)
+ .ARM.attributes
+                0x000006cf       0x1e d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_thumb1_case_uqi.o)
+ .ARM.attributes
+                0x000006ed       0x1e d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_udivsi3.o)
+ .ARM.attributes
+                0x0000070b       0x1e d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_divsi3.o)
+ .ARM.attributes
+                0x00000729       0x1e d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_dvmd_tls.o)
+
+.debug_frame    0x00000000     0x1618
+ .debug_frame   0x00000000       0xe8 obj/main.o
+ .debug_frame   0x000000e8       0x38 obj/shell.o
+ .debug_frame   0x00000120       0xb8 obj/debug.o
+ .debug_frame   0x000001d8      0x264 obj/OS_lib.o
+ .debug_frame   0x0000043c      0x110 obj/data.o
+ .debug_frame   0x0000054c      0x158 obj/dataV.o
+ .debug_frame   0x000006a4       0x6c obj/dataW.o
+ .debug_frame   0x00000710      0x14c obj/protocol.o
+ .debug_frame   0x0000085c      0x244 obj/user.o
+ .debug_frame   0x00000aa0       0xbc obj/fmc_rw.o
+ .debug_frame   0x00000b5c       0x30 obj/hardware.o
+ .debug_frame   0x00000b8c       0xc4 obj/nuc_adc.o
+ .debug_frame   0x00000c50      0x188 obj/nuc_can.o
+ .debug_frame   0x00000dd8      0x104 obj/nuc_uart0.o
+ .debug_frame   0x00000edc       0x80 obj/nuc_wdt.o
+ .debug_frame   0x00000f5c       0x3c obj/bsp.o
+ .debug_frame   0x00000f98       0x90 obj/cr_startup_NUC131.o
+ .debug_frame   0x00001028       0x54 obj/system_NUC131.o
+ .debug_frame   0x0000107c       0x38 ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+ .debug_frame   0x000010b4       0x30 ../mylib_t\libos_m0.a(OSTimeDly.o)
+ .debug_frame   0x000010e4       0x74 ../mylib_t\libos_m0.a(os_cpu_c.o)
+ .debug_frame   0x00001158       0x2c ../mylib_t\libos_m0.a(OSIntExit.o)
+ .debug_frame   0x00001184       0x2c ../mylib_t\libos_m0.a(OSSched.o)
+ .debug_frame   0x000011b0       0x30 ../mylib_t\libosc_m0.a(vsnprintf.o)
+ .debug_frame   0x000011e0       0xc8 ../mylib_t\libosc_m0.a(vfprintf.o)
+ .debug_frame   0x000012a8       0xe4 ../mylib_t\libosc_m0.a(printk.o)
+ .debug_frame   0x0000138c       0x2c ../mylib_t\libosc_m0.a(atoi.o)
+ .debug_frame   0x000013b8       0x3c ../mylib_t\libosc_m0.a(strtol.o)
+ .debug_frame   0x000013f4       0x30 ../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+ .debug_frame   0x00001424       0x34 ../mylib_t\libosc_m0.a(memset.o)
+ .debug_frame   0x00001458       0x20 ../mylib_t\libosc_m0.a(strcmp.o)
+ .debug_frame   0x00001478       0x2c ../mylib_t\libosc_m0.a(strncpy.o)
+ .debug_frame   0x000014a4       0x7c ../mylib_t\libosc_m0.a(pcommand.o)
+ .debug_frame   0x00001520       0x8c ../mylib_t\libosc_m0.a(shellSort.o)
+ .debug_frame   0x000015ac       0x2c d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv6-m\libc.a(lib_a-memcpy-stub.o)
+ .debug_frame   0x000015d8       0x20 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_udivsi3.o)
+ .debug_frame   0x000015f8       0x20 d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_divsi3.o)
+
+Cross Reference Table
+
+Symbol                                            File
+ADCFlag                                           obj/nuc_adc.o
+ADCInit                                           obj/nuc_adc.o
+ADC_Disable                                       obj/nuc_adc.o
+ADC_Enable                                        obj/nuc_adc.o
+                                                  obj/data.o
+ADC_Flag                                          obj/nuc_adc.o
+                                                  obj/data.o
+ADC_Get                                           obj/nuc_adc.o
+ADC_GetExt                                        obj/nuc_adc.o
+                                                  obj/data.o
+ADC_IRQHandler                                    obj/nuc_adc.o
+ADCchannel                                        obj/nuc_adc.o
+ADCsize                                           obj/nuc_adc.o
+AutoTrans                                         obj/protocol.o
+BD_disable                                        obj/data.o
+BJ_Trans                                          obj/protocol.o
+BOD_IRQHandler                                    obj/cr_startup_NUC131.o
+BPWM0_IRQHandler                                  obj/cr_startup_NUC131.o
+BPWM1_IRQHandler                                  obj/cr_startup_NUC131.o
+BRAKE0_IRQHandler                                 obj/cr_startup_NUC131.o
+BRAKE1_IRQHandler                                 obj/cr_startup_NUC131.o
+BSP_Init                                          obj/bsp.o
+                                                  obj/main.o
+BSP_Reset                                         obj/bsp.o
+                                                  obj/nuc_wdt.o
+                                                  obj/main.o
+CAN0_IRQHandler                                   obj/nuc_can.o
+CAN1_IRQHandler                                   obj/cr_startup_NUC131.o
+CAN_GetErr                                        obj/nuc_can.o
+                                                  obj/protocol.o
+                                                  obj/main.o
+CAN_GetErrCnt                                     obj/nuc_can.o
+CAN_Init                                          obj/nuc_can.o
+                                                  obj/main.o
+CAN_RxMsg                                         obj/nuc_can.o
+CAN_TxMsg                                         obj/nuc_can.o
+CAN_TxRdy                                         obj/nuc_can.o
+CAN_WriteAll                                      obj/protocol.o
+                                                  obj/main.o
+CAN_init                                          obj/nuc_can.o
+CAN_rdMSG                                         obj/nuc_can.o
+                                                  obj/main.o
+CAN_start                                         obj/nuc_can.o
+CAN_testmode                                      obj/nuc_can.o
+CAN_waitReady                                     obj/nuc_can.o
+CAN_wrFilter                                      obj/nuc_can.o
+CAN_wrMSG                                         obj/nuc_can.o
+                                                  obj/protocol.o
+CAN_wrMsg                                         obj/nuc_can.o
+CVDataList                                        obj/dataV.o
+CanCmdMsg                                         obj/protocol.o
+                                                  obj/main.o
+Can_Task                                          obj/main.o
+Can_TaskStk                                       obj/main.o
+CyclesPerUs                                       obj/system_NUC131.o
+DataCJ_Task                                       obj/data.o
+                                                  obj/main.o
+DataCJ_TaskStk                                    obj/main.o
+DataCJgetValue                                    obj/data.o
+Data_Init                                         obj/data.o
+                                                  obj/main.o
+Data_PD                                           obj/data.o
+                                                  obj/main.o
+Data_Trans                                        obj/data.o
+                                                  obj/main.o
+Default_Handler                                   obj/cr_startup_NUC131.o
+Dis_Task                                          obj/main.o
+Dis_TaskStk                                       obj/main.o
+EINT0_IRQHandler                                  obj/cr_startup_NUC131.o
+EINT1_IRQHandler                                  obj/cr_startup_NUC131.o
+GPAB_IRQHandler                                   obj/cr_startup_NUC131.o
+GPCDEF_IRQHandler                                 obj/cr_startup_NUC131.o
+GZ_Trans                                          obj/protocol.o
+                                                  obj/data.o
+GetChar                                           ../mylib_t\libosc_m0.a(printk.o)
+GetObjName                                        obj/data.o
+                                                  obj/main.o
+GetValueV                                         obj/dataV.o
+                                                  obj/data.o
+GetValueVD                                        obj/dataV.o
+                                                  obj/data.o
+GetValueV_JZ                                      obj/dataV.o
+GetValueWV                                        obj/dataV.o
+                                                  obj/data.o
+GetValueWV_JZ                                     obj/dataV.o
+GetWJZValue                                       obj/dataV.o
+                                                  obj/protocol.o
+HardFaultHandle_c                                 obj/bsp_int.o
+HardFault_Handler                                 obj/debug.o
+I2C0_IRQHandler                                   obj/cr_startup_NUC131.o
+I2C1_IRQHandler                                   obj/cr_startup_NUC131.o
+IO_Init                                           obj/hardware.o
+                                                  obj/main.o
+Init_Devices                                      obj/main.o
+IntDefaultHandler                                 obj/cr_startup_NUC131.o
+JZPtValue                                         obj/dataW.o
+MKState                                           obj/data.o
+                                                  obj/protocol.o
+MemStart                                          obj/main.o
+NMI_Handler                                       obj/cr_startup_NUC131.o
+OBJname                                           obj/data.o
+OSCPUUsage                                        obj/debug.o
+OSCreateTbl                                       obj/OS_lib.o
+OSCtxSw                                           ../mylib_t\libos_m0.a(os_cpu_a.o)
+OSCtxSwCtr                                        obj/OS_lib.o
+                                                  obj/debug.o
+OSDataClean                                       obj/OS_lib.o
+                                                  ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+OSEventTaskRdy                                    obj/OS_lib.o
+OSEventTaskTo                                     obj/OS_lib.o
+OSEventTaskWait                                   obj/OS_lib.o
+OSGetPID                                          obj/OS_lib.o
+OSGetTabePro8                                     obj/OS_lib.o
+OSGetTablePro                                     obj/OS_lib.o
+OSGetTime                                         obj/OS_lib.o
+OSIdleCtr                                         obj/OS_lib.o
+OSIdle_Task                                       obj/OS_lib.o
+OSIdle_TaskStk                                    obj/OS_lib.o
+OSInit                                            obj/OS_lib.o
+                                                  obj/main.o
+OSIntCtxSw                                        ../mylib_t\libos_m0.a(os_cpu_a.o)
+                                                  ../mylib_t\libos_m0.a(OSSched.o)
+                                                  ../mylib_t\libos_m0.a(OSIntExit.o)
+OSIntExit                                         ../mylib_t\libos_m0.a(OSIntExit.o)
+                                                  ../mylib_t\libos_m0.a(os_cpu_c.o)
+OSIntNesting                                      ../mylib_t\libos_m0.a(os_cpu_c.o)
+                                                  obj/OS_lib.o
+                                                  ../mylib_t\libos_m0.a(OSSched.o)
+                                                  ../mylib_t\libos_m0.a(OSIntExit.o)
+OSMapTbl_H                                        obj/OS_lib.o
+OSMapTbl_L                                        obj/OS_lib.o
+OSRdyTbl                                          obj/OS_lib.o
+OSRdyTblRdy                                       obj/OS_lib.o
+                                                  ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+OSRdyTblWait                                      obj/OS_lib.o
+                                                  ../mylib_t\libos_m0.a(OSTimeDly.o)
+OSReturnTbl                                       obj/OS_lib.o
+OSRunning                                         ../mylib_t\libos_m0.a(os_cpu_c.o)
+                                                  obj/OS_lib.o
+                                                  ../mylib_t\libos_m0.a(OSIntExit.o)
+                                                  ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+                                                  ../mylib_t\libos_m0.a(os_cpu_a.o)
+OSSched                                           ../mylib_t\libos_m0.a(OSSched.o)
+                                                  ../mylib_t\libos_m0.a(OSTimeDly.o)
+                                                  ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+OSSetTime                                         obj/OS_lib.o
+OSStart                                           obj/OS_lib.o
+                                                  obj/main.o
+OSStartHighRdy                                    ../mylib_t\libos_m0.a(os_cpu_a.o)
+                                                  obj/OS_lib.o
+OSTableClean                                      obj/OS_lib.o
+OSTableGetRdy                                     obj/OS_lib.o
+OSTableRdy                                        obj/OS_lib.o
+OSTableWait                                       obj/OS_lib.o
+OSTaskCreateExt                                   ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+                                                  obj/OS_lib.o
+                                                  obj/main.o
+OSTaskDelHook                                     obj/OS_lib.o
+OSTaskFindIdleID                                  obj/OS_lib.o
+OSTaskStatHook                                    obj/debug.o
+OSTaskStkInit                                     ../mylib_t\libos_m0.a(os_cpu_c.o)
+                                                  ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+OSTaskSwHook                                      obj/OS_lib.o
+                                                  ../mylib_t\libos_m0.a(os_cpu_a.o)
+OSTimeCnt                                         obj/OS_lib.o
+                                                  obj/debug.o
+OSTimeDly                                         ../mylib_t\libos_m0.a(OSTimeDly.o)
+                                                  ../mylib_t\libosc_m0.a(printk.o)
+                                                  ../mylib_t\libos_m0.a(os_cpu_c.o)
+                                                  obj/protocol.o
+                                                  obj/data.o
+                                                  obj/debug.o
+                                                  obj/main.o
+OSTimeTick                                        obj/OS_lib.o
+                                                  ../mylib_t\libos_m0.a(os_cpu_c.o)
+OS_CPU_PendSVHandler                              ../mylib_t\libos_m0.a(os_cpu_a.o)
+OS_CPU_SR_Restore                                 ../mylib_t\libos_m0.a(os_cpu_a.o)
+                                                  ../mylib_t\libos_m0.a(OSSched.o)
+                                                  ../mylib_t\libos_m0.a(OSIntExit.o)
+                                                  ../mylib_t\libos_m0.a(os_cpu_c.o)
+                                                  ../mylib_t\libos_m0.a(OSTimeDly.o)
+                                                  ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+                                                  obj/nuc_uart0.o
+                                                  obj/fmc_rw.o
+                                                  obj/protocol.o
+                                                  obj/OS_lib.o
+                                                  obj/main.o
+OS_CPU_SR_Save                                    ../mylib_t\libos_m0.a(os_cpu_a.o)
+                                                  ../mylib_t\libos_m0.a(OSSched.o)
+                                                  ../mylib_t\libos_m0.a(OSIntExit.o)
+                                                  ../mylib_t\libos_m0.a(os_cpu_c.o)
+                                                  ../mylib_t\libos_m0.a(OSTimeDly.o)
+                                                  ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+                                                  obj/nuc_uart0.o
+                                                  obj/fmc_rw.o
+                                                  obj/protocol.o
+                                                  obj/OS_lib.o
+                                                  obj/main.o
+OS_CPU_SysTickInit                                ../mylib_t\libos_m0.a(os_cpu_c.o)
+                                                  obj/main.o
+OS_EventFreeList                                  obj/OS_lib.o
+OS_EventTbl                                       obj/OS_lib.o
+OS_SchedNew                                       obj/OS_lib.o
+                                                  ../mylib_t\libos_m0.a(OSSched.o)
+                                                  ../mylib_t\libos_m0.a(OSIntExit.o)
+OS_TCBCur                                         obj/OS_lib.o
+                                                  ../mylib_t\libos_m0.a(OSSched.o)
+                                                  ../mylib_t\libos_m0.a(OSIntExit.o)
+                                                  ../mylib_t\libos_m0.a(OSTimeDly.o)
+                                                  ../mylib_t\libos_m0.a(os_cpu_a.o)
+OS_TCBHighRdy                                     obj/OS_lib.o
+                                                  ../mylib_t\libos_m0.a(OSSched.o)
+                                                  ../mylib_t\libos_m0.a(OSIntExit.o)
+                                                  ../mylib_t\libos_m0.a(os_cpu_a.o)
+OS_TCBTbl                                         obj/OS_lib.o
+                                                  ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+                                                  obj/debug.o
+OS_TaskIdle_Hook                                  obj/main.o
+                                                  obj/OS_lib.o
+OS_TaskReturn                                     ../mylib_t\libos_m0.a(os_cpu_c.o)
+OS_atoi                                           ../mylib_t\libosc_m0.a(atoi.o)
+                                                  obj/user.o
+                                                  obj/dataV.o
+                                                  obj/debug.o
+OS_cmd                                            obj/debug.o
+OS_fputc                                          ../mylib_t\libosc_m0.a(vfprintf.o)
+OS_strtol                                         ../mylib_t\libosc_m0.a(strtol.o)
+                                                  ../mylib_t\libosc_m0.a(atoi.o)
+OS_vfprintf                                       ../mylib_t\libosc_m0.a(vfprintf.o)
+                                                  ../mylib_t\libosc_m0.a(printk.o)
+                                                  ../mylib_t\libosc_m0.a(vsnprintf.o)
+OS_vsnprintf                                      ../mylib_t\libosc_m0.a(vsnprintf.o)
+                                                  obj/debug.o
+OSmemset                                          ../mylib_t\libosc_m0.a(memset.o)
+                                                  ../mylib_t\libosc_m0.a(pcommand.o)
+                                                  obj/nuc_adc.o
+OSstrcmp                                          ../mylib_t\libosc_m0.a(strcmp.o)
+                                                  ../mylib_t\libosc_m0.a(pcommand.o)
+                                                  obj/user.o
+                                                  obj/debug.o
+OSstrncpy                                         ../mylib_t\libosc_m0.a(strncpy.o)
+                                                  ../mylib_t\libos_m0.a(OSTaskCreateExt.o)
+PCMD_string                                       ../mylib_t\libosc_m0.a(pcommand.o)
+                                                  obj/shell.o
+PWM0_IRQHandler                                   obj/cr_startup_NUC131.o
+PWM1_IRQHandler                                   obj/cr_startup_NUC131.o
+PWRWU_IRQHandler                                  obj/cr_startup_NUC131.o
+PendSV_Handler                                    ../mylib_t\libos_m0.a(os_cpu_a.o)
+                                                  obj/cr_startup_NUC131.o
+PllClock                                          obj/system_NUC131.o
+ProCanError                                       obj/protocol.o
+Pro_Init                                          obj/protocol.o
+                                                  obj/main.o
+RTC_IRQHandler                                    obj/cr_startup_NUC131.o
+ResetISR                                          obj/cr_startup_NUC131.o
+SPI0_IRQHandler                                   obj/cr_startup_NUC131.o
+SPI_Sem                                           obj/hardware.o
+SVCall_Handler                                    obj/cr_startup_NUC131.o
+SetAddress                                        obj/protocol.o
+                                                  obj/main.o
+SysTick_Handler                                   ../mylib_t\libos_m0.a(os_cpu_c.o)
+                                                  obj/cr_startup_NUC131.o
+SystemCoreClock                                   obj/system_NUC131.o
+                                                  obj/nuc_i2c.o
+                                                  obj/nuc_can.o
+                                                  obj/debug.o
+                                                  obj/main.o
+SystemCoreClockUpdate                             obj/system_NUC131.o
+                                                  obj/nuc_can.o
+                                                  obj/hardware.o
+SystemInit                                        obj/system_NUC131.o
+                                                  obj/cr_startup_NUC131.o
+                                                  obj/bsp.o
+TK_Trans                                          obj/protocol.o
+                                                  obj/main.o
+TMR0_IRQHandler                                   obj/nuc_adc.o
+TMR1_IRQHandler                                   obj/cr_startup_NUC131.o
+TMR2_IRQHandler                                   obj/cr_startup_NUC131.o
+TMR3_IRQHandler                                   obj/cr_startup_NUC131.o
+TT_Trans                                          obj/protocol.o
+U0_Isr                                            obj/nuc_uart0.o
+U1_Isr                                            obj/nuc_uart0.o
+UART02_IRQHandler                                 obj/nuc_uart0.o
+UART1_IRQHandler                                  obj/cr_startup_NUC131.o
+UART3_IRQHandler                                  obj/cr_startup_NUC131.o
+UART4_IRQHandler                                  obj/cr_startup_NUC131.o
+UART5_IRQHandler                                  obj/cr_startup_NUC131.o
+Uart_GetChar_nb                                   obj/nuc_uart0.o
+                                                  obj/main.o
+Uart_Init                                         obj/nuc_uart0.o
+                                                  obj/main.o
+Uart_SendBuff                                     obj/nuc_uart0.o
+                                                  obj/protocol.o
+                                                  obj/debug.o
+                                                  obj/shell.o
+Uart_SendByte                                     obj/nuc_uart0.o
+                                                  obj/main.o
+Uart_SendString                                   obj/nuc_uart0.o
+UserSetDef                                        obj/user.o
+                                                  obj/protocol.o
+UserVJZ                                           obj/dataV.o
+                                                  obj/protocol.o
+UserWDJZ                                          obj/dataW.o
+UsrDefault                                        obj/user.o
+UsrInit                                           obj/user.o
+                                                  obj/main.o
+UsrRead                                           obj/user.o
+UsrSetAddr                                        obj/user.o
+                                                  obj/main.o
+UsrSetBD                                          obj/user.o
+                                                  obj/protocol.o
+UsrSetCnt                                         obj/user.o
+                                                  obj/protocol.o
+UsrSetDelay                                       obj/user.o
+                                                  obj/protocol.o
+UsrSetDelayI                                      obj/user.o
+                                                  obj/protocol.o
+UsrSetIbj                                         obj/user.o
+                                                  obj/protocol.o
+UsrSetIed                                         obj/user.o
+                                                  obj/protocol.o
+UsrSetSbj                                         obj/user.o
+                                                  obj/protocol.o
+UsrSetType                                        obj/user.o
+                                                  obj/protocol.o
+UsrSetVbj                                         obj/user.o
+                                                  obj/protocol.o
+UsrSetVqy                                         obj/user.o
+                                                  obj/protocol.o
+UsrSetWDJZ                                        obj/user.o
+UsrSetWbj                                         obj/user.o
+                                                  obj/protocol.o
+UsrWrite                                          obj/user.o
+                                                  obj/dataW.o
+                                                  obj/dataV.o
+VDDataList                                        obj/dataV.o
+WDT_IRQHandler                                    obj/nuc_wdt.o
+WDlist                                            obj/dataV.o
+WVDataList                                        obj/dataV.o
+WValue                                            obj/dataW.o
+                                                  obj/data.o
+__DataFlash                                       obj/fmc_rw.o
+                                                  obj/user.o
+__REV                                             obj/core_cm0.o
+__REV16                                           obj/core_cm0.o
+__REVSH                                           obj/core_cm0.o
+__aeabi_idiv                                      d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_divsi3.o)
+                                                  obj/dataW.o
+                                                  obj/dataV.o
+                                                  obj/data.o
+                                                  obj/debug.o
+__aeabi_idiv0                                     d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_dvmd_tls.o)
+                                                  d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_divsi3.o)
+                                                  d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_udivsi3.o)
+__aeabi_idivmod                                   d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_divsi3.o)
+__aeabi_ldiv0                                     d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_dvmd_tls.o)
+__aeabi_uidiv                                     d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_udivsi3.o)
+                                                  ../mylib_t\libosc_m0.a(pcommand.o)
+                                                  ../mylib_t\libosc_m0.a(strtol.o)
+                                                  ../mylib_t\libosc_m0.a(vfprintf.o)
+                                                  obj/system_NUC131.o
+                                                  obj/nuc_uart0.o
+                                                  obj/nuc_i2c.o
+                                                  obj/nuc_can.o
+                                                  obj/nuc_adc.o
+                                                  obj/protocol.o
+                                                  obj/dataW.o
+                                                  obj/debug.o
+                                                  obj/main.o
+__aeabi_uidivmod                                  d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_udivsi3.o)
+                                                  ../mylib_t\libosc_m0.a(vfprintf.o)
+                                                  obj/nuc_can.o
+__divsi3                                          d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_divsi3.o)
+__error                                           ../mylib_t\libosc_m0.a(printk.o)
+                                                  obj/OS_lib.o
+                                                  obj/main.o
+__get_CONTROL                                     obj/core_cm0.o
+__get_MSP                                         obj/core_cm0.o
+__get_PRIMASK                                     obj/core_cm0.o
+__get_PSP                                         obj/core_cm0.o
+__gnu_thumb1_case_uqi                             d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_thumb1_case_uqi.o)
+                                                  obj/protocol.o
+                                                  obj/dataV.o
+                                                  obj/data.o
+__iob                                             ../mylib_t\libosc_m0.a(vfprintf.o)
+__set_CONTROL                                     obj/core_cm0.o
+__set_MSP                                         obj/core_cm0.o
+__set_PRIMASK                                     obj/core_cm0.o
+__set_PSP                                         obj/core_cm0.o
+__udivsi3                                         d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv6-m\libgcc.a(_udivsi3.o)
+_bss                                              obj/cr_startup_NUC131.o
+_data                                             obj/cr_startup_NUC131.o
+_ebss                                             obj/cr_startup_NUC131.o
+_edata                                            obj/cr_startup_NUC131.o
+_etext                                            obj/cr_startup_NUC131.o
+canList_rx                                        obj/nuc_can.o
+cmd_data                                          obj/data.o
+cmd_debug                                         obj/debug.o
+cmd_get                                           obj/protocol.o
+cmd_help                                          ../mylib_t\libosc_m0.a(pcommand.o)
+cmd_jz                                            obj/dataV.o
+cmd_jzV                                           obj/dataV.o
+cmd_os                                            obj/debug.o
+cmd_reset                                         obj/main.o
+cmd_user                                          obj/user.o
+crc16_XMODEM                                      ../mylib_t\libosc_m0.a(crc16_XMODEM.o)
+                                                  obj/user.o
+                                                  obj/protocol.o
+createWJZ                                         obj/dataV.o
+                                                  obj/data.o
+data                                              obj/data.o
+                                                  obj/protocol.o
+                                                  obj/dataW.o
+                                                  obj/dataV.o
+data_cmd                                          obj/data.o
+                                                  obj/main.o
+dbg_print                                         obj/debug.o
+                                                  obj/user.o
+                                                  obj/protocol.o
+                                                  obj/data.o
+                                                  obj/shell.o
+                                                  obj/main.o
+debug_en                                          obj/debug.o
+                                                  obj/protocol.o
+                                                  obj/main.o
+fmc_Init                                          obj/fmc_rw.o
+                                                  obj/user.o
+fmc_Read                                          obj/fmc_rw.o
+                                                  obj/user.o
+fmc_Write                                         obj/fmc_rw.o
+                                                  obj/user.o
+g_pfnVectors                                      obj/cr_startup_NUC131.o
+gau32ClkSrcTbl                                    obj/system_NUC131.o
+i2c_Read                                          obj/nuc_i2c.o
+i2c_Write                                         obj/nuc_i2c.o
+i2c_init                                          obj/nuc_i2c.o
+i2c_readbyte                                      obj/nuc_i2c.o
+i2c_start                                         obj/nuc_i2c.o
+i2c_stop                                          obj/nuc_i2c.o
+i2c_writebyte                                     obj/nuc_i2c.o
+jz_cmd                                            obj/dataV.o
+                                                  obj/protocol.o
+kGetChar                                          ../mylib_t\libosc_m0.a(printk.o)
+kPutBuff                                          ../mylib_t\libosc_m0.a(printk.o)
+kPutChar                                          ../mylib_t\libosc_m0.a(printk.o)
+lADCBuff                                          obj/nuc_adc.o
+led_out                                           obj/hardware.o
+main                                              obj/main.o
+                                                  obj/cr_startup_NUC131.o
+memcpy                                            d:/wingcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv6-m\libc.a(lib_a-memcpy-stub.o)
+                                                  obj/system_NUC131.o
+pUsrCfg                                           obj/user.o
+                                                  obj/protocol.o
+                                                  obj/dataW.o
+                                                  obj/dataV.o
+                                                  obj/data.o
+                                                  obj/main.o
+printk                                            ../mylib_t\libosc_m0.a(printk.o)
+                                                  ../mylib_t\libosc_m0.a(pcommand.o)
+                                                  obj/nuc_wdt.o
+                                                  obj/debug.o
+printk_file                                       ../mylib_t\libosc_m0.a(printk.o)
+printk_set                                        ../mylib_t\libosc_m0.a(printk.o)
+                                                  obj/main.o
+pro                                               obj/protocol.o
+ptlist                                            obj/dataW.o
+reset_cmd                                         obj/main.o
+                                                  obj/user.o
+                                                  obj/protocol.o
+shell                                             obj/shell.o
+                                                  obj/main.o
+shellSort16                                       ../mylib_t\libosc_m0.a(shellSort.o)
+                                                  obj/data.o
+shellSort32                                       ../mylib_t\libosc_m0.a(shellSort.o)
+shellSort8                                        ../mylib_t\libosc_m0.a(shellSort.o)
+shell_end                                         ../mylib_t\libosc_m0.a(pcommand.o)
+shell_size                                        ../mylib_t\libosc_m0.a(pcommand.o)
+shell_start                                       ../mylib_t\libosc_m0.a(pcommand.o)
+svc_function                                      obj/bsp_int.o
+svc_handler_export                                obj/bsp_int.o
+ulADCBuf                                          obj/nuc_adc.o
+userCMD                                           obj/user.o
+userSave                                          obj/user.o
+wValue                                            obj/data.o
+                                                  obj/protocol.o
+wdt_init                                          obj/nuc_wdt.o
+                                                  obj/main.o
+wdt_reset                                         obj/nuc_wdt.o
+                                                  obj/protocol.o
+                                                  obj/debug.o
+                                                  obj/main.o

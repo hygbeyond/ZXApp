@@ -1,0 +1,1916 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 4
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"user.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.UsrRead,"ax",%progbits
+  20              		.align	1
+  21              		.global	UsrRead
+  22              		.code	16
+  23              		.thumb_func
+  25              	UsrRead:
+  26              	.LFB63:
+  27              		.file 1 "./data/user.c"
+   1:./data/user.c **** 
+   2:./data/user.c **** /*
+   3:./data/user.c ****    文件名：user.c
+   4:./data/user.c ****    功能：用户配置信息，保存在eeprom中的数据
+   5:./data/user.c ****    */
+   6:./data/user.c **** #define USER_GLOBAL
+   7:./data/user.c **** #include "mytype.h"
+   8:./data/user.c **** #include "OSstring.h"
+   9:./data/user.c **** #include "crc16.h"
+  10:./data/user.c **** #include "user.h"
+  11:./data/user.c **** #include "app_cfg.h"
+  12:./data/user.c **** 
+  13:./data/user.c **** #include "fmc_rw.h"
+  14:./data/user.c **** #include "bsp.h"
+  15:./data/user.c **** #include "data.h"
+  16:./data/user.c **** #include "protocol.h"
+  17:./data/user.c **** 
+  18:./data/user.c **** #define   USER_JZV      1024
+  19:./data/user.c **** #define   USER_JZI      500
+  20:./data/user.c **** 
+  21:./data/user.c **** typedef struct
+  22:./data/user.c **** {
+  23:./data/user.c ****     TUser   usr;
+  24:./data/user.c ****     uint16  crc;
+  25:./data/user.c **** }__PACKED__ TUserSave;
+  26:./data/user.c **** 
+  27:./data/user.c **** TUserSave userSave;
+  28:./data/user.c **** TUser *pUsrCfg = &userSave.usr;
+  29:./data/user.c **** 
+  30:./data/user.c **** 
+  31:./data/user.c **** extern void reset_cmd(void);
+  32:./data/user.c **** 
+  33:./data/user.c **** 
+  34:./data/user.c **** //static uint8 UserRead(uint16 addr)
+  35:./data/user.c **** //{
+  36:./data/user.c **** //    uint16 crc;
+  37:./data/user.c **** //    fmc_Read( __DataFlash, (uint8 *)&User,sizeof(User));
+  38:./data/user.c **** //    crc = modbus_crc(0x55AA,(uint8*)&User,sizeof(User.Usr));
+  39:./data/user.c **** //    return(crc == User.crc);
+  40:./data/user.c **** //}
+  41:./data/user.c **** //
+  42:./data/user.c **** //static void UserWrite(void)
+  43:./data/user.c **** //{
+  44:./data/user.c **** //    User.crc = modbus_crc(0x55AA,(uint8*)&User,sizeof(User.Usr));
+  45:./data/user.c **** //    fmc_Write( __DataFlash,  (uint8 *)&User, sizeof(User));
+  46:./data/user.c **** //}
+  47:./data/user.c **** 
+  48:./data/user.c **** int UsrRead( uint16 addr )
+  49:./data/user.c **** {
+  28              		.loc 1 49 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              	.LVL0:
+  33 0000 10B5     		push	{r4, lr}
+  34              	.LCFI0:
+  35              		.cfi_def_cfa_offset 8
+  36              		.cfi_offset 4, -8
+  37              		.cfi_offset 14, -4
+  50:./data/user.c ****     uint16 crc;
+  51:./data/user.c ****     fmc_Read( __DataFlash, (uint8*) &userSave, sizeof( userSave )  );
+  38              		.loc 1 51 0
+  39 0002 0B4C     		ldr	r4, .L2
+  40 0004 3322     		movs	r2, #51
+  41 0006 2100     		movs	r1, r4
+  42 0008 0A48     		ldr	r0, .L2+4
+  43              	.LVL1:
+  44 000a FFF7FEFF 		bl	fmc_Read
+  45              	.LVL2:
+  46              	.LBB6:
+  47              	.LBB7:
+  48              		.file 2 "../mylib_t/crc16.h"
+   1:../mylib_t/crc16.h **** 
+   2:../mylib_t/crc16.h **** 
+   3:../mylib_t/crc16.h **** #ifndef __CRC16_H__
+   4:../mylib_t/crc16.h **** #define __CRC16_H__
+   5:../mylib_t/crc16.h **** 
+   6:../mylib_t/crc16.h **** 
+   7:../mylib_t/crc16.h **** #include "mytype.h"
+   8:../mylib_t/crc16.h **** 
+   9:../mylib_t/crc16.h **** #define CRC16_BEGIN        0x55AA
+  10:../mylib_t/crc16.h **** #define CRC32_BEGIN        0x55AAFFFF
+  11:../mylib_t/crc16.h **** 
+  12:../mylib_t/crc16.h **** 
+  13:../mylib_t/crc16.h **** extern uint16 crc16_update  (uint16 crc, uint8 a);	
+  14:../mylib_t/crc16.h **** 
+  15:../mylib_t/crc16.h **** /*
+  16:../mylib_t/crc16.h ****  * CRC  0xA001
+  17:../mylib_t/crc16.h ****  * CRC = crc16_IBM( 0xFFFF, buff, sizeof(buff) );
+  18:../mylib_t/crc16.h ****  * modbus校验
+  19:../mylib_t/crc16.h ****  */
+  20:../mylib_t/crc16.h **** extern uint16 crc16_IBM   ( uint16 crc, const uint8 *p,   int size );
+  21:../mylib_t/crc16.h **** 
+  22:../mylib_t/crc16.h **** /*
+  23:../mylib_t/crc16.h ****  * CRC  0x1201
+  24:../mylib_t/crc16.h ****  * TProtocl, xmodem
+  25:../mylib_t/crc16.h ****  */
+  26:../mylib_t/crc16.h **** extern uint16 crc16_XMODEM( uint16 crc, const uint8 *ptr, int len  );   
+  27:../mylib_t/crc16.h **** 
+  28:../mylib_t/crc16.h **** static inline uint16 GetCheckCRC   (uint16 crc, uint8 *buff,int len)
+  29:../mylib_t/crc16.h **** {
+  30:../mylib_t/crc16.h ****     return crc16_IBM( crc, buff, len );
+  31:../mylib_t/crc16.h **** }
+  32:../mylib_t/crc16.h **** 
+  33:../mylib_t/crc16.h **** static inline uint16 modbus_crc( uint16 crc, const uint8 *pd, int len )
+  34:../mylib_t/crc16.h **** {
+  35:../mylib_t/crc16.h ****     return crc16_XMODEM( crc, pd, len );
+  49              		.loc 2 35 0
+  50 000e 0A4B     		ldr	r3, .L2+8
+  51 0010 3122     		movs	r2, #49
+  52 0012 1968     		ldr	r1, [r3]
+  53 0014 0020     		movs	r0, #0
+  54 0016 FFF7FEFF 		bl	crc16_XMODEM
+  55              	.LVL3:
+  56              	.LBE7:
+  57              	.LBE6:
+  52:./data/user.c ****     crc = modbus_crc( 0, (uint8*) pUsrCfg, sizeof( *pUsrCfg) );
+  53:./data/user.c ****     return crc == userSave.crc;
+  58              		.loc 1 53 0
+  59 001a 2300     		movs	r3, r4
+  60 001c 3234     		adds	r4, r4, #50
+  61 001e 3133     		adds	r3, r3, #49
+  62 0020 1A78     		ldrb	r2, [r3]
+  63 0022 2378     		ldrb	r3, [r4]
+  54:./data/user.c **** }
+  64              		.loc 1 54 0
+  65              		@ sp needed
+  53:./data/user.c **** }
+  66              		.loc 1 53 0
+  67 0024 1B02     		lsls	r3, r3, #8
+  68 0026 1343     		orrs	r3, r2
+  69 0028 181A     		subs	r0, r3, r0
+  70 002a 4342     		rsbs	r3, r0, #0
+  71 002c 5841     		adcs	r0, r0, r3
+  72              		.loc 1 54 0
+  73 002e 10BD     		pop	{r4, pc}
+  74              	.L3:
+  75              		.align	2
+  76              	.L2:
+  77 0030 00000000 		.word	userSave
+  78 0034 00000000 		.word	__DataFlash
+  79 0038 00000000 		.word	.LANCHOR0
+  80              		.cfi_endproc
+  81              	.LFE63:
+  83              		.section	.text.UsrWrite,"ax",%progbits
+  84              		.align	1
+  85              		.global	UsrWrite
+  86              		.code	16
+  87              		.thumb_func
+  89              	UsrWrite:
+  90              	.LFB64:
+  55:./data/user.c **** 
+  56:./data/user.c **** void UsrWrite( void )
+  57:./data/user.c **** {
+  91              		.loc 1 57 0
+  92              		.cfi_startproc
+  93              		@ args = 0, pretend = 0, frame = 0
+  94              		@ frame_needed = 0, uses_anonymous_args = 0
+  95              	.LVL4:
+  96              	.LBB8:
+  97              	.LBB9:
+  98              		.loc 2 35 0
+  99 0000 084B     		ldr	r3, .L5
+ 100              	.LBE9:
+ 101              	.LBE8:
+ 102              		.loc 1 57 0
+ 103 0002 10B5     		push	{r4, lr}
+ 104              	.LCFI1:
+ 105              		.cfi_def_cfa_offset 8
+ 106              		.cfi_offset 4, -8
+ 107              		.cfi_offset 14, -4
+ 108              	.LBB11:
+ 109              	.LBB10:
+ 110              		.loc 2 35 0
+ 111 0004 1968     		ldr	r1, [r3]
+ 112 0006 3122     		movs	r2, #49
+ 113 0008 0020     		movs	r0, #0
+ 114 000a FFF7FEFF 		bl	crc16_XMODEM
+ 115              	.LVL5:
+ 116              	.LBE10:
+ 117              	.LBE11:
+  58:./data/user.c ****     uint16 crc;
+  59:./data/user.c ****     crc = modbus_crc( 0, (uint8*)pUsrCfg, sizeof( *pUsrCfg ));
+  60:./data/user.c ****     userSave.crc = crc;
+ 118              		.loc 1 60 0
+ 119 000e 0649     		ldr	r1, .L5+4
+  61:./data/user.c ****     fmc_Write( __DataFlash, (uint8*) &userSave, sizeof( userSave));
+ 120              		.loc 1 61 0
+ 121 0010 3322     		movs	r2, #51
+  60:./data/user.c ****     fmc_Write( __DataFlash, (uint8*) &userSave, sizeof( userSave));
+ 122              		.loc 1 60 0
+ 123 0012 0B00     		movs	r3, r1
+ 124 0014 3133     		adds	r3, r3, #49
+ 125 0016 1870     		strb	r0, [r3]
+ 126 0018 000A     		lsrs	r0, r0, #8
+ 127 001a 5870     		strb	r0, [r3, #1]
+ 128              		.loc 1 61 0
+ 129 001c 0348     		ldr	r0, .L5+8
+ 130 001e FFF7FEFF 		bl	fmc_Write
+ 131              	.LVL6:
+  62:./data/user.c **** }
+ 132              		.loc 1 62 0
+ 133              		@ sp needed
+ 134 0022 10BD     		pop	{r4, pc}
+ 135              	.L6:
+ 136              		.align	2
+ 137              	.L5:
+ 138 0024 00000000 		.word	.LANCHOR0
+ 139 0028 00000000 		.word	userSave
+ 140 002c 00000000 		.word	__DataFlash
+ 141              		.cfi_endproc
+ 142              	.LFE64:
+ 144              		.section	.text.UsrSetAddr,"ax",%progbits
+ 145              		.align	1
+ 146              		.global	UsrSetAddr
+ 147              		.code	16
+ 148              		.thumb_func
+ 150              	UsrSetAddr:
+ 151              	.LFB68:
+  63:./data/user.c **** 
+  64:./data/user.c **** 
+  65:./data/user.c **** void UsrInit( void )
+  66:./data/user.c **** {
+  67:./data/user.c ****     fmc_Init();
+  68:./data/user.c ****     if( !UsrRead(0))
+  69:./data/user.c ****     {
+  70:./data/user.c ****         UsrDefault();
+  71:./data/user.c ****         UsrWrite();
+  72:./data/user.c ****     }
+  73:./data/user.c ****     pUsrCfg->count = MIN( MAX_POINT_COUNT, pUsrCfg->count );
+  74:./data/user.c **** }
+  75:./data/user.c **** 
+  76:./data/user.c **** 
+  77:./data/user.c **** void UserSetDef( void )
+  78:./data/user.c **** {
+  79:./data/user.c ****     pUsrCfg->address = 1;
+  80:./data/user.c ****     pUsrCfg->delay   = 4;
+  81:./data/user.c **** #if OEM == 1
+  82:./data/user.c **** //#warning "count 6"
+  83:./data/user.c ****     pUsrCfg->count   = 6;
+  84:./data/user.c **** #else
+  85:./data/user.c **** //#warning "count 7"
+  86:./data/user.c ****     pUsrCfg->count   = 7;
+  87:./data/user.c **** #endif
+  88:./data/user.c ****     UsrSetType(pUsrCfg->type );
+  89:./data/user.c **** }
+  90:./data/user.c **** 
+  91:./data/user.c **** void UsrDefault( void )
+  92:./data/user.c **** {
+  93:./data/user.c ****     pUsrCfg->address = 1;
+  94:./data/user.c **** #if OEM == 1
+  95:./data/user.c ****     pUsrCfg->count   = 6;
+  96:./data/user.c **** #else
+  97:./data/user.c ****     pUsrCfg->count   = 7;
+  98:./data/user.c **** #endif
+  99:./data/user.c ****     pUsrCfg->type    = eCGQvas2; //CGQ_TYPE_VI_3B;
+ 100:./data/user.c ****     pUsrCfg->delay   = 20;
+ 101:./data/user.c ****     pUsrCfg->delayI  = 50;
+ 102:./data/user.c ****     pUsrCfg->enable  = 0;
+ 103:./data/user.c ****     pUsrCfg->Aed     = 100;
+ 104:./data/user.c ****     pUsrCfg->Abj     = 100;
+ 105:./data/user.c ****     pUsrCfg->Vqy     = 187;
+ 106:./data/user.c ****     pUsrCfg->Vbj     = 242;
+ 107:./data/user.c **** 
+ 108:./data/user.c ****     pUsrCfg->WDJZen = 1;
+ 109:./data/user.c **** 
+ 110:./data/user.c ****     pUsrCfg->JZ[0] = USER_JZV;
+ 111:./data/user.c ****     pUsrCfg->JZ[1] = USER_JZV;
+ 112:./data/user.c ****     pUsrCfg->JZ[2] = USER_JZV;
+ 113:./data/user.c **** 
+ 114:./data/user.c ****     pUsrCfg->JZ[3] = USER_JZV;
+ 115:./data/user.c ****     pUsrCfg->JZ[4] = USER_JZV;
+ 116:./data/user.c ****     pUsrCfg->JZ[5] = USER_JZV;
+ 117:./data/user.c **** 
+ 118:./data/user.c ****     pUsrCfg->JZ[6] = USER_JZV;
+ 119:./data/user.c ****     pUsrCfg->JZ[7] = USER_JZI;
+ 120:./data/user.c **** 
+ 121:./data/user.c **** 
+ 122:./data/user.c ****     //剩余电流默认配置
+ 123:./data/user.c ****     pUsrCfg->LDCfg.ed  = 1600;
+ 124:./data/user.c ****     pUsrCfg->LDCfg.bj  = 800;
+ 125:./data/user.c ****     pUsrCfg->LDCfg.jz  = 440;
+ 126:./data/user.c **** 
+ 127:./data/user.c ****     //剩余电流默认配置
+ 128:./data/user.c ****     pUsrCfg->DLCfg.ed  = 100;
+ 129:./data/user.c ****     pUsrCfg->DLCfg.bj  = 100;
+ 130:./data/user.c ****     pUsrCfg->DLCfg.jz  = 245;
+ 131:./data/user.c **** 
+ 132:./data/user.c ****     //温度配置文件
+ 133:./data/user.c ****     pUsrCfg->WDCfg.bj  = 80;
+ 134:./data/user.c ****     pUsrCfg->WDCfg.jzL = 511;
+ 135:./data/user.c ****     pUsrCfg->WDCfg.jzH = 1024;
+ 136:./data/user.c ****     pr_debug("user default\n");
+ 137:./data/user.c **** }
+ 138:./data/user.c **** 
+ 139:./data/user.c **** int UsrSetAddr( int addr )
+ 140:./data/user.c **** {
+ 152              		.loc 1 140 0
+ 153              		.cfi_startproc
+ 154              		@ args = 0, pretend = 0, frame = 0
+ 155              		@ frame_needed = 0, uses_anonymous_args = 0
+ 156              	.LVL7:
+ 141:./data/user.c ****     if( addr>0 && addr <= 2000 )
+ 157              		.loc 1 141 0
+ 158 0000 094B     		ldr	r3, .L10
+ 159 0002 421E     		subs	r2, r0, #1
+ 140:./data/user.c ****     if( addr>0 && addr <= 2000 )
+ 160              		.loc 1 140 0
+ 161 0004 10B5     		push	{r4, lr}
+ 162              	.LCFI2:
+ 163              		.cfi_def_cfa_offset 8
+ 164              		.cfi_offset 4, -8
+ 165              		.cfi_offset 14, -4
+ 166 0006 094C     		ldr	r4, .L10+4
+ 167              		.loc 1 141 0
+ 168 0008 9A42     		cmp	r2, r3
+ 169 000a 06D8     		bhi	.L8
+ 142:./data/user.c ****     {
+ 143:./data/user.c ****         pUsrCfg->address = addr;
+ 170              		.loc 1 143 0
+ 171 000c 2368     		ldr	r3, [r4]
+ 172 000e 80B2     		uxth	r0, r0
+ 173              	.LVL8:
+ 174 0010 1870     		strb	r0, [r3]
+ 175 0012 000A     		lsrs	r0, r0, #8
+ 176 0014 5870     		strb	r0, [r3, #1]
+ 144:./data/user.c ****         UsrWrite();
+ 177              		.loc 1 144 0
+ 178 0016 FFF7FEFF 		bl	UsrWrite
+ 179              	.LVL9:
+ 180              	.L8:
+ 145:./data/user.c ****     }
+ 146:./data/user.c ****     return pUsrCfg->address;
+ 181              		.loc 1 146 0
+ 182 001a 2268     		ldr	r2, [r4]
+ 147:./data/user.c **** }
+ 183              		.loc 1 147 0
+ 184              		@ sp needed
+ 146:./data/user.c **** }
+ 185              		.loc 1 146 0
+ 186 001c 5078     		ldrb	r0, [r2, #1]
+ 187 001e 1378     		ldrb	r3, [r2]
+ 188 0020 0002     		lsls	r0, r0, #8
+ 189 0022 1843     		orrs	r0, r3
+ 190              		.loc 1 147 0
+ 191 0024 10BD     		pop	{r4, pc}
+ 192              	.L11:
+ 193 0026 C046     		.align	2
+ 194              	.L10:
+ 195 0028 CF070000 		.word	1999
+ 196 002c 00000000 		.word	.LANCHOR0
+ 197              		.cfi_endproc
+ 198              	.LFE68:
+ 200              		.section	.text.UsrSetDelay,"ax",%progbits
+ 201              		.align	1
+ 202              		.global	UsrSetDelay
+ 203              		.code	16
+ 204              		.thumb_func
+ 206              	UsrSetDelay:
+ 207              	.LFB69:
+ 148:./data/user.c **** 
+ 149:./data/user.c **** int UsrSetDelay( int delay )
+ 150:./data/user.c **** {
+ 208              		.loc 1 150 0
+ 209              		.cfi_startproc
+ 210              		@ args = 0, pretend = 0, frame = 0
+ 211              		@ frame_needed = 0, uses_anonymous_args = 0
+ 212              	.LVL10:
+ 213 0000 10B5     		push	{r4, lr}
+ 214              	.LCFI3:
+ 215              		.cfi_def_cfa_offset 8
+ 216              		.cfi_offset 4, -8
+ 217              		.cfi_offset 14, -4
+ 218 0002 054C     		ldr	r4, .L14
+ 151:./data/user.c ****     if(delay > 0 )
+ 219              		.loc 1 151 0
+ 220 0004 0028     		cmp	r0, #0
+ 221 0006 03DD     		ble	.L13
+ 152:./data/user.c ****     {
+ 153:./data/user.c ****         pUsrCfg->delay = delay;
+ 222              		.loc 1 153 0
+ 223 0008 2368     		ldr	r3, [r4]
+ 224 000a 1871     		strb	r0, [r3, #4]
+ 154:./data/user.c ****         UsrWrite();
+ 225              		.loc 1 154 0
+ 226 000c FFF7FEFF 		bl	UsrWrite
+ 227              	.LVL11:
+ 228              	.L13:
+ 155:./data/user.c ****     }
+ 156:./data/user.c ****     return pUsrCfg->delay;
+ 229              		.loc 1 156 0
+ 230 0010 2368     		ldr	r3, [r4]
+ 157:./data/user.c **** }
+ 231              		.loc 1 157 0
+ 232              		@ sp needed
+ 156:./data/user.c **** }
+ 233              		.loc 1 156 0
+ 234 0012 1879     		ldrb	r0, [r3, #4]
+ 235              		.loc 1 157 0
+ 236 0014 10BD     		pop	{r4, pc}
+ 237              	.L15:
+ 238 0016 C046     		.align	2
+ 239              	.L14:
+ 240 0018 00000000 		.word	.LANCHOR0
+ 241              		.cfi_endproc
+ 242              	.LFE69:
+ 244              		.section	.text.UsrSetDelayI,"ax",%progbits
+ 245              		.align	1
+ 246              		.global	UsrSetDelayI
+ 247              		.code	16
+ 248              		.thumb_func
+ 250              	UsrSetDelayI:
+ 251              	.LFB70:
+ 158:./data/user.c **** 
+ 159:./data/user.c **** int UsrSetDelayI( int delay )
+ 160:./data/user.c **** {
+ 252              		.loc 1 160 0
+ 253              		.cfi_startproc
+ 254              		@ args = 0, pretend = 0, frame = 0
+ 255              		@ frame_needed = 0, uses_anonymous_args = 0
+ 256              	.LVL12:
+ 257 0000 10B5     		push	{r4, lr}
+ 258              	.LCFI4:
+ 259              		.cfi_def_cfa_offset 8
+ 260              		.cfi_offset 4, -8
+ 261              		.cfi_offset 14, -4
+ 262 0002 054C     		ldr	r4, .L18
+ 161:./data/user.c ****     if(delay > 0 )
+ 263              		.loc 1 161 0
+ 264 0004 0028     		cmp	r0, #0
+ 265 0006 03DD     		ble	.L17
+ 162:./data/user.c ****     {
+ 163:./data/user.c ****         pUsrCfg->delayI = delay;
+ 266              		.loc 1 163 0
+ 267 0008 2368     		ldr	r3, [r4]
+ 268 000a 5871     		strb	r0, [r3, #5]
+ 164:./data/user.c ****         UsrWrite();
+ 269              		.loc 1 164 0
+ 270 000c FFF7FEFF 		bl	UsrWrite
+ 271              	.LVL13:
+ 272              	.L17:
+ 165:./data/user.c ****     }
+ 166:./data/user.c ****     return pUsrCfg->delayI;
+ 273              		.loc 1 166 0
+ 274 0010 2368     		ldr	r3, [r4]
+ 167:./data/user.c **** }
+ 275              		.loc 1 167 0
+ 276              		@ sp needed
+ 166:./data/user.c **** }
+ 277              		.loc 1 166 0
+ 278 0012 5879     		ldrb	r0, [r3, #5]
+ 279              		.loc 1 167 0
+ 280 0014 10BD     		pop	{r4, pc}
+ 281              	.L19:
+ 282 0016 C046     		.align	2
+ 283              	.L18:
+ 284 0018 00000000 		.word	.LANCHOR0
+ 285              		.cfi_endproc
+ 286              	.LFE70:
+ 288              		.section	.text.UsrSetIed,"ax",%progbits
+ 289              		.align	1
+ 290              		.global	UsrSetIed
+ 291              		.code	16
+ 292              		.thumb_func
+ 294              	UsrSetIed:
+ 295              	.LFB71:
+ 168:./data/user.c **** 
+ 169:./data/user.c **** int UsrSetIed( int ed )
+ 170:./data/user.c **** {
+ 296              		.loc 1 170 0
+ 297              		.cfi_startproc
+ 298              		@ args = 0, pretend = 0, frame = 0
+ 299              		@ frame_needed = 0, uses_anonymous_args = 0
+ 300              	.LVL14:
+ 301 0000 10B5     		push	{r4, lr}
+ 302              	.LCFI5:
+ 303              		.cfi_def_cfa_offset 8
+ 304              		.cfi_offset 4, -8
+ 305              		.cfi_offset 14, -4
+ 306 0002 094C     		ldr	r4, .L22
+ 171:./data/user.c ****     if( ed >= 5 )
+ 307              		.loc 1 171 0
+ 308 0004 0428     		cmp	r0, #4
+ 309 0006 09DD     		ble	.L21
+ 172:./data/user.c ****     {
+ 173:./data/user.c ****         pUsrCfg->Aed = ed;
+ 310              		.loc 1 173 0
+ 311 0008 2368     		ldr	r3, [r4]
+ 312 000a 80B2     		uxth	r0, r0
+ 313              	.LVL15:
+ 314 000c C2B2     		uxtb	r2, r0
+ 315 000e 000A     		lsrs	r0, r0, #8
+ 316 0010 DA71     		strb	r2, [r3, #7]
+ 317 0012 1872     		strb	r0, [r3, #8]
+ 174:./data/user.c ****         pUsrCfg->Abj = ed;
+ 318              		.loc 1 174 0
+ 319 0014 5A72     		strb	r2, [r3, #9]
+ 320 0016 9872     		strb	r0, [r3, #10]
+ 175:./data/user.c ****         UsrWrite();
+ 321              		.loc 1 175 0
+ 322 0018 FFF7FEFF 		bl	UsrWrite
+ 323              	.LVL16:
+ 324              	.L21:
+ 176:./data/user.c ****     }
+ 177:./data/user.c ****     return pUsrCfg->Aed;
+ 325              		.loc 1 177 0
+ 326 001c 2268     		ldr	r2, [r4]
+ 178:./data/user.c **** }
+ 327              		.loc 1 178 0
+ 328              		@ sp needed
+ 177:./data/user.c **** }
+ 329              		.loc 1 177 0
+ 330 001e 107A     		ldrb	r0, [r2, #8]
+ 331 0020 D379     		ldrb	r3, [r2, #7]
+ 332 0022 0002     		lsls	r0, r0, #8
+ 333 0024 1843     		orrs	r0, r3
+ 334              		.loc 1 178 0
+ 335 0026 10BD     		pop	{r4, pc}
+ 336              	.L23:
+ 337              		.align	2
+ 338              	.L22:
+ 339 0028 00000000 		.word	.LANCHOR0
+ 340              		.cfi_endproc
+ 341              	.LFE71:
+ 343              		.section	.text.UsrSetIbj,"ax",%progbits
+ 344              		.align	1
+ 345              		.global	UsrSetIbj
+ 346              		.code	16
+ 347              		.thumb_func
+ 349              	UsrSetIbj:
+ 350              	.LFB72:
+ 179:./data/user.c **** 
+ 180:./data/user.c **** int UsrSetIbj( int bj )
+ 181:./data/user.c **** {
+ 351              		.loc 1 181 0
+ 352              		.cfi_startproc
+ 353              		@ args = 0, pretend = 0, frame = 0
+ 354              		@ frame_needed = 0, uses_anonymous_args = 0
+ 355              	.LVL17:
+ 356 0000 10B5     		push	{r4, lr}
+ 357              	.LCFI6:
+ 358              		.cfi_def_cfa_offset 8
+ 359              		.cfi_offset 4, -8
+ 360              		.cfi_offset 14, -4
+ 361 0002 0B4C     		ldr	r4, .L26
+ 182:./data/user.c ****     if( bj > 0 && bj <= pUsrCfg->Aed)
+ 362              		.loc 1 182 0
+ 363 0004 0028     		cmp	r0, #0
+ 364 0006 0CDD     		ble	.L25
+ 365              		.loc 1 182 0 is_stmt 0 discriminator 1
+ 366 0008 2368     		ldr	r3, [r4]
+ 367 000a 1A7A     		ldrb	r2, [r3, #8]
+ 368 000c D979     		ldrb	r1, [r3, #7]
+ 369 000e 1202     		lsls	r2, r2, #8
+ 370 0010 0A43     		orrs	r2, r1
+ 371 0012 9042     		cmp	r0, r2
+ 372 0014 05DC     		bgt	.L25
+ 183:./data/user.c ****     {
+ 184:./data/user.c ****         pUsrCfg->Abj = bj;
+ 373              		.loc 1 184 0 is_stmt 1
+ 374 0016 80B2     		uxth	r0, r0
+ 375              	.LVL18:
+ 376 0018 5872     		strb	r0, [r3, #9]
+ 377 001a 000A     		lsrs	r0, r0, #8
+ 378 001c 9872     		strb	r0, [r3, #10]
+ 185:./data/user.c ****         UsrWrite();
+ 379              		.loc 1 185 0
+ 380 001e FFF7FEFF 		bl	UsrWrite
+ 381              	.LVL19:
+ 382              	.L25:
+ 186:./data/user.c ****     }
+ 187:./data/user.c ****     return pUsrCfg->Abj;
+ 383              		.loc 1 187 0
+ 384 0022 2268     		ldr	r2, [r4]
+ 188:./data/user.c **** }
+ 385              		.loc 1 188 0
+ 386              		@ sp needed
+ 187:./data/user.c **** }
+ 387              		.loc 1 187 0
+ 388 0024 907A     		ldrb	r0, [r2, #10]
+ 389 0026 537A     		ldrb	r3, [r2, #9]
+ 390 0028 0002     		lsls	r0, r0, #8
+ 391 002a 1843     		orrs	r0, r3
+ 392              		.loc 1 188 0
+ 393 002c 10BD     		pop	{r4, pc}
+ 394              	.L27:
+ 395 002e C046     		.align	2
+ 396              	.L26:
+ 397 0030 00000000 		.word	.LANCHOR0
+ 398              		.cfi_endproc
+ 399              	.LFE72:
+ 401              		.section	.text.UsrSetVbj,"ax",%progbits
+ 402              		.align	1
+ 403              		.global	UsrSetVbj
+ 404              		.code	16
+ 405              		.thumb_func
+ 407              	UsrSetVbj:
+ 408              	.LFB73:
+ 189:./data/user.c **** 
+ 190:./data/user.c **** int UsrSetVbj( int bj )
+ 191:./data/user.c **** {
+ 409              		.loc 1 191 0
+ 410              		.cfi_startproc
+ 411              		@ args = 0, pretend = 0, frame = 0
+ 412              		@ frame_needed = 0, uses_anonymous_args = 0
+ 413              	.LVL20:
+ 414 0000 10B5     		push	{r4, lr}
+ 415              	.LCFI7:
+ 416              		.cfi_def_cfa_offset 8
+ 417              		.cfi_offset 4, -8
+ 418              		.cfi_offset 14, -4
+ 419 0002 084C     		ldr	r4, .L30
+ 192:./data/user.c ****     if( bj > 5)
+ 420              		.loc 1 192 0
+ 421 0004 0528     		cmp	r0, #5
+ 422 0006 06DD     		ble	.L29
+ 193:./data/user.c ****     {
+ 194:./data/user.c ****         pUsrCfg->Vbj = bj;
+ 423              		.loc 1 194 0
+ 424 0008 2368     		ldr	r3, [r4]
+ 425 000a 80B2     		uxth	r0, r0
+ 426              	.LVL21:
+ 427 000c 5873     		strb	r0, [r3, #13]
+ 428 000e 000A     		lsrs	r0, r0, #8
+ 429 0010 9873     		strb	r0, [r3, #14]
+ 195:./data/user.c ****         UsrWrite();
+ 430              		.loc 1 195 0
+ 431 0012 FFF7FEFF 		bl	UsrWrite
+ 432              	.LVL22:
+ 433              	.L29:
+ 196:./data/user.c ****     }
+ 197:./data/user.c ****     return pUsrCfg->Vbj;
+ 434              		.loc 1 197 0
+ 435 0016 2268     		ldr	r2, [r4]
+ 198:./data/user.c **** }
+ 436              		.loc 1 198 0
+ 437              		@ sp needed
+ 197:./data/user.c **** }
+ 438              		.loc 1 197 0
+ 439 0018 907B     		ldrb	r0, [r2, #14]
+ 440 001a 537B     		ldrb	r3, [r2, #13]
+ 441 001c 0002     		lsls	r0, r0, #8
+ 442 001e 1843     		orrs	r0, r3
+ 443              		.loc 1 198 0
+ 444 0020 10BD     		pop	{r4, pc}
+ 445              	.L31:
+ 446 0022 C046     		.align	2
+ 447              	.L30:
+ 448 0024 00000000 		.word	.LANCHOR0
+ 449              		.cfi_endproc
+ 450              	.LFE73:
+ 452              		.section	.text.UsrSetVqy,"ax",%progbits
+ 453              		.align	1
+ 454              		.global	UsrSetVqy
+ 455              		.code	16
+ 456              		.thumb_func
+ 458              	UsrSetVqy:
+ 459              	.LFB74:
+ 199:./data/user.c **** 
+ 200:./data/user.c **** int UsrSetVqy( int bj )
+ 201:./data/user.c **** {
+ 460              		.loc 1 201 0
+ 461              		.cfi_startproc
+ 462              		@ args = 0, pretend = 0, frame = 0
+ 463              		@ frame_needed = 0, uses_anonymous_args = 0
+ 464              	.LVL23:
+ 465 0000 10B5     		push	{r4, lr}
+ 466              	.LCFI8:
+ 467              		.cfi_def_cfa_offset 8
+ 468              		.cfi_offset 4, -8
+ 469              		.cfi_offset 14, -4
+ 470 0002 084C     		ldr	r4, .L34
+ 202:./data/user.c ****     if( bj > 5)
+ 471              		.loc 1 202 0
+ 472 0004 0528     		cmp	r0, #5
+ 473 0006 06DD     		ble	.L33
+ 203:./data/user.c ****     {
+ 204:./data/user.c ****         pUsrCfg->Vqy = bj;
+ 474              		.loc 1 204 0
+ 475 0008 2368     		ldr	r3, [r4]
+ 476 000a 80B2     		uxth	r0, r0
+ 477              	.LVL24:
+ 478 000c D872     		strb	r0, [r3, #11]
+ 479 000e 000A     		lsrs	r0, r0, #8
+ 480 0010 1873     		strb	r0, [r3, #12]
+ 205:./data/user.c ****         UsrWrite();
+ 481              		.loc 1 205 0
+ 482 0012 FFF7FEFF 		bl	UsrWrite
+ 483              	.LVL25:
+ 484              	.L33:
+ 206:./data/user.c ****     }
+ 207:./data/user.c ****     return pUsrCfg->Vqy;
+ 485              		.loc 1 207 0
+ 486 0016 2268     		ldr	r2, [r4]
+ 208:./data/user.c **** }
+ 487              		.loc 1 208 0
+ 488              		@ sp needed
+ 207:./data/user.c **** }
+ 489              		.loc 1 207 0
+ 490 0018 107B     		ldrb	r0, [r2, #12]
+ 491 001a D37A     		ldrb	r3, [r2, #11]
+ 492 001c 0002     		lsls	r0, r0, #8
+ 493 001e 1843     		orrs	r0, r3
+ 494              		.loc 1 208 0
+ 495 0020 10BD     		pop	{r4, pc}
+ 496              	.L35:
+ 497 0022 C046     		.align	2
+ 498              	.L34:
+ 499 0024 00000000 		.word	.LANCHOR0
+ 500              		.cfi_endproc
+ 501              	.LFE74:
+ 503              		.section	.text.UsrSetCnt,"ax",%progbits
+ 504              		.align	1
+ 505              		.global	UsrSetCnt
+ 506              		.code	16
+ 507              		.thumb_func
+ 509              	UsrSetCnt:
+ 510              	.LFB77:
+ 209:./data/user.c **** 
+ 210:./data/user.c **** int UsrSetWbj( int bj )
+ 211:./data/user.c **** {
+ 212:./data/user.c ****     if( bj > 40 && bj <= 160 )
+ 213:./data/user.c ****     {
+ 214:./data/user.c ****         pUsrCfg->WDCfg.bj = bj;
+ 215:./data/user.c ****         UsrWrite();
+ 216:./data/user.c ****     }
+ 217:./data/user.c ****     return pUsrCfg->WDCfg.bj;
+ 218:./data/user.c **** }
+ 219:./data/user.c **** 
+ 220:./data/user.c **** int UsrSetSbj( int bj )
+ 221:./data/user.c **** {
+ 222:./data/user.c ****     if( bj > 200 && bj <= 1600 )
+ 223:./data/user.c ****     {
+ 224:./data/user.c ****         pUsrCfg->LDCfg.bj = bj;
+ 225:./data/user.c ****         UsrWrite();
+ 226:./data/user.c ****     }
+ 227:./data/user.c ****     return pUsrCfg->LDCfg.bj;
+ 228:./data/user.c **** }
+ 229:./data/user.c **** 
+ 230:./data/user.c **** int UsrSetCnt( int cnt )
+ 231:./data/user.c **** {
+ 511              		.loc 1 231 0
+ 512              		.cfi_startproc
+ 513              		@ args = 0, pretend = 0, frame = 0
+ 514              		@ frame_needed = 0, uses_anonymous_args = 0
+ 515              	.LVL26:
+ 232:./data/user.c ****     if( cnt > 0 && cnt <= MAX_POINT_COUNT )
+ 516              		.loc 1 232 0
+ 517 0000 431E     		subs	r3, r0, #1
+ 231:./data/user.c ****     if( cnt > 0 && cnt <= MAX_POINT_COUNT )
+ 518              		.loc 1 231 0
+ 519 0002 10B5     		push	{r4, lr}
+ 520              	.LCFI9:
+ 521              		.cfi_def_cfa_offset 8
+ 522              		.cfi_offset 4, -8
+ 523              		.cfi_offset 14, -4
+ 524 0004 044C     		ldr	r4, .L38
+ 525              		.loc 1 232 0
+ 526 0006 072B     		cmp	r3, #7
+ 527 0008 03D8     		bhi	.L37
+ 233:./data/user.c ****     {
+ 234:./data/user.c ****         pUsrCfg->count = cnt;
+ 528              		.loc 1 234 0
+ 529 000a 2368     		ldr	r3, [r4]
+ 530 000c 9870     		strb	r0, [r3, #2]
+ 235:./data/user.c ****         UsrWrite();
+ 531              		.loc 1 235 0
+ 532 000e FFF7FEFF 		bl	UsrWrite
+ 533              	.LVL27:
+ 534              	.L37:
+ 236:./data/user.c ****     }
+ 237:./data/user.c ****     return pUsrCfg->count;
+ 535              		.loc 1 237 0
+ 536 0012 2368     		ldr	r3, [r4]
+ 238:./data/user.c **** }
+ 537              		.loc 1 238 0
+ 538              		@ sp needed
+ 237:./data/user.c **** }
+ 539              		.loc 1 237 0
+ 540 0014 9878     		ldrb	r0, [r3, #2]
+ 541              		.loc 1 238 0
+ 542 0016 10BD     		pop	{r4, pc}
+ 543              	.L39:
+ 544              		.align	2
+ 545              	.L38:
+ 546 0018 00000000 		.word	.LANCHOR0
+ 547              		.cfi_endproc
+ 548              	.LFE77:
+ 550              		.section	.text.UsrSetBD,"ax",%progbits
+ 551              		.align	1
+ 552              		.global	UsrSetBD
+ 553              		.code	16
+ 554              		.thumb_func
+ 556              	UsrSetBD:
+ 557              	.LFB78:
+ 239:./data/user.c **** 
+ 240:./data/user.c **** int UsrSetBD( int cnt )
+ 241:./data/user.c **** {
+ 558              		.loc 1 241 0
+ 559              		.cfi_startproc
+ 560              		@ args = 0, pretend = 0, frame = 0
+ 561              		@ frame_needed = 0, uses_anonymous_args = 0
+ 562              	.LVL28:
+ 563 0000 10B5     		push	{r4, lr}
+ 564              	.LCFI10:
+ 565              		.cfi_def_cfa_offset 8
+ 566              		.cfi_offset 4, -8
+ 567              		.cfi_offset 14, -4
+ 568 0002 094C     		ldr	r4, .L42
+ 242:./data/user.c **** 	if (cnt >= 0) {
+ 569              		.loc 1 242 0
+ 570 0004 0028     		cmp	r0, #0
+ 571 0006 09DB     		blt	.L41
+ 243:./data/user.c **** 		pUsrCfg->BDenable = cnt ? 1 : 0;
+ 572              		.loc 1 243 0
+ 573 0008 0121     		movs	r1, #1
+ 574 000a 431E     		subs	r3, r0, #1
+ 575 000c 9841     		sbcs	r0, r0, r3
+ 576              	.LVL29:
+ 577 000e 2268     		ldr	r2, [r4]
+ 578 0010 9379     		ldrb	r3, [r2, #6]
+ 579 0012 8B43     		bics	r3, r1
+ 580 0014 1843     		orrs	r0, r3
+ 581 0016 9071     		strb	r0, [r2, #6]
+ 244:./data/user.c **** 		UsrWrite();
+ 582              		.loc 1 244 0
+ 583 0018 FFF7FEFF 		bl	UsrWrite
+ 584              	.LVL30:
+ 585              	.L41:
+ 245:./data/user.c **** 	}
+ 246:./data/user.c **** 	return pUsrCfg->BDenable;
+ 586              		.loc 1 246 0
+ 587 001c 2368     		ldr	r3, [r4]
+ 247:./data/user.c **** }
+ 588              		.loc 1 247 0
+ 589              		@ sp needed
+ 246:./data/user.c **** }
+ 590              		.loc 1 246 0
+ 591 001e 9879     		ldrb	r0, [r3, #6]
+ 592 0020 C007     		lsls	r0, r0, #31
+ 593 0022 C00F     		lsrs	r0, r0, #31
+ 594 0024 C0B2     		uxtb	r0, r0
+ 595              		.loc 1 247 0
+ 596 0026 10BD     		pop	{r4, pc}
+ 597              	.L43:
+ 598              		.align	2
+ 599              	.L42:
+ 600 0028 00000000 		.word	.LANCHOR0
+ 601              		.cfi_endproc
+ 602              	.LFE78:
+ 604              		.section	.text.UsrSetWDJZ,"ax",%progbits
+ 605              		.align	1
+ 606              		.global	UsrSetWDJZ
+ 607              		.code	16
+ 608              		.thumb_func
+ 610              	UsrSetWDJZ:
+ 611              	.LFB79:
+ 248:./data/user.c **** 
+ 249:./data/user.c **** 
+ 250:./data/user.c **** int UsrSetWDJZ(int cnt)
+ 251:./data/user.c **** {
+ 612              		.loc 1 251 0
+ 613              		.cfi_startproc
+ 614              		@ args = 0, pretend = 0, frame = 0
+ 615              		@ frame_needed = 0, uses_anonymous_args = 0
+ 616              	.LVL31:
+ 617 0000 10B5     		push	{r4, lr}
+ 618              	.LCFI11:
+ 619              		.cfi_def_cfa_offset 8
+ 620              		.cfi_offset 4, -8
+ 621              		.cfi_offset 14, -4
+ 622 0002 094C     		ldr	r4, .L46
+ 252:./data/user.c **** 	if (cnt >= 0) {
+ 623              		.loc 1 252 0
+ 624 0004 0028     		cmp	r0, #0
+ 625 0006 0ADB     		blt	.L45
+ 253:./data/user.c **** 		pUsrCfg->WDJZen = cnt ? 1 : 0;
+ 626              		.loc 1 253 0
+ 627 0008 431E     		subs	r3, r0, #1
+ 628 000a 9841     		sbcs	r0, r0, r3
+ 629              	.LVL32:
+ 630 000c 0221     		movs	r1, #2
+ 631 000e 2268     		ldr	r2, [r4]
+ 632 0010 4000     		lsls	r0, r0, #1
+ 633 0012 9379     		ldrb	r3, [r2, #6]
+ 634 0014 8B43     		bics	r3, r1
+ 635 0016 1843     		orrs	r0, r3
+ 636 0018 9071     		strb	r0, [r2, #6]
+ 254:./data/user.c **** 		UsrWrite();
+ 637              		.loc 1 254 0
+ 638 001a FFF7FEFF 		bl	UsrWrite
+ 639              	.LVL33:
+ 640              	.L45:
+ 255:./data/user.c **** 	}
+ 256:./data/user.c **** 	return pUsrCfg->WDJZen;
+ 641              		.loc 1 256 0
+ 642 001e 2368     		ldr	r3, [r4]
+ 257:./data/user.c **** }
+ 643              		.loc 1 257 0
+ 644              		@ sp needed
+ 256:./data/user.c **** }
+ 645              		.loc 1 256 0
+ 646 0020 9879     		ldrb	r0, [r3, #6]
+ 647 0022 8007     		lsls	r0, r0, #30
+ 648 0024 C00F     		lsrs	r0, r0, #31
+ 649              		.loc 1 257 0
+ 650 0026 10BD     		pop	{r4, pc}
+ 651              	.L47:
+ 652              		.align	2
+ 653              	.L46:
+ 654 0028 00000000 		.word	.LANCHOR0
+ 655              		.cfi_endproc
+ 656              	.LFE79:
+ 658              		.section	.text.UsrSetType,"ax",%progbits
+ 659              		.align	1
+ 660              		.global	UsrSetType
+ 661              		.code	16
+ 662              		.thumb_func
+ 664              	UsrSetType:
+ 665              	.LFB80:
+ 258:./data/user.c **** 
+ 259:./data/user.c **** int UsrSetType( int type )
+ 260:./data/user.c **** {
+ 666              		.loc 1 260 0
+ 667              		.cfi_startproc
+ 668              		@ args = 0, pretend = 0, frame = 0
+ 669              		@ frame_needed = 0, uses_anonymous_args = 0
+ 670              	.LVL34:
+ 671 0000 F8B5     		push	{r3, r4, r5, r6, r7, lr}
+ 672              	.LCFI12:
+ 673              		.cfi_def_cfa_offset 24
+ 674              		.cfi_offset 3, -24
+ 675              		.cfi_offset 4, -20
+ 676              		.cfi_offset 5, -16
+ 677              		.cfi_offset 6, -12
+ 678              		.cfi_offset 7, -8
+ 679              		.cfi_offset 14, -4
+ 261:./data/user.c **** 	if( type <= 0 || type >= eCGQend )
+ 680              		.loc 1 261 0
+ 681 0002 431E     		subs	r3, r0, #1
+ 682 0004 1E4C     		ldr	r4, .L65
+ 683 0006 102B     		cmp	r3, #16
+ 684 0008 36D8     		bhi	.L64
+ 685 000a 1128     		cmp	r0, #17
+ 686 000c 05D0     		beq	.L51
+ 687 000e 0123     		movs	r3, #1
+ 688 0010 C222     		movs	r2, #194
+ 689 0012 8340     		lsls	r3, r3, r0
+ 690 0014 5202     		lsls	r2, r2, #9
+ 691 0016 1342     		tst	r3, r2
+ 692 0018 2ED1     		bne	.L64
+ 693              	.L51:
+ 694              	.LVL35:
+ 695              	.LBB14:
+ 696              	.LBB15:
+ 262:./data/user.c **** 	{
+ 263:./data/user.c **** 		return pUsrCfg->type;
+ 264:./data/user.c **** 	}
+ 265:./data/user.c ****     switch( type )
+ 266:./data/user.c ****     {
+ 267:./data/user.c ****     case eCGQFJ:
+ 268:./data/user.c ****     case eCGQld:        /*15 8路漏电、温度、电流*/
+ 269:./data/user.c ****     case eCGQTX:        /*16 255路二总线模块 */
+ 270:./data/user.c ****             return pUsrCfg->type;
+ 271:./data/user.c ****     }
+ 272:./data/user.c **** 
+ 273:./data/user.c ****     pUsrCfg->type = type;
+ 697              		.loc 1 273 0
+ 698 001a 2368     		ldr	r3, [r4]
+ 274:./data/user.c ****     pUsrCfg->Aed     = 100;
+ 699              		.loc 1 274 0
+ 700 001c 6421     		movs	r1, #100
+ 275:./data/user.c ****     pUsrCfg->Abj     = 100;
+ 701              		.loc 1 275 0
+ 702 001e 1D00     		movs	r5, r3
+ 276:./data/user.c ****     pUsrCfg->Vqy     = 187;
+ 703              		.loc 1 276 0
+ 704 0020 1E00     		movs	r6, r3
+ 274:./data/user.c ****     pUsrCfg->Aed     = 100;
+ 705              		.loc 1 274 0
+ 706 0022 0022     		movs	r2, #0
+ 707 0024 D971     		strb	r1, [r3, #7]
+ 275:./data/user.c ****     pUsrCfg->Abj     = 100;
+ 708              		.loc 1 275 0
+ 709 0026 5972     		strb	r1, [r3, #9]
+ 710              		.loc 1 276 0
+ 711 0028 A939     		subs	r1, r1, #169
+ 712 002a D972     		strb	r1, [r3, #11]
+ 713 002c 0B36     		adds	r6, r6, #11
+ 277:./data/user.c ****     pUsrCfg->Vbj     = 242;
+ 714              		.loc 1 277 0
+ 715 002e 0D35     		adds	r5, r5, #13
+ 716 0030 3731     		adds	r1, r1, #55
+ 273:./data/user.c ****     pUsrCfg->Aed     = 100;
+ 717              		.loc 1 273 0
+ 718 0032 D870     		strb	r0, [r3, #3]
+ 274:./data/user.c ****     pUsrCfg->Abj     = 100;
+ 719              		.loc 1 274 0
+ 720 0034 1A72     		strb	r2, [r3, #8]
+ 275:./data/user.c ****     pUsrCfg->Vqy     = 187;
+ 721              		.loc 1 275 0
+ 722 0036 9A72     		strb	r2, [r3, #10]
+ 276:./data/user.c ****     pUsrCfg->Vbj     = 242;
+ 723              		.loc 1 276 0
+ 724 0038 7270     		strb	r2, [r6, #1]
+ 725              		.loc 1 277 0
+ 726 003a 5973     		strb	r1, [r3, #13]
+ 727 003c 6A70     		strb	r2, [r5, #1]
+ 728 003e 0E28     		cmp	r0, #14
+ 729 0040 16D8     		bhi	.L52
+ 730 0042 0F31     		adds	r1, r1, #15
+ 731 0044 0F00     		movs	r7, r1
+ 732 0046 8740     		lsls	r7, r7, r0
+ 733 0048 3800     		movs	r0, r7
+ 734              	.LVL36:
+ 735 004a 0E4F     		ldr	r7, .L65+4
+ 736 004c 3842     		tst	r0, r7
+ 737 004e 08D1     		bne	.L53
+ 738 0050 8C22     		movs	r2, #140
+ 739 0052 9201     		lsls	r2, r2, #6
+ 740 0054 1042     		tst	r0, r2
+ 741 0056 0BD0     		beq	.L52
+ 278:./data/user.c **** 
+ 279:./data/user.c ****     switch( type )
+ 280:./data/user.c ****     {
+ 281:./data/user.c ****         case eCGQvaw2:
+ 282:./data/user.c ****         case CGQ_TYPE_VI_W:
+ 283:./data/user.c ****         case CGQ_TYPE_VA_W:
+ 284:./data/user.c ****             pUsrCfg->Vqy     = 323;
+ 742              		.loc 1 284 0
+ 743 0058 4322     		movs	r2, #67
+ 744 005a DA72     		strb	r2, [r3, #11]
+ 745 005c 7170     		strb	r1, [r6, #1]
+ 285:./data/user.c ****             pUsrCfg->Vbj     = 418;
+ 746              		.loc 1 285 0
+ 747 005e A13A     		subs	r2, r2, #161
+ 748 0060 04E0     		b	.L63
+ 749              	.L53:
+ 286:./data/user.c ****             break;
+ 287:./data/user.c ****         case eCGQvd:
+ 288:./data/user.c ****         case eCGQvdi:
+ 289:./data/user.c ****             pUsrCfg->Vqy     = 204;
+ 750              		.loc 1 289 0
+ 751 0062 3420     		movs	r0, #52
+ 752 0064 4042     		rsbs	r0, r0, #0
+ 753 0066 D872     		strb	r0, [r3, #11]
+ 754 0068 7270     		strb	r2, [r6, #1]
+ 290:./data/user.c ****             pUsrCfg->Vbj     = 262;
+ 755              		.loc 1 290 0
+ 756 006a 0622     		movs	r2, #6
+ 757              	.L63:
+ 758 006c 5A73     		strb	r2, [r3, #13]
+ 759 006e 6970     		strb	r1, [r5, #1]
+ 760              	.L52:
+ 291:./data/user.c ****             break;
+ 292:./data/user.c ****     }
+ 293:./data/user.c **** 
+ 294:./data/user.c ****     UsrWrite();
+ 761              		.loc 1 294 0
+ 762 0070 FFF7FEFF 		bl	UsrWrite
+ 763              	.LVL37:
+ 295:./data/user.c ****     reset_cmd();
+ 764              		.loc 1 295 0
+ 765 0074 FFF7FEFF 		bl	reset_cmd
+ 766              	.LVL38:
+ 767              	.L64:
+ 296:./data/user.c ****     return pUsrCfg->type;
+ 768              		.loc 1 296 0
+ 769 0078 2368     		ldr	r3, [r4]
+ 770              	.LBE15:
+ 771              	.LBE14:
+ 297:./data/user.c **** }
+ 772              		.loc 1 297 0
+ 773              		@ sp needed
+ 774              	.LBB17:
+ 775              	.LBB16:
+ 296:./data/user.c ****     return pUsrCfg->type;
+ 776              		.loc 1 296 0
+ 777 007a D878     		ldrb	r0, [r3, #3]
+ 778              	.LBE16:
+ 779              	.LBE17:
+ 780              		.loc 1 297 0
+ 781 007c F8BD     		pop	{r3, r4, r5, r6, r7, pc}
+ 782              	.L66:
+ 783 007e C046     		.align	2
+ 784              	.L65:
+ 785 0080 00000000 		.word	.LANCHOR0
+ 786 0084 40400000 		.word	16448
+ 787              		.cfi_endproc
+ 788              	.LFE80:
+ 790              		.section	.text.UserSetDef,"ax",%progbits
+ 791              		.align	1
+ 792              		.global	UserSetDef
+ 793              		.code	16
+ 794              		.thumb_func
+ 796              	UserSetDef:
+ 797              	.LFB66:
+  78:./data/user.c ****     pUsrCfg->address = 1;
+ 798              		.loc 1 78 0
+ 799              		.cfi_startproc
+ 800              		@ args = 0, pretend = 0, frame = 0
+ 801              		@ frame_needed = 0, uses_anonymous_args = 0
+  79:./data/user.c ****     pUsrCfg->delay   = 4;
+ 802              		.loc 1 79 0
+ 803 0000 0122     		movs	r2, #1
+ 804 0002 074B     		ldr	r3, .L68
+  78:./data/user.c ****     pUsrCfg->address = 1;
+ 805              		.loc 1 78 0
+ 806 0004 10B5     		push	{r4, lr}
+ 807              	.LCFI13:
+ 808              		.cfi_def_cfa_offset 8
+ 809              		.cfi_offset 4, -8
+ 810              		.cfi_offset 14, -4
+  79:./data/user.c ****     pUsrCfg->delay   = 4;
+ 811              		.loc 1 79 0
+ 812 0006 1B68     		ldr	r3, [r3]
+  89:./data/user.c **** 
+ 813              		.loc 1 89 0
+ 814              		@ sp needed
+  79:./data/user.c ****     pUsrCfg->delay   = 4;
+ 815              		.loc 1 79 0
+ 816 0008 1A70     		strb	r2, [r3]
+ 817 000a 0022     		movs	r2, #0
+ 818 000c 5A70     		strb	r2, [r3, #1]
+  80:./data/user.c **** #if OEM == 1
+ 819              		.loc 1 80 0
+ 820 000e 0432     		adds	r2, r2, #4
+ 821 0010 1A71     		strb	r2, [r3, #4]
+  86:./data/user.c **** #endif
+ 822              		.loc 1 86 0
+ 823 0012 0332     		adds	r2, r2, #3
+ 824 0014 9A70     		strb	r2, [r3, #2]
+  88:./data/user.c **** }
+ 825              		.loc 1 88 0
+ 826 0016 D878     		ldrb	r0, [r3, #3]
+ 827 0018 FFF7FEFF 		bl	UsrSetType
+ 828              	.LVL39:
+  89:./data/user.c **** 
+ 829              		.loc 1 89 0
+ 830 001c 10BD     		pop	{r4, pc}
+ 831              	.L69:
+ 832 001e C046     		.align	2
+ 833              	.L68:
+ 834 0020 00000000 		.word	.LANCHOR0
+ 835              		.cfi_endproc
+ 836              	.LFE66:
+ 838              		.section	.text.UsrDefault,"ax",%progbits
+ 839              		.align	1
+ 840              		.global	UsrDefault
+ 841              		.code	16
+ 842              		.thumb_func
+ 844              	UsrDefault:
+ 845              	.LFB67:
+  92:./data/user.c ****     pUsrCfg->address = 1;
+ 846              		.loc 1 92 0
+ 847              		.cfi_startproc
+ 848              		@ args = 0, pretend = 0, frame = 0
+ 849              		@ frame_needed = 0, uses_anonymous_args = 0
+  97:./data/user.c **** #endif
+ 850              		.loc 1 97 0
+ 851 0000 0721     		movs	r1, #7
+  93:./data/user.c **** #if OEM == 1
+ 852              		.loc 1 93 0
+ 853 0002 274B     		ldr	r3, .L71
+  92:./data/user.c ****     pUsrCfg->address = 1;
+ 854              		.loc 1 92 0
+ 855 0004 70B5     		push	{r4, r5, r6, lr}
+ 856              	.LCFI14:
+ 857              		.cfi_def_cfa_offset 16
+ 858              		.cfi_offset 4, -16
+ 859              		.cfi_offset 5, -12
+ 860              		.cfi_offset 6, -8
+ 861              		.cfi_offset 14, -4
+  93:./data/user.c **** #if OEM == 1
+ 862              		.loc 1 93 0
+ 863 0006 1B68     		ldr	r3, [r3]
+ 105:./data/user.c ****     pUsrCfg->Vbj     = 242;
+ 864              		.loc 1 105 0
+ 865 0008 4525     		movs	r5, #69
+  97:./data/user.c **** #endif
+ 866              		.loc 1 97 0
+ 867 000a 9970     		strb	r1, [r3, #2]
+ 100:./data/user.c ****     pUsrCfg->delayI  = 50;
+ 868              		.loc 1 100 0
+ 869 000c 0D31     		adds	r1, r1, #13
+ 870 000e 1971     		strb	r1, [r3, #4]
+ 101:./data/user.c ****     pUsrCfg->enable  = 0;
+ 871              		.loc 1 101 0
+ 872 0010 1E31     		adds	r1, r1, #30
+ 873 0012 5971     		strb	r1, [r3, #5]
+ 108:./data/user.c **** 
+ 874              		.loc 1 108 0
+ 875 0014 0221     		movs	r1, #2
+  93:./data/user.c **** #if OEM == 1
+ 876              		.loc 1 93 0
+ 877 0016 0022     		movs	r2, #0
+ 878 0018 0120     		movs	r0, #1
+ 103:./data/user.c ****     pUsrCfg->Abj     = 100;
+ 879              		.loc 1 103 0
+ 880 001a 6424     		movs	r4, #100
+ 105:./data/user.c ****     pUsrCfg->Vbj     = 242;
+ 881              		.loc 1 105 0
+ 882 001c 6D42     		rsbs	r5, r5, #0
+ 883 001e DD72     		strb	r5, [r3, #11]
+ 106:./data/user.c **** 
+ 884              		.loc 1 106 0
+ 885 0020 3735     		adds	r5, r5, #55
+ 886 0022 5D73     		strb	r5, [r3, #13]
+ 108:./data/user.c **** 
+ 887              		.loc 1 108 0
+ 888 0024 9971     		strb	r1, [r3, #6]
+ 119:./data/user.c **** 
+ 889              		.loc 1 119 0
+ 890 0026 0235     		adds	r5, r5, #2
+ 110:./data/user.c ****     pUsrCfg->JZ[1] = USER_JZV;
+ 891              		.loc 1 110 0
+ 892 0028 4918     		adds	r1, r1, r1
+  93:./data/user.c **** #if OEM == 1
+ 893              		.loc 1 93 0
+ 894 002a 1870     		strb	r0, [r3]
+ 895 002c 5A70     		strb	r2, [r3, #1]
+  99:./data/user.c ****     pUsrCfg->delay   = 20;
+ 896              		.loc 1 99 0
+ 897 002e D870     		strb	r0, [r3, #3]
+ 103:./data/user.c ****     pUsrCfg->Abj     = 100;
+ 898              		.loc 1 103 0
+ 899 0030 DC71     		strb	r4, [r3, #7]
+ 900 0032 1A72     		strb	r2, [r3, #8]
+ 104:./data/user.c ****     pUsrCfg->Vqy     = 187;
+ 901              		.loc 1 104 0
+ 902 0034 5C72     		strb	r4, [r3, #9]
+ 903 0036 9A72     		strb	r2, [r3, #10]
+ 105:./data/user.c ****     pUsrCfg->Vbj     = 242;
+ 904              		.loc 1 105 0
+ 905 0038 1A73     		strb	r2, [r3, #12]
+ 106:./data/user.c **** 
+ 906              		.loc 1 106 0
+ 907 003a 9A73     		strb	r2, [r3, #14]
+ 110:./data/user.c ****     pUsrCfg->JZ[1] = USER_JZV;
+ 908              		.loc 1 110 0
+ 909 003c DA73     		strb	r2, [r3, #15]
+ 910 003e 1974     		strb	r1, [r3, #16]
+ 111:./data/user.c ****     pUsrCfg->JZ[2] = USER_JZV;
+ 911              		.loc 1 111 0
+ 912 0040 5A74     		strb	r2, [r3, #17]
+ 913 0042 9974     		strb	r1, [r3, #18]
+ 112:./data/user.c **** 
+ 914              		.loc 1 112 0
+ 915 0044 DA74     		strb	r2, [r3, #19]
+ 916 0046 1975     		strb	r1, [r3, #20]
+ 114:./data/user.c ****     pUsrCfg->JZ[4] = USER_JZV;
+ 917              		.loc 1 114 0
+ 918 0048 5A75     		strb	r2, [r3, #21]
+ 919 004a 9975     		strb	r1, [r3, #22]
+ 115:./data/user.c ****     pUsrCfg->JZ[5] = USER_JZV;
+ 920              		.loc 1 115 0
+ 921 004c DA75     		strb	r2, [r3, #23]
+ 922 004e 1976     		strb	r1, [r3, #24]
+ 116:./data/user.c **** 
+ 923              		.loc 1 116 0
+ 924 0050 5A76     		strb	r2, [r3, #25]
+ 925 0052 9976     		strb	r1, [r3, #26]
+ 118:./data/user.c ****     pUsrCfg->JZ[7] = USER_JZI;
+ 926              		.loc 1 118 0
+ 927 0054 DA76     		strb	r2, [r3, #27]
+ 928 0056 1977     		strb	r1, [r3, #28]
+ 123:./data/user.c ****     pUsrCfg->LDCfg.bj  = 800;
+ 929              		.loc 1 123 0
+ 930 0058 4026     		movs	r6, #64
+ 119:./data/user.c **** 
+ 931              		.loc 1 119 0
+ 932 005a 5D77     		strb	r5, [r3, #29]
+ 123:./data/user.c ****     pUsrCfg->LDCfg.bj  = 800;
+ 933              		.loc 1 123 0
+ 934 005c 1D00     		movs	r5, r3
+ 935 005e DE77     		strb	r6, [r3, #31]
+ 936 0060 1F35     		adds	r5, r5, #31
+ 937 0062 3A3E     		subs	r6, r6, #58
+ 119:./data/user.c **** 
+ 938              		.loc 1 119 0
+ 939 0064 9877     		strb	r0, [r3, #30]
+ 123:./data/user.c ****     pUsrCfg->LDCfg.bj  = 800;
+ 940              		.loc 1 123 0
+ 941 0066 6E70     		strb	r6, [r5, #1]
+ 124:./data/user.c ****     pUsrCfg->LDCfg.jz  = 440;
+ 942              		.loc 1 124 0
+ 943 0068 1A36     		adds	r6, r6, #26
+ 944 006a AE70     		strb	r6, [r5, #2]
+ 945 006c 1D3E     		subs	r6, r6, #29
+ 946 006e EE70     		strb	r6, [r5, #3]
+ 125:./data/user.c **** 
+ 947              		.loc 1 125 0
+ 948 0070 4B3E     		subs	r6, r6, #75
+ 949 0072 2E71     		strb	r6, [r5, #4]
+ 128:./data/user.c ****     pUsrCfg->DLCfg.bj  = 100;
+ 950              		.loc 1 128 0
+ 951 0074 2C73     		strb	r4, [r5, #12]
+ 129:./data/user.c ****     pUsrCfg->DLCfg.jz  = 245;
+ 952              		.loc 1 129 0
+ 953 0076 AC73     		strb	r4, [r5, #14]
+ 125:./data/user.c **** 
+ 954              		.loc 1 125 0
+ 955 0078 6871     		strb	r0, [r5, #5]
+ 128:./data/user.c ****     pUsrCfg->DLCfg.bj  = 100;
+ 956              		.loc 1 128 0
+ 957 007a 6A73     		strb	r2, [r5, #13]
+ 129:./data/user.c ****     pUsrCfg->DLCfg.jz  = 245;
+ 958              		.loc 1 129 0
+ 959 007c EA73     		strb	r2, [r5, #15]
+ 130:./data/user.c **** 
+ 960              		.loc 1 130 0
+ 961 007e 1C00     		movs	r4, r3
+ 962 0080 0B25     		movs	r5, #11
+ 963 0082 2F34     		adds	r4, r4, #47
+ 964 0084 6D42     		rsbs	r5, r5, #0
+ 965 0086 2570     		strb	r5, [r4]
+ 966 0088 6270     		strb	r2, [r4, #1]
+ 133:./data/user.c ****     pUsrCfg->WDCfg.jzL = 511;
+ 967              		.loc 1 133 0
+ 968 008a 5B35     		adds	r5, r5, #91
+ 969 008c 0A3C     		subs	r4, r4, #10
+ 970 008e 2570     		strb	r5, [r4]
+ 135:./data/user.c ****     pr_debug("user default\n");
+ 971              		.loc 1 135 0
+ 972 0090 2733     		adds	r3, r3, #39
+ 134:./data/user.c ****     pUsrCfg->WDCfg.jzH = 1024;
+ 973              		.loc 1 134 0
+ 974 0092 513D     		subs	r5, r5, #81
+ 975 0094 2571     		strb	r5, [r4, #4]
+ 133:./data/user.c ****     pUsrCfg->WDCfg.jzL = 511;
+ 976              		.loc 1 133 0
+ 977 0096 6270     		strb	r2, [r4, #1]
+ 134:./data/user.c ****     pUsrCfg->WDCfg.jzH = 1024;
+ 978              		.loc 1 134 0
+ 979 0098 6071     		strb	r0, [r4, #5]
+ 137:./data/user.c **** 
+ 980              		.loc 1 137 0
+ 981              		@ sp needed
+ 135:./data/user.c ****     pr_debug("user default\n");
+ 982              		.loc 1 135 0
+ 983 009a 1A70     		strb	r2, [r3]
+ 984 009c 5970     		strb	r1, [r3, #1]
+ 137:./data/user.c **** 
+ 985              		.loc 1 137 0
+ 986 009e 70BD     		pop	{r4, r5, r6, pc}
+ 987              	.L72:
+ 988              		.align	2
+ 989              	.L71:
+ 990 00a0 00000000 		.word	.LANCHOR0
+ 991              		.cfi_endproc
+ 992              	.LFE67:
+ 994              		.section	.text.UsrInit,"ax",%progbits
+ 995              		.align	1
+ 996              		.global	UsrInit
+ 997              		.code	16
+ 998              		.thumb_func
+ 1000              	UsrInit:
+ 1001              	.LFB65:
+  66:./data/user.c ****     fmc_Init();
+ 1002              		.loc 1 66 0
+ 1003              		.cfi_startproc
+ 1004              		@ args = 0, pretend = 0, frame = 0
+ 1005              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1006 0000 10B5     		push	{r4, lr}
+ 1007              	.LCFI15:
+ 1008              		.cfi_def_cfa_offset 8
+ 1009              		.cfi_offset 4, -8
+ 1010              		.cfi_offset 14, -4
+  67:./data/user.c ****     if( !UsrRead(0))
+ 1011              		.loc 1 67 0
+ 1012 0002 FFF7FEFF 		bl	fmc_Init
+ 1013              	.LVL40:
+  68:./data/user.c ****     {
+ 1014              		.loc 1 68 0
+ 1015 0006 0020     		movs	r0, #0
+ 1016 0008 FFF7FEFF 		bl	UsrRead
+ 1017              	.LVL41:
+ 1018 000c 0028     		cmp	r0, #0
+ 1019 000e 03D1     		bne	.L74
+  70:./data/user.c ****         UsrWrite();
+ 1020              		.loc 1 70 0
+ 1021 0010 FFF7FEFF 		bl	UsrDefault
+ 1022              	.LVL42:
+  71:./data/user.c ****     }
+ 1023              		.loc 1 71 0
+ 1024 0014 FFF7FEFF 		bl	UsrWrite
+ 1025              	.LVL43:
+ 1026              	.L74:
+  73:./data/user.c **** }
+ 1027              		.loc 1 73 0
+ 1028 0018 044B     		ldr	r3, .L76
+ 1029 001a 1B68     		ldr	r3, [r3]
+ 1030 001c 9978     		ldrb	r1, [r3, #2]
+ 1031 001e 0A1C     		adds	r2, r1, #0
+ 1032 0020 0829     		cmp	r1, #8
+ 1033 0022 00D9     		bls	.L75
+ 1034 0024 0822     		movs	r2, #8
+ 1035              	.L75:
+ 1036 0026 9A70     		strb	r2, [r3, #2]
+  74:./data/user.c **** 
+ 1037              		.loc 1 74 0
+ 1038              		@ sp needed
+ 1039 0028 10BD     		pop	{r4, pc}
+ 1040              	.L77:
+ 1041 002a C046     		.align	2
+ 1042              	.L76:
+ 1043 002c 00000000 		.word	.LANCHOR0
+ 1044              		.cfi_endproc
+ 1045              	.LFE65:
+ 1047              		.section	.text.user_cmd,"ax",%progbits
+ 1048              		.align	1
+ 1049              		.code	16
+ 1050              		.thumb_func
+ 1052              	user_cmd:
+ 1053              	.LFB81:
+ 298:./data/user.c **** 
+ 299:./data/user.c **** 
+ 300:./data/user.c **** 
+ 301:./data/user.c **** typedef struct TUserCMD
+ 302:./data/user.c **** {
+ 303:./data/user.c **** 	char name[8];
+ 304:./data/user.c **** 	int (*func)(int );
+ 305:./data/user.c **** }TUserCMD;
+ 306:./data/user.c **** 
+ 307:./data/user.c **** const TUserCMD userCMD[]=
+ 308:./data/user.c **** {
+ 309:./data/user.c **** 	{ "addr",   UsrSetAddr  },
+ 310:./data/user.c **** 	{ "cnt",    UsrSetCnt   },
+ 311:./data/user.c **** 	{ "type",   UsrSetType  },
+ 312:./data/user.c **** 	{ "delay",  UsrSetDelay },
+ 313:./data/user.c **** 	{ "delayI", UsrSetDelayI },
+ 314:./data/user.c **** 	{ "edI",    UsrSetIed   },
+ 315:./data/user.c **** 	{ "bjI",    UsrSetIbj   },
+ 316:./data/user.c **** 	{ "bjV",    UsrSetVbj   },
+ 317:./data/user.c **** 	{ "qyV",    UsrSetVqy   },
+ 318:./data/user.c **** 	{ "BD",     UsrSetBD    },
+ 319:./data/user.c **** 	{ "WDJZ",   UsrSetWDJZ  },
+ 320:./data/user.c **** };
+ 321:./data/user.c **** 
+ 322:./data/user.c **** 
+ 323:./data/user.c **** #include "pcommand.h"
+ 324:./data/user.c **** static void user_cmd(int args, char **argv )
+ 325:./data/user.c **** {
+ 1054              		.loc 1 325 0
+ 1055              		.cfi_startproc
+ 1056              		@ args = 0, pretend = 0, frame = 8
+ 1057              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1058              	.LVL44:
+ 1059 0000 F7B5     		push	{r0, r1, r2, r4, r5, r6, r7, lr}
+ 1060              	.LCFI16:
+ 1061              		.cfi_def_cfa_offset 32
+ 1062              		.cfi_offset 0, -32
+ 1063              		.cfi_offset 1, -28
+ 1064              		.cfi_offset 2, -24
+ 1065              		.cfi_offset 4, -20
+ 1066              		.cfi_offset 5, -16
+ 1067              		.cfi_offset 6, -12
+ 1068              		.cfi_offset 7, -8
+ 1069              		.cfi_offset 14, -4
+ 326:./data/user.c **** 	int cnt;
+ 327:./data/user.c **** 	cnt = atoi(argv[2]);
+ 1070              		.loc 1 327 0
+ 1071 0002 8868     		ldr	r0, [r1, #8]
+ 1072              	.LVL45:
+ 325:./data/user.c **** 	int cnt;
+ 1073              		.loc 1 325 0
+ 1074 0004 0D00     		movs	r5, r1
+ 1075              		.loc 1 327 0
+ 1076 0006 FFF7FEFF 		bl	OS_atoi
+ 1077              	.LVL46:
+ 328:./data/user.c **** 	int i;
+ 329:./data/user.c **** 	for (i = 0; i < ARRAY_SIZE(userCMD); i++) {
+ 1078              		.loc 1 329 0
+ 1079 000a 0026     		movs	r6, #0
+ 327:./data/user.c **** 	int i;
+ 1080              		.loc 1 327 0
+ 1081 000c 0190     		str	r0, [sp, #4]
+ 1082              	.LVL47:
+ 1083              	.L81:
+ 1084 000e 0C24     		movs	r4, #12
+ 1085 0010 7443     		muls	r4, r6
+ 1086 0012 1B4F     		ldr	r7, .L87
+ 330:./data/user.c **** 		if (!strcmp(argv[1], userCMD[i].name)) {
+ 1087              		.loc 1 330 0
+ 1088 0014 6868     		ldr	r0, [r5, #4]
+ 1089 0016 3C19     		adds	r4, r7, r4
+ 1090 0018 2100     		movs	r1, r4
+ 1091 001a FFF7FEFF 		bl	OSstrcmp
+ 1092              	.LVL48:
+ 1093 001e 0028     		cmp	r0, #0
+ 1094 0020 08D1     		bne	.L79
+ 331:./data/user.c **** 			TRACE("%s %d\n", userCMD[i].name, userCMD[i].func(cnt));
+ 1095              		.loc 1 331 0
+ 1096 0022 0198     		ldr	r0, [sp, #4]
+ 1097 0024 A368     		ldr	r3, [r4, #8]
+ 1098 0026 9847     		blx	r3
+ 1099              	.LVL49:
+ 1100 0028 2100     		movs	r1, r4
+ 1101 002a 0200     		movs	r2, r0
+ 1102 002c 1548     		ldr	r0, .L87+4
+ 1103 002e FFF7FEFF 		bl	dbg_print
+ 1104              	.LVL50:
+ 332:./data/user.c **** 			return;
+ 1105              		.loc 1 332 0
+ 1106 0032 24E0     		b	.L78
+ 1107              	.L79:
+ 329:./data/user.c **** 		if (!strcmp(argv[1], userCMD[i].name)) {
+ 1108              		.loc 1 329 0 discriminator 2
+ 1109 0034 0136     		adds	r6, r6, #1
+ 1110              	.LVL51:
+ 1111 0036 0B2E     		cmp	r6, #11
+ 1112 0038 E9D1     		bne	.L81
+ 1113              	.LVL52:
+ 1114              	.LBB20:
+ 1115              	.LBB21:
+ 333:./data/user.c **** 		}
+ 334:./data/user.c **** 	}
+ 335:./data/user.c **** 	if (!strcmp(argv[1], "get")) {
+ 1116              		.loc 1 335 0
+ 1117 003a 1349     		ldr	r1, .L87+8
+ 1118 003c 6868     		ldr	r0, [r5, #4]
+ 1119 003e FFF7FEFF 		bl	OSstrcmp
+ 1120              	.LVL53:
+ 1121 0042 0028     		cmp	r0, #0
+ 1122 0044 11D1     		bne	.L82
+ 1123 0046 3D00     		movs	r5, r7
+ 1124              	.LVL54:
+ 1125 0048 3C00     		movs	r4, r7
+ 1126 004a 0835     		adds	r5, r5, #8
+ 1127 004c 8C34     		adds	r4, r4, #140
+ 1128              	.L83:
+ 336:./data/user.c **** 		for (i = 0; i < ARRAY_SIZE(userCMD); i++) {
+ 1129              		.loc 1 336 0
+ 1130 004e A542     		cmp	r5, r4
+ 1131 0050 15D0     		beq	.L78
+ 337:./data/user.c **** 			TRACE("%s\t%d\n", userCMD[i].name, userCMD[i].func(-1));
+ 1132              		.loc 1 337 0
+ 1133 0052 0120     		movs	r0, #1
+ 1134 0054 2B68     		ldr	r3, [r5]
+ 1135 0056 4042     		rsbs	r0, r0, #0
+ 1136 0058 9847     		blx	r3
+ 1137              	.LVL55:
+ 1138 005a 2900     		movs	r1, r5
+ 1139 005c 0200     		movs	r2, r0
+ 1140 005e 0839     		subs	r1, r1, #8
+ 1141 0060 0A48     		ldr	r0, .L87+12
+ 1142 0062 FFF7FEFF 		bl	dbg_print
+ 1143              	.LVL56:
+ 1144 0066 0C35     		adds	r5, r5, #12
+ 1145 0068 F1E7     		b	.L83
+ 1146              	.LVL57:
+ 1147              	.L82:
+ 338:./data/user.c **** 		}
+ 339:./data/user.c **** 	} else if (!strcmp(argv[1], "def")) {
+ 1148              		.loc 1 339 0
+ 1149 006a 0949     		ldr	r1, .L87+16
+ 1150 006c 6868     		ldr	r0, [r5, #4]
+ 1151 006e FFF7FEFF 		bl	OSstrcmp
+ 1152              	.LVL58:
+ 1153 0072 0028     		cmp	r0, #0
+ 1154 0074 03D1     		bne	.L78
+ 340:./data/user.c **** 		UsrDefault();
+ 1155              		.loc 1 340 0
+ 1156 0076 FFF7FEFF 		bl	UsrDefault
+ 1157              	.LVL59:
+ 341:./data/user.c **** 		UsrWrite();
+ 1158              		.loc 1 341 0
+ 1159 007a FFF7FEFF 		bl	UsrWrite
+ 1160              	.LVL60:
+ 1161              	.L78:
+ 1162              	.LBE21:
+ 1163              	.LBE20:
+ 342:./data/user.c **** 	}
+ 343:./data/user.c **** }
+ 1164              		.loc 1 343 0
+ 1165              		@ sp needed
+ 1166              	.LVL61:
+ 1167 007e F7BD     		pop	{r0, r1, r2, r4, r5, r6, r7, pc}
+ 1168              	.L88:
+ 1169              		.align	2
+ 1170              	.L87:
+ 1171 0080 00000000 		.word	.LANCHOR1
+ 1172 0084 00000000 		.word	.LC26
+ 1173 0088 07000000 		.word	.LC28
+ 1174 008c 0B000000 		.word	.LC30
+ 1175 0090 12000000 		.word	.LC32
+ 1176              		.cfi_endproc
+ 1177              	.LFE81:
+ 1179              		.section	.text.UsrSetWbj,"ax",%progbits
+ 1180              		.align	1
+ 1181              		.global	UsrSetWbj
+ 1182              		.code	16
+ 1183              		.thumb_func
+ 1185              	UsrSetWbj:
+ 1186              	.LFB75:
+ 211:./data/user.c ****     if( bj > 40 && bj <= 160 )
+ 1187              		.loc 1 211 0
+ 1188              		.cfi_startproc
+ 1189              		@ args = 0, pretend = 0, frame = 0
+ 1190              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1191              	.LVL62:
+ 212:./data/user.c ****     {
+ 1192              		.loc 1 212 0
+ 1193 0000 0300     		movs	r3, r0
+ 1194 0002 293B     		subs	r3, r3, #41
+ 211:./data/user.c ****     if( bj > 40 && bj <= 160 )
+ 1195              		.loc 1 211 0
+ 1196 0004 10B5     		push	{r4, lr}
+ 1197              	.LCFI17:
+ 1198              		.cfi_def_cfa_offset 8
+ 1199              		.cfi_offset 4, -8
+ 1200              		.cfi_offset 14, -4
+ 1201 0006 094C     		ldr	r4, .L91
+ 212:./data/user.c ****     {
+ 1202              		.loc 1 212 0
+ 1203 0008 772B     		cmp	r3, #119
+ 1204 000a 07D8     		bhi	.L90
+ 214:./data/user.c ****         UsrWrite();
+ 1205              		.loc 1 214 0
+ 1206 000c 2368     		ldr	r3, [r4]
+ 1207 000e 80B2     		uxth	r0, r0
+ 1208              	.LVL63:
+ 1209 0010 2533     		adds	r3, r3, #37
+ 1210 0012 1870     		strb	r0, [r3]
+ 1211 0014 000A     		lsrs	r0, r0, #8
+ 1212 0016 5870     		strb	r0, [r3, #1]
+ 215:./data/user.c ****     }
+ 1213              		.loc 1 215 0
+ 1214 0018 FFF7FEFF 		bl	UsrWrite
+ 1215              	.LVL64:
+ 1216              	.L90:
+ 217:./data/user.c **** }
+ 1217              		.loc 1 217 0
+ 1218 001c 2368     		ldr	r3, [r4]
+ 218:./data/user.c **** 
+ 1219              		.loc 1 218 0
+ 1220              		@ sp needed
+ 217:./data/user.c **** }
+ 1221              		.loc 1 217 0
+ 1222 001e 9A1D     		adds	r2, r3, #6
+ 1223 0020 0733     		adds	r3, r3, #7
+ 1224 0022 D87F     		ldrb	r0, [r3, #31]
+ 1225 0024 D27F     		ldrb	r2, [r2, #31]
+ 1226 0026 0002     		lsls	r0, r0, #8
+ 1227 0028 1043     		orrs	r0, r2
+ 218:./data/user.c **** 
+ 1228              		.loc 1 218 0
+ 1229 002a 10BD     		pop	{r4, pc}
+ 1230              	.L92:
+ 1231              		.align	2
+ 1232              	.L91:
+ 1233 002c 00000000 		.word	.LANCHOR0
+ 1234              		.cfi_endproc
+ 1235              	.LFE75:
+ 1237              		.section	.text.UsrSetSbj,"ax",%progbits
+ 1238              		.align	1
+ 1239              		.global	UsrSetSbj
+ 1240              		.code	16
+ 1241              		.thumb_func
+ 1243              	UsrSetSbj:
+ 1244              	.LFB76:
+ 221:./data/user.c ****     if( bj > 200 && bj <= 1600 )
+ 1245              		.loc 1 221 0
+ 1246              		.cfi_startproc
+ 1247              		@ args = 0, pretend = 0, frame = 0
+ 1248              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1249              	.LVL65:
+ 222:./data/user.c ****     {
+ 1250              		.loc 1 222 0
+ 1251 0000 0200     		movs	r2, r0
+ 1252 0002 0B4B     		ldr	r3, .L95
+ 1253 0004 C93A     		subs	r2, r2, #201
+ 221:./data/user.c ****     if( bj > 200 && bj <= 1600 )
+ 1254              		.loc 1 221 0
+ 1255 0006 10B5     		push	{r4, lr}
+ 1256              	.LCFI18:
+ 1257              		.cfi_def_cfa_offset 8
+ 1258              		.cfi_offset 4, -8
+ 1259              		.cfi_offset 14, -4
+ 1260 0008 0A4C     		ldr	r4, .L95+4
+ 222:./data/user.c ****     {
+ 1261              		.loc 1 222 0
+ 1262 000a 9A42     		cmp	r2, r3
+ 1263 000c 07D8     		bhi	.L94
+ 224:./data/user.c ****         UsrWrite();
+ 1264              		.loc 1 224 0
+ 1265 000e 2368     		ldr	r3, [r4]
+ 1266 0010 80B2     		uxth	r0, r0
+ 1267              	.LVL66:
+ 1268 0012 2133     		adds	r3, r3, #33
+ 1269 0014 1870     		strb	r0, [r3]
+ 1270 0016 000A     		lsrs	r0, r0, #8
+ 1271 0018 5870     		strb	r0, [r3, #1]
+ 225:./data/user.c ****     }
+ 1272              		.loc 1 225 0
+ 1273 001a FFF7FEFF 		bl	UsrWrite
+ 1274              	.LVL67:
+ 1275              	.L94:
+ 227:./data/user.c **** }
+ 1276              		.loc 1 227 0
+ 1277 001e 2368     		ldr	r3, [r4]
+ 228:./data/user.c **** 
+ 1278              		.loc 1 228 0
+ 1279              		@ sp needed
+ 227:./data/user.c **** }
+ 1280              		.loc 1 227 0
+ 1281 0020 9A1C     		adds	r2, r3, #2
+ 1282 0022 0333     		adds	r3, r3, #3
+ 1283 0024 D87F     		ldrb	r0, [r3, #31]
+ 1284 0026 D27F     		ldrb	r2, [r2, #31]
+ 1285 0028 0002     		lsls	r0, r0, #8
+ 1286 002a 1043     		orrs	r0, r2
+ 228:./data/user.c **** 
+ 1287              		.loc 1 228 0
+ 1288 002c 10BD     		pop	{r4, pc}
+ 1289              	.L96:
+ 1290 002e C046     		.align	2
+ 1291              	.L95:
+ 1292 0030 77050000 		.word	1399
+ 1293 0034 00000000 		.word	.LANCHOR0
+ 1294              		.cfi_endproc
+ 1295              	.LFE76:
+ 1297              		.global	cmd_user
+ 1298              		.global	userCMD
+ 1299              		.global	pUsrCfg
+ 1300              		.comm	userSave,51,1
+ 1301              		.section	.rodata
+ 1302              		.align	2
+ 1303              		.set	.LANCHOR1,. + 0
+ 1306              	userCMD:
+ 1307 0000 61646472 		.ascii	"addr\000"
+ 1307      00
+ 1308 0005 000000   		.space	3
+ 1309 0008 00000000 		.word	UsrSetAddr
+ 1310 000c 636E7400 		.ascii	"cnt\000"
+ 1311 0010 00000000 		.space	4
+ 1312 0014 00000000 		.word	UsrSetCnt
+ 1313 0018 74797065 		.ascii	"type\000"
+ 1313      00
+ 1314 001d 000000   		.space	3
+ 1315 0020 00000000 		.word	UsrSetType
+ 1316 0024 64656C61 		.ascii	"delay\000"
+ 1316      7900
+ 1317 002a 0000     		.space	2
+ 1318 002c 00000000 		.word	UsrSetDelay
+ 1319 0030 64656C61 		.ascii	"delayI\000"
+ 1319      794900
+ 1320 0037 00       		.space	1
+ 1321 0038 00000000 		.word	UsrSetDelayI
+ 1322 003c 65644900 		.ascii	"edI\000"
+ 1323 0040 00000000 		.space	4
+ 1324 0044 00000000 		.word	UsrSetIed
+ 1325 0048 626A4900 		.ascii	"bjI\000"
+ 1326 004c 00000000 		.space	4
+ 1327 0050 00000000 		.word	UsrSetIbj
+ 1328 0054 626A5600 		.ascii	"bjV\000"
+ 1329 0058 00000000 		.space	4
+ 1330 005c 00000000 		.word	UsrSetVbj
+ 1331 0060 71795600 		.ascii	"qyV\000"
+ 1332 0064 00000000 		.space	4
+ 1333 0068 00000000 		.word	UsrSetVqy
+ 1334 006c 424400   		.ascii	"BD\000"
+ 1335 006f 00000000 		.space	5
+ 1335      00
+ 1336 0074 00000000 		.word	UsrSetBD
+ 1337 0078 57444A5A 		.ascii	"WDJZ\000"
+ 1337      00
+ 1338 007d 000000   		.space	3
+ 1339 0080 00000000 		.word	UsrSetWDJZ
+ 1342              	help_user:
+ 1343 0084 75736572 		.ascii	"user\000"
+ 1343      00
+ 1346              	name_user:
+ 1347 0089 75736572 		.ascii	"user\000"
+ 1347      00
+ 1348              		.section	.shell,"aw",%progbits
+ 1349              		.align	2
+ 1352              	cmd_user:
+ 1353 0000 89000000 		.word	name_user
+ 1354 0004 00000000 		.word	user_cmd
+ 1355 0008 84000000 		.word	help_user
+ 1356              		.section	.rodata.str1.1,"aMS",%progbits,1
+ 1357              	.LC26:
+ 1358 0000 25732025 		.ascii	"%s %d\012\000"
+ 1358      640A00
+ 1359              	.LC28:
+ 1360 0007 67657400 		.ascii	"get\000"
+ 1361              	.LC30:
+ 1362 000b 25730925 		.ascii	"%s\011%d\012\000"
+ 1362      640A00
+ 1363              	.LC32:
+ 1364 0012 64656600 		.ascii	"def\000"
+ 1365              		.data
+ 1366              		.align	2
+ 1367              		.set	.LANCHOR0,. + 0
+ 1370              	pUsrCfg:
+ 1371 0000 00000000 		.word	userSave
+ 1372              		.text
+ 1373              	.Letext0:
+ 1374              		.file 3 "d:\\wingcc\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 1375              		.file 4 "d:\\wingcc\\arm-none-eabi\\include\\sys\\_stdint.h"
+ 1376              		.file 5 "./bsp/mytype.h"
+ 1377              		.file 6 "./data/user.h"
+ 1378              		.file 7 "../mylib_t/data_def.h"
+ 1379              		.file 8 "../mylib_t/pcommand.h"
+ 1380              		.file 9 "./bsp/system_NUC131.h"
+ 1381              		.file 10 "./drive/fmc_rw.h"
+ 1382              		.file 11 "../mylib_t/OSstring.h"
+ 1383              		.file 12 "./app/app_cfg.h"
+ 1384              		.file 13 "../mylib_t/OSstdlib.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 user.c
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:20     .text.UsrRead:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:25     .text.UsrRead:00000000 UsrRead
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:77     .text.UsrRead:00000030 $d
+                            *COM*:00000033 userSave
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:84     .text.UsrWrite:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:89     .text.UsrWrite:00000000 UsrWrite
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:138    .text.UsrWrite:00000024 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:145    .text.UsrSetAddr:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:150    .text.UsrSetAddr:00000000 UsrSetAddr
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:195    .text.UsrSetAddr:00000028 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:201    .text.UsrSetDelay:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:206    .text.UsrSetDelay:00000000 UsrSetDelay
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:240    .text.UsrSetDelay:00000018 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:245    .text.UsrSetDelayI:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:250    .text.UsrSetDelayI:00000000 UsrSetDelayI
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:284    .text.UsrSetDelayI:00000018 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:289    .text.UsrSetIed:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:294    .text.UsrSetIed:00000000 UsrSetIed
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:339    .text.UsrSetIed:00000028 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:344    .text.UsrSetIbj:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:349    .text.UsrSetIbj:00000000 UsrSetIbj
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:397    .text.UsrSetIbj:00000030 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:402    .text.UsrSetVbj:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:407    .text.UsrSetVbj:00000000 UsrSetVbj
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:448    .text.UsrSetVbj:00000024 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:453    .text.UsrSetVqy:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:458    .text.UsrSetVqy:00000000 UsrSetVqy
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:499    .text.UsrSetVqy:00000024 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:504    .text.UsrSetCnt:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:509    .text.UsrSetCnt:00000000 UsrSetCnt
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:546    .text.UsrSetCnt:00000018 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:551    .text.UsrSetBD:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:556    .text.UsrSetBD:00000000 UsrSetBD
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:600    .text.UsrSetBD:00000028 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:605    .text.UsrSetWDJZ:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:610    .text.UsrSetWDJZ:00000000 UsrSetWDJZ
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:654    .text.UsrSetWDJZ:00000028 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:659    .text.UsrSetType:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:664    .text.UsrSetType:00000000 UsrSetType
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:785    .text.UsrSetType:00000080 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:791    .text.UserSetDef:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:796    .text.UserSetDef:00000000 UserSetDef
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:834    .text.UserSetDef:00000020 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:839    .text.UsrDefault:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:844    .text.UsrDefault:00000000 UsrDefault
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:990    .text.UsrDefault:000000a0 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:995    .text.UsrInit:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1000   .text.UsrInit:00000000 UsrInit
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1043   .text.UsrInit:0000002c $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1048   .text.user_cmd:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1052   .text.user_cmd:00000000 user_cmd
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1171   .text.user_cmd:00000080 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1180   .text.UsrSetWbj:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1185   .text.UsrSetWbj:00000000 UsrSetWbj
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1233   .text.UsrSetWbj:0000002c $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1238   .text.UsrSetSbj:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1243   .text.UsrSetSbj:00000000 UsrSetSbj
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1292   .text.UsrSetSbj:00000030 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1352   .shell:00000000 cmd_user
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1306   .rodata:00000000 userCMD
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1370   .data:00000000 pUsrCfg
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1302   .rodata:00000000 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1342   .rodata:00000084 help_user
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1346   .rodata:00000089 name_user
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1349   .shell:00000000 $d
+C:\Users\beyond\AppData\Local\Temp\cctjuVq3.s:1366   .data:00000000 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+fmc_Read
+crc16_XMODEM
+__DataFlash
+fmc_Write
+reset_cmd
+fmc_Init
+OS_atoi
+OSstrcmp
+dbg_print

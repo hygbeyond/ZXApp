@@ -1,0 +1,894 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 4
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"debug.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.dbg_print,"ax",%progbits
+  20              		.align	1
+  21              		.global	dbg_print
+  22              		.code	16
+  23              		.thumb_func
+  25              	dbg_print:
+  26              	.LFB59:
+  27              		.file 1 "./app/debug.c"
+   1:./app/debug.c **** 
+   2:./app/debug.c **** 
+   3:./app/debug.c **** #include "mytype.h"
+   4:./app/debug.c **** #include "pcommand.h"
+   5:./app/debug.c **** #include "printk.h"
+   6:./app/debug.c **** #include "MicroOS.h"
+   7:./app/debug.c **** #include "OSstring.h"
+   8:./app/debug.c **** #include "bsp.h"
+   9:./app/debug.c **** #include "app_cfg.h"
+  10:./app/debug.c **** #include "nuc_uart0.h"
+  11:./app/debug.c **** 
+  12:./app/debug.c **** 
+  13:./app/debug.c **** uint32 debug_en = 3;
+  14:./app/debug.c **** void wdt_reset( void );
+  15:./app/debug.c **** int dbg_print( const char *fmt, ... )
+  16:./app/debug.c **** {
+  28              		.loc 1 16 0
+  29              		.cfi_startproc
+  30              		@ args = 4, pretend = 16, frame = 8
+  31              		@ frame_needed = 0, uses_anonymous_args = 1
+  32              	.LVL0:
+  33 0000 0FB4     		push	{r0, r1, r2, r3}
+  34              	.LCFI0:
+  35              		.cfi_def_cfa_offset 16
+  36 0002 73B5     		push	{r0, r1, r4, r5, r6, lr}
+  37              	.LCFI1:
+  38              		.cfi_def_cfa_offset 40
+  39              		.cfi_offset 0, -40
+  40              		.cfi_offset 1, -36
+  41              		.cfi_offset 4, -32
+  42              		.cfi_offset 5, -28
+  43              		.cfi_offset 6, -24
+  44              		.cfi_offset 14, -20
+  17:./app/debug.c **** 	va_list ap;
+  18:./app/debug.c **** 	int i;
+  19:./app/debug.c **** 	static char buff[64];
+  20:./app/debug.c **** 	uint8 *str = (uint8*)buff;
+  21:./app/debug.c **** 	va_start(ap, fmt);
+  22:./app/debug.c **** 	i = vsnprintf(buff, 64, fmt, ap);
+  45              		.loc 1 22 0
+  46 0004 0E4C     		ldr	r4, .L8
+  16:./app/debug.c **** 	va_list ap;
+  47              		.loc 1 16 0
+  48 0006 06AB     		add	r3, sp, #24
+  49 0008 04CB     		ldmia	r3!, {r2}
+  50              		.loc 1 22 0
+  51 000a 4021     		movs	r1, #64
+  52 000c 2000     		movs	r0, r4
+  21:./app/debug.c **** 	i = vsnprintf(buff, 64, fmt, ap);
+  53              		.loc 1 21 0
+  54 000e 0193     		str	r3, [sp, #4]
+  55              		.loc 1 22 0
+  56 0010 FFF7FEFF 		bl	OS_vsnprintf
+  57              	.LVL1:
+  23:./app/debug.c **** 	va_end(ap);
+  58              		.loc 1 23 0
+  59 0014 2826     		movs	r6, #40
+  22:./app/debug.c **** 	va_end(ap);
+  60              		.loc 1 22 0
+  61 0016 0500     		movs	r5, r0
+  62              	.LVL2:
+  63              	.L3:
+  64              	.LBB3:
+  65              	.LBB4:
+  24:./app/debug.c **** 
+  25:./app/debug.c **** 	for(int a=0; a<HZ/5; a++)
+  26:./app/debug.c **** 	{
+  27:./app/debug.c **** 		wdt_reset();
+  66              		.loc 1 27 0
+  67 0018 FFF7FEFF 		bl	wdt_reset
+  68              	.LVL3:
+  28:./app/debug.c **** 		int ret = Uart_SendBuff(str, i);
+  69              		.loc 1 28 0
+  70 001c 2900     		movs	r1, r5
+  71 001e 2000     		movs	r0, r4
+  72 0020 FFF7FEFF 		bl	Uart_SendBuff
+  73              	.LVL4:
+  29:./app/debug.c **** 		str += ret;
+  74              		.loc 1 29 0
+  75 0024 2418     		adds	r4, r4, r0
+  76              	.LVL5:
+  30:./app/debug.c **** 		i   -= ret;
+  77              		.loc 1 30 0
+  78 0026 2D1A     		subs	r5, r5, r0
+  79              	.LVL6:
+  31:./app/debug.c **** 		if( i==0 ) break;
+  80              		.loc 1 31 0
+  81 0028 05D0     		beq	.L6
+  32:./app/debug.c **** 		OSTimeDly(5);
+  82              		.loc 1 32 0 discriminator 2
+  83 002a 0520     		movs	r0, #5
+  84              	.LVL7:
+  85 002c 013E     		subs	r6, r6, #1
+  86              	.LVL8:
+  87 002e FFF7FEFF 		bl	OSTimeDly
+  88              	.LVL9:
+  89              	.LBE4:
+  25:./app/debug.c **** 	{
+  90              		.loc 1 25 0 discriminator 2
+  91 0032 002E     		cmp	r6, #0
+  92 0034 F0D1     		bne	.L3
+  93              	.L6:
+  94              	.LBE3:
+  33:./app/debug.c **** 	}
+  34:./app/debug.c **** 	return 1;
+  35:./app/debug.c **** }
+  95              		.loc 1 35 0
+  96 0036 0120     		movs	r0, #1
+  97              		@ sp needed
+  98              	.LVL10:
+  99              	.LVL11:
+ 100 0038 76BC     		pop	{r1, r2, r4, r5, r6}
+ 101 003a 08BC     		pop	{r3}
+ 102 003c 04B0     		add	sp, sp, #16
+ 103 003e 1847     		bx	r3
+ 104              	.L9:
+ 105              		.align	2
+ 106              	.L8:
+ 107 0040 00000000 		.word	.LANCHOR0
+ 108              		.cfi_endproc
+ 109              	.LFE59:
+ 111              		.section	.text.debug_cmd,"ax",%progbits
+ 112              		.align	1
+ 113              		.code	16
+ 114              		.thumb_func
+ 116              	debug_cmd:
+ 117              	.LFB60:
+  36:./app/debug.c **** 
+  37:./app/debug.c **** static int debug_cmd( int args, char **argv )
+  38:./app/debug.c **** {
+ 118              		.loc 1 38 0
+ 119              		.cfi_startproc
+ 120              		@ args = 0, pretend = 0, frame = 0
+ 121              		@ frame_needed = 0, uses_anonymous_args = 0
+ 122              	.LVL12:
+ 123 0000 70B5     		push	{r4, r5, r6, lr}
+ 124              	.LCFI2:
+ 125              		.cfi_def_cfa_offset 16
+ 126              		.cfi_offset 4, -16
+ 127              		.cfi_offset 5, -12
+ 128              		.cfi_offset 6, -8
+ 129              		.cfi_offset 14, -4
+ 130              		.loc 1 38 0
+ 131 0002 0D00     		movs	r5, r1
+  39:./app/debug.c ****     if( args > 2 )
+ 132              		.loc 1 39 0
+ 133 0004 0228     		cmp	r0, #2
+ 134 0006 2DDD     		ble	.L11
+ 135              	.LVL13:
+ 136              	.LBB8:
+ 137              	.LBB9:
+  40:./app/debug.c ****     {
+  41:./app/debug.c ****         int num = atoi( argv[2] );
+ 138              		.loc 1 41 0
+ 139 0008 8868     		ldr	r0, [r1, #8]
+ 140              	.LVL14:
+ 141 000a FFF7FEFF 		bl	OS_atoi
+ 142              	.LVL15:
+  42:./app/debug.c ****         if(!strcmp(argv[1], "en"))
+ 143              		.loc 1 42 0
+ 144 000e 1949     		ldr	r1, .L18
+  41:./app/debug.c ****         if(!strcmp(argv[1], "en"))
+ 145              		.loc 1 41 0
+ 146 0010 0400     		movs	r4, r0
+ 147              	.LVL16:
+ 148              		.loc 1 42 0
+ 149 0012 6868     		ldr	r0, [r5, #4]
+ 150              	.LVL17:
+ 151 0014 FFF7FEFF 		bl	OSstrcmp
+ 152              	.LVL18:
+ 153 0018 0028     		cmp	r0, #0
+ 154 001a 09D1     		bne	.L12
+ 155              	.LVL19:
+  43:./app/debug.c ****         {
+  44:./app/debug.c ****             if( num > 31 )
+  45:./app/debug.c ****                 num = 31;
+  46:./app/debug.c ****             debug_en |= (1<<num);
+ 156              		.loc 1 46 0
+ 157 001c 1649     		ldr	r1, .L18+4
+ 158 001e 0A00     		movs	r2, r1
+ 159 0020 1F2C     		cmp	r4, #31
+ 160 0022 00DD     		ble	.L13
+ 161 0024 1F24     		movs	r4, #31
+ 162              	.LVL20:
+ 163              	.L13:
+ 164 0026 0123     		movs	r3, #1
+ 165 0028 A340     		lsls	r3, r3, r4
+ 166 002a 1268     		ldr	r2, [r2]
+ 167 002c 1343     		orrs	r3, r2
+ 168 002e 0EE0     		b	.L17
+ 169              	.LVL21:
+ 170              	.L12:
+  47:./app/debug.c ****         }else if(!strcmp(argv[1], "dis"))
+ 171              		.loc 1 47 0
+ 172 0030 1249     		ldr	r1, .L18+8
+ 173 0032 6868     		ldr	r0, [r5, #4]
+ 174 0034 FFF7FEFF 		bl	OSstrcmp
+ 175              	.LVL22:
+ 176 0038 0028     		cmp	r0, #0
+ 177 003a 0AD1     		bne	.L15
+ 178              	.LVL23:
+  48:./app/debug.c ****         {
+  49:./app/debug.c ****             if( num > 31 )
+  50:./app/debug.c ****                 num = 31;
+  51:./app/debug.c ****             debug_en &= ~(1<<num);
+ 179              		.loc 1 51 0
+ 180 003c 0E49     		ldr	r1, .L18+4
+ 181 003e 0B00     		movs	r3, r1
+ 182 0040 1F2C     		cmp	r4, #31
+ 183 0042 00DD     		ble	.L16
+ 184 0044 1F24     		movs	r4, #31
+ 185              	.LVL24:
+ 186              	.L16:
+ 187 0046 0122     		movs	r2, #1
+ 188 0048 A240     		lsls	r2, r2, r4
+ 189 004a 1B68     		ldr	r3, [r3]
+ 190 004c 9343     		bics	r3, r2
+ 191              	.L17:
+ 192 004e 0B60     		str	r3, [r1]
+ 193 0050 0DE0     		b	.L14
+ 194              	.LVL25:
+ 195              	.L15:
+  52:./app/debug.c ****         }else if(!strcmp(argv[1], "set"))
+ 196              		.loc 1 52 0
+ 197 0052 0B49     		ldr	r1, .L18+12
+ 198 0054 6868     		ldr	r0, [r5, #4]
+ 199 0056 FFF7FEFF 		bl	OSstrcmp
+ 200              	.LVL26:
+ 201 005a 0028     		cmp	r0, #0
+ 202 005c 07D1     		bne	.L14
+  53:./app/debug.c ****         {
+  54:./app/debug.c ****             debug_en = num;
+ 203              		.loc 1 54 0
+ 204 005e 064B     		ldr	r3, .L18+4
+ 205 0060 1C60     		str	r4, [r3]
+ 206 0062 04E0     		b	.L14
+ 207              	.LVL27:
+ 208              	.L11:
+ 209              	.LBE9:
+ 210              	.LBE8:
+  55:./app/debug.c ****         }
+  56:./app/debug.c ****     }else
+  57:./app/debug.c ****     {
+  58:./app/debug.c ****     	dbg_print("debug [en|dis|set] num 0x%08x\n", debug_en);
+ 211              		.loc 1 58 0
+ 212 0064 044B     		ldr	r3, .L18+4
+ 213 0066 0748     		ldr	r0, .L18+16
+ 214              	.LVL28:
+ 215 0068 1968     		ldr	r1, [r3]
+ 216              	.LVL29:
+ 217 006a FFF7FEFF 		bl	dbg_print
+ 218              	.LVL30:
+ 219              	.L14:
+  59:./app/debug.c ****     }
+  60:./app/debug.c ****     return 0;
+  61:./app/debug.c **** }
+ 220              		.loc 1 61 0
+ 221 006e 0020     		movs	r0, #0
+ 222              		@ sp needed
+ 223              	.LVL31:
+ 224 0070 70BD     		pop	{r4, r5, r6, pc}
+ 225              	.L19:
+ 226 0072 C046     		.align	2
+ 227              	.L18:
+ 228 0074 00000000 		.word	.LC1
+ 229 0078 00000000 		.word	.LANCHOR1
+ 230 007c 03000000 		.word	.LC4
+ 231 0080 07000000 		.word	.LC6
+ 232 0084 0B000000 		.word	.LC8
+ 233              		.cfi_endproc
+ 234              	.LFE60:
+ 236              		.global	__aeabi_uidiv
+ 237              		.global	__aeabi_idiv
+ 238              		.section	.text.OS_cmd,"ax",%progbits
+ 239              		.align	1
+ 240              		.global	OS_cmd
+ 241              		.code	16
+ 242              		.thumb_func
+ 244              	OS_cmd:
+ 245              	.LFB61:
+  62:./app/debug.c **** PSHELL_CMD( debug, debug_cmd, "debug [en|dis|set] numb");
+  63:./app/debug.c **** 
+  64:./app/debug.c **** void OS_cmd( void );
+  65:./app/debug.c **** void OS_cmd( void )
+  66:./app/debug.c ****  {
+ 246              		.loc 1 66 0
+ 247              		.cfi_startproc
+ 248              		@ args = 0, pretend = 0, frame = 0
+ 249              		@ frame_needed = 0, uses_anonymous_args = 0
+ 250 0000 F8B5     		push	{r3, r4, r5, r6, r7, lr}
+ 251              	.LCFI3:
+ 252              		.cfi_def_cfa_offset 24
+ 253              		.cfi_offset 3, -24
+ 254              		.cfi_offset 4, -20
+ 255              		.cfi_offset 5, -16
+ 256              		.cfi_offset 6, -12
+ 257              		.cfi_offset 7, -8
+ 258              		.cfi_offset 14, -4
+  67:./app/debug.c **** 	int i, j;
+  68:./app/debug.c **** 	/* 打印MicroOS的版本号 */
+  69:./app/debug.c **** 	dbg_print("  MicroOS  : V%d.%02d\n", OS_VERSION, OS_PATCHLEVEL);
+ 259              		.loc 1 69 0
+ 260 0002 6322     		movs	r2, #99
+ 261 0004 0021     		movs	r1, #0
+ 262 0006 2148     		ldr	r0, .L30
+ 263 0008 FFF7FEFF 		bl	dbg_print
+ 264              	.LVL32:
+  70:./app/debug.c **** 
+  71:./app/debug.c **** 	/* 打印滴答（心跳）速率，即每秒多少次心跳 */
+  72:./app/debug.c **** 	dbg_print("  TickRate  : %d\n", OS_TICKS_PER_SEC);
+ 265              		.loc 1 72 0
+ 266 000c C821     		movs	r1, #200
+ 267 000e 2048     		ldr	r0, .L30+4
+ 268 0010 FFF7FEFF 		bl	dbg_print
+ 269              	.LVL33:
+  73:./app/debug.c **** 
+  74:./app/debug.c **** #if OS_STAT_EN > 0
+  75:./app/debug.c **** 	/* 打印CPU占用率 */
+  76:./app/debug.c **** 	dbg_print("  CPU Usage : %02d%%\n", OSCPUUsage);
+  77:./app/debug.c **** #endif
+  78:./app/debug.c **** 
+  79:./app/debug.c **** 	/* 打印CPU速度 */
+  80:./app/debug.c **** 	dbg_print("  CPU Speed : %d MHz\n", (int)(FPCLK / 1000000L));
+ 270              		.loc 1 80 0
+ 271 0014 1F4B     		ldr	r3, .L30+8
+ 272 0016 2049     		ldr	r1, .L30+12
+ 273 0018 1868     		ldr	r0, [r3]
+ 274 001a FFF7FEFF 		bl	__aeabi_uidiv
+ 275              	.LVL34:
+ 276              	.LBB10:
+  81:./app/debug.c **** 
+  82:./app/debug.c **** 	/* 打印CPU已运行时间（单位：滴答) */
+  83:./app/debug.c **** 	dbg_print("  #Ticks    : %d\n", OSTimeCnt);
+  84:./app/debug.c **** 
+  85:./app/debug.c **** 	/* 打印上下文切换次数 (context switches) */
+  86:./app/debug.c **** 	dbg_print("  #CtxSw    : %d\n", OSCtxSwCtr);
+  87:./app/debug.c **** 
+  88:./app/debug.c **** 	dbg_print("名称\tID号\t堆栈总数\t堆栈使用\t运行次数\n");
+  89:./app/debug.c **** 	for (i = 0; i <= OS_TASKS; i++) {
+  90:./app/debug.c **** 		OS_STK *stk = OS_TCBTbl[i].OSTaskStackEnd;
+  91:./app/debug.c **** 		int size = OS_TCBTbl[i].StkSize;
+  92:./app/debug.c **** 		if (size) {
+  93:./app/debug.c **** 			dbg_print("%-5s\t%-4d\t", OS_TCBTbl[i].name, OS_TCBTbl[i].ID);
+  94:./app/debug.c **** 			for (j = 0; j < size; j++) {
+  95:./app/debug.c **** 				if (*stk++ != 0)
+  96:./app/debug.c **** 					break;
+  97:./app/debug.c **** 			}
+  98:./app/debug.c **** 			dbg_print("%-5d\t%5d%%\t%-5d\n", size, (size - j) * 100 / size,
+ 277              		.loc 1 98 0
+ 278 001e 6426     		movs	r6, #100
+ 279              	.LBE10:
+  80:./app/debug.c **** 
+ 280              		.loc 1 80 0
+ 281 0020 0100     		movs	r1, r0
+ 282 0022 1E48     		ldr	r0, .L30+16
+ 283 0024 FFF7FEFF 		bl	dbg_print
+ 284              	.LVL35:
+  83:./app/debug.c **** 
+ 285              		.loc 1 83 0
+ 286 0028 1D4B     		ldr	r3, .L30+20
+ 287 002a 1E48     		ldr	r0, .L30+24
+ 288 002c 1968     		ldr	r1, [r3]
+ 289 002e FFF7FEFF 		bl	dbg_print
+ 290              	.LVL36:
+  86:./app/debug.c **** 
+ 291              		.loc 1 86 0
+ 292 0032 1D4B     		ldr	r3, .L30+28
+ 293 0034 1D48     		ldr	r0, .L30+32
+ 294 0036 1968     		ldr	r1, [r3]
+ 295 0038 FFF7FEFF 		bl	dbg_print
+ 296              	.LVL37:
+  88:./app/debug.c **** 	for (i = 0; i <= OS_TASKS; i++) {
+ 297              		.loc 1 88 0
+ 298 003c 1C48     		ldr	r0, .L30+36
+ 299 003e FFF7FEFF 		bl	dbg_print
+ 300              	.LVL38:
+ 301 0042 1C4C     		ldr	r4, .L30+40
+ 302              	.LVL39:
+ 303              	.L24:
+ 304              	.LBB11:
+  91:./app/debug.c **** 		if (size) {
+ 305              		.loc 1 91 0
+ 306 0044 A588     		ldrh	r5, [r4, #4]
+ 307              	.LVL40:
+  92:./app/debug.c **** 			dbg_print("%-5s\t%-4d\t", OS_TCBTbl[i].name, OS_TCBTbl[i].ID);
+ 308              		.loc 1 92 0
+ 309 0046 002D     		cmp	r5, #0
+ 310 0048 1AD0     		beq	.L21
+  93:./app/debug.c **** 			for (j = 0; j < size; j++) {
+ 311              		.loc 1 93 0
+ 312 004a 2100     		movs	r1, r4
+ 313 004c A27A     		ldrb	r2, [r4, #10]
+ 314 004e 1031     		adds	r1, r1, #16
+ 315 0050 1948     		ldr	r0, .L30+44
+  90:./app/debug.c **** 		int size = OS_TCBTbl[i].StkSize;
+ 316              		.loc 1 90 0
+ 317 0052 2768     		ldr	r7, [r4]
+  93:./app/debug.c **** 			for (j = 0; j < size; j++) {
+ 318              		.loc 1 93 0
+ 319 0054 FFF7FEFF 		bl	dbg_print
+ 320              	.LVL41:
+  94:./app/debug.c **** 				if (*stk++ != 0)
+ 321              		.loc 1 94 0
+ 322 0058 0020     		movs	r0, #0
+ 323              	.LVL42:
+ 324              	.L23:
+  95:./app/debug.c **** 					break;
+ 325              		.loc 1 95 0
+ 326 005a 8300     		lsls	r3, r0, #2
+ 327 005c FB58     		ldr	r3, [r7, r3]
+ 328 005e 002B     		cmp	r3, #0
+ 329 0060 02D1     		bne	.L22
+  94:./app/debug.c **** 				if (*stk++ != 0)
+ 330              		.loc 1 94 0 discriminator 2
+ 331 0062 0130     		adds	r0, r0, #1
+ 332              	.LVL43:
+ 333 0064 8542     		cmp	r5, r0
+ 334 0066 F8DC     		bgt	.L23
+ 335              	.LVL44:
+ 336              	.L22:
+ 337              		.loc 1 98 0
+ 338 0068 281A     		subs	r0, r5, r0
+ 339              	.LVL45:
+ 340 006a 2900     		movs	r1, r5
+ 341 006c 7043     		muls	r0, r6
+ 342 006e FFF7FEFF 		bl	__aeabi_idiv
+ 343              	.LVL46:
+ 344 0072 2789     		ldrh	r7, [r4, #8]
+ 345 0074 0200     		movs	r2, r0
+ 346 0076 3B00     		movs	r3, r7
+ 347 0078 2900     		movs	r1, r5
+ 348 007a 1048     		ldr	r0, .L30+48
+ 349 007c FFF7FEFF 		bl	dbg_print
+ 350              	.LVL47:
+ 351              	.L21:
+ 352              	.LBE11:
+  89:./app/debug.c **** 		OS_STK *stk = OS_TCBTbl[i].OSTaskStackEnd;
+ 353              		.loc 1 89 0 discriminator 2
+ 354 0080 0F4B     		ldr	r3, .L30+52
+ 355 0082 1C34     		adds	r4, r4, #28
+ 356 0084 9C42     		cmp	r4, r3
+ 357 0086 DDD1     		bne	.L24
+  99:./app/debug.c **** 					OS_TCBTbl[i].TaskSchedCnt);
+ 100:./app/debug.c **** 		}
+ 101:./app/debug.c **** 	}
+ 102:./app/debug.c **** }
+ 358              		.loc 1 102 0
+ 359              		@ sp needed
+ 360              	.LVL48:
+ 361 0088 F8BD     		pop	{r3, r4, r5, r6, r7, pc}
+ 362              	.L31:
+ 363 008a C046     		.align	2
+ 364              	.L30:
+ 365 008c 2A000000 		.word	.LC14
+ 366 0090 41000000 		.word	.LC16
+ 367 0094 00000000 		.word	SystemCoreClock
+ 368 0098 40420F00 		.word	1000000
+ 369 009c 53000000 		.word	.LC19
+ 370 00a0 00000000 		.word	OSTimeCnt
+ 371 00a4 69000000 		.word	.LC22
+ 372 00a8 00000000 		.word	OSCtxSwCtr
+ 373 00ac 7B000000 		.word	.LC25
+ 374 00b0 8D000000 		.word	.LC27
+ 375 00b4 04000000 		.word	OS_TCBTbl+4
+ 376 00b8 B3000000 		.word	.LC31
+ 377 00bc BE000000 		.word	.LC33
+ 378 00c0 00010000 		.word	OS_TCBTbl+256
+ 379              		.cfi_endproc
+ 380              	.LFE61:
+ 382              		.section	.text.OSTaskStatHook,"ax",%progbits
+ 383              		.align	1
+ 384              		.global	OSTaskStatHook
+ 385              		.code	16
+ 386              		.thumb_func
+ 388              	OSTaskStatHook:
+ 389              	.LFB62:
+ 103:./app/debug.c **** PSHELL_CMD( os, OS_cmd, "os");
+ 104:./app/debug.c **** 
+ 105:./app/debug.c **** void OSTaskStatHook(void)
+ 106:./app/debug.c **** {
+ 390              		.loc 1 106 0
+ 391              		.cfi_startproc
+ 392              		@ args = 0, pretend = 0, frame = 0
+ 393              		@ frame_needed = 0, uses_anonymous_args = 0
+ 107:./app/debug.c **** //	static int i=0;
+ 108:./app/debug.c **** //	const char *str = "-\\|/";
+ 109:./app/debug.c **** 	DEBUG9("CPU Usage : %02d%%\n", OSCPUUsage);
+ 394              		.loc 1 109 0
+ 395 0000 054B     		ldr	r3, .L37
+ 106:./app/debug.c **** //	static int i=0;
+ 396              		.loc 1 106 0
+ 397 0002 10B5     		push	{r4, lr}
+ 398              	.LCFI4:
+ 399              		.cfi_def_cfa_offset 8
+ 400              		.cfi_offset 4, -8
+ 401              		.cfi_offset 14, -4
+ 402              		.loc 1 109 0
+ 403 0004 1B68     		ldr	r3, [r3]
+ 404 0006 9B05     		lsls	r3, r3, #22
+ 405 0008 04D5     		bpl	.L32
+ 406              		.loc 1 109 0 is_stmt 0 discriminator 1
+ 407 000a 044B     		ldr	r3, .L37+4
+ 408 000c 0448     		ldr	r0, .L37+8
+ 409 000e 1978     		ldrb	r1, [r3]
+ 410 0010 FFF7FEFF 		bl	dbg_print
+ 411              	.LVL49:
+ 412              	.L32:
+ 110:./app/debug.c **** //	if( i>3 ) i=0;
+ 111:./app/debug.c **** }
+ 413              		.loc 1 111 0 is_stmt 1
+ 414              		@ sp needed
+ 415 0014 10BD     		pop	{r4, pc}
+ 416              	.L38:
+ 417 0016 C046     		.align	2
+ 418              	.L37:
+ 419 0018 00000000 		.word	.LANCHOR1
+ 420 001c 00000000 		.word	OSCPUUsage
+ 421 0020 CF000000 		.word	.LC37
+ 422              		.cfi_endproc
+ 423              	.LFE62:
+ 425              		.section	.after_vectors,"ax",%progbits
+ 426              		.align	1
+ 427              		.global	HardFault_Handler
+ 428              		.code	16
+ 429              		.thumb_func
+ 431              	HardFault_Handler:
+ 432              	.LFB63:
+ 112:./app/debug.c **** 
+ 113:./app/debug.c **** //void OSTaskSwHook(void)
+ 114:./app/debug.c **** //{
+ 115:./app/debug.c **** //	OS_TCBCur->TaskSchedCnt++;
+ 116:./app/debug.c **** //	OSCtxSwCtr++;
+ 117:./app/debug.c **** //}
+ 118:./app/debug.c **** 
+ 119:./app/debug.c **** /*
+ 120:./app/debug.c **** ***************************************************************************************************
+ 121:./app/debug.c **** *                                             App_Fault_ISR()
+ 122:./app/debug.c **** *
+ 123:./app/debug.c **** * Description : Handle hard fault.
+ 124:./app/debug.c **** *
+ 125:./app/debug.c **** * Argument(s) : none.
+ 126:./app/debug.c **** *
+ 127:./app/debug.c **** * Return(s)   : none.
+ 128:./app/debug.c **** *
+ 129:./app/debug.c **** * Caller(s)   : This is an ISR.
+ 130:./app/debug.c **** *
+ 131:./app/debug.c **** * Note(s)     : none.
+ 132:./app/debug.c **** ***************************************************************************************************
+ 133:./app/debug.c **** */
+ 134:./app/debug.c **** #ifndef BFSR        
+ 135:./app/debug.c **** #define BFSR          ((volatile uint32 *) 0xE000ED29)
+ 136:./app/debug.c **** #define UFSR          ((volatile uint32 *) 0xE000ED2A)
+ 137:./app/debug.c **** #define HFSR          ((volatile uint32 *) 0xE000ED2C)
+ 138:./app/debug.c **** #define DFSR          ((volatile uint32 *) 0xE000ED30)
+ 139:./app/debug.c **** #define AFSR          ((volatile uint32 *) 0xE000ED3C)
+ 140:./app/debug.c **** #endif
+ 141:./app/debug.c **** #if 0
+ 142:./app/debug.c **** void HardFaultHandle_c( uint32 *hardfault_args, uint32 i);
+ 143:./app/debug.c **** void HardFaultHandle_c( uint32 *hardfault_args, uint32 i)
+ 144:./app/debug.c **** {
+ 145:./app/debug.c ****     switch( i)
+ 146:./app/debug.c ****     {
+ 147:./app/debug.c ****         case 0:
+ 148:./app/debug.c ****             pr_debug("Handle hard fault ISR\n");
+ 149:./app/debug.c ****             break;
+ 150:./app/debug.c ****         case 1:
+ 151:./app/debug.c ****             pr_debug("Handle memory fault ISR\n");
+ 152:./app/debug.c ****             break;
+ 153:./app/debug.c ****         case 2:
+ 154:./app/debug.c ****             pr_debug("handle bus fault ISR\n");
+ 155:./app/debug.c ****             break;
+ 156:./app/debug.c ****         case 3:
+ 157:./app/debug.c ****             pr_debug( "Handle usage fault ISR\n");
+ 158:./app/debug.c ****             break;
+ 159:./app/debug.c ****         case 4:
+ 160:./app/debug.c ****             pr_debug("Handle spurious interrupt\n");
+ 161:./app/debug.c ****             break;
+ 162:./app/debug.c ****     }
+ 163:./app/debug.c ****     pr_debug("R0 = 0x%08x\n", hardfault_args[0]);
+ 164:./app/debug.c ****     pr_debug("R1 = 0x%08x\n", hardfault_args[1]);
+ 165:./app/debug.c ****     pr_debug("R2 = 0x%08x\n", hardfault_args[2]);
+ 166:./app/debug.c ****     pr_debug("R3 = 0x%08x\n", hardfault_args[3]);
+ 167:./app/debug.c ****     pr_debug("R12= 0x%08x\n", hardfault_args[4]);
+ 168:./app/debug.c ****     pr_debug("LR = 0x%08x\n", hardfault_args[5]);
+ 169:./app/debug.c ****     pr_debug("PC = 0x%08x\n", hardfault_args[6]);
+ 170:./app/debug.c ****     pr_debug("PSR= 0x%08x\n", hardfault_args[7]);
+ 171:./app/debug.c ****     pr_debug("BFAR= 0x%08x\n", (*((volatile uint32 *) 0xE000ED38)));
+ 172:./app/debug.c ****     pr_debug("CFSR= 0x%08x\n", (*((volatile uint32 *) 0xE000ED28)));
+ 173:./app/debug.c ****     pr_debug("HFSR= 0x%08x\n", (*((volatile uint32 *) 0xE000ED2C)));
+ 174:./app/debug.c ****     pr_debug("DFSR= 0x%08x\n", (*((volatile uint32 *) 0xE000ED30)));
+ 175:./app/debug.c ****     pr_debug("AFSR= 0x%08x\n", (*((volatile uint32 *) 0xE000ED3C)));
+ 176:./app/debug.c ****     while(1);
+ 177:./app/debug.c **** }
+ 178:./app/debug.c **** #endif
+ 179:./app/debug.c **** 
+ 180:./app/debug.c **** __AFTER__
+ 181:./app/debug.c **** void HardFault_Handler(void );
+ 182:./app/debug.c **** void HardFault_Handler(void )
+ 183:./app/debug.c **** {
+ 433              		.loc 1 183 0
+ 434              		.cfi_startproc
+ 435              		@ args = 0, pretend = 0, frame = 0
+ 436              		@ frame_needed = 0, uses_anonymous_args = 0
+ 437 0000 10B5     		push	{r4, lr}
+ 438              	.LCFI5:
+ 439              		.cfi_def_cfa_offset 8
+ 440              		.cfi_offset 4, -8
+ 441              		.cfi_offset 14, -4
+ 184:./app/debug.c ****     uint32 *hardfault_args;
+ 185:./app/debug.c **** 
+ 186:./app/debug.c ****     pr_debug("Handle hard fault ISR\n");
+ 187:./app/debug.c ****     asm volatile( "mrs %0, MSP\n\t" :"=r"(hardfault_args) );
+ 442              		.loc 1 187 0
+ 443              		.syntax divided
+ 444              	@ 187 "./app/debug.c" 1
+ 445 0002 EFF30884 		mrs r4, MSP
+ 446              		
+ 447              	@ 0 "" 2
+ 448              	.LVL50:
+ 188:./app/debug.c ****     if( hardfault_args == 0 )
+ 449              		.loc 1 188 0
+ 450              		.thumb
+ 451              		.syntax unified
+ 452 0006 002C     		cmp	r4, #0
+ 453 0008 01D1     		bne	.L40
+ 189:./app/debug.c ****         asm volatile( "mrs %0, PSP\n\t":"=r"(hardfault_args) );
+ 454              		.loc 1 189 0
+ 455              		.syntax divided
+ 456              	@ 189 "./app/debug.c" 1
+ 457 000a EFF30984 		mrs r4, PSP
+ 458              		
+ 459              	@ 0 "" 2
+ 460              	.LVL51:
+ 461              		.thumb
+ 462              		.syntax unified
+ 463              	.L40:
+ 190:./app/debug.c **** 
+ 191:./app/debug.c ****     pr_debug("R0 = 0x%08x\n", hardfault_args[0]);
+ 192:./app/debug.c ****     pr_debug("R1 = 0x%08x\n", hardfault_args[1]);
+ 193:./app/debug.c ****     pr_debug("R2 = 0x%08x\n", hardfault_args[2]);
+ 194:./app/debug.c ****     pr_debug("R3 = 0x%08x\n", hardfault_args[3]);
+ 195:./app/debug.c ****     printk("R12= 0x%08x\n", hardfault_args[4]);
+ 464              		.loc 1 195 0
+ 465 000e 2169     		ldr	r1, [r4, #16]
+ 466 0010 0748     		ldr	r0, .L42
+ 467 0012 FFF7FEFF 		bl	printk
+ 468              	.LVL52:
+ 196:./app/debug.c ****     printk("LR = 0x%08x\n", hardfault_args[5]);
+ 469              		.loc 1 196 0
+ 470 0016 6169     		ldr	r1, [r4, #20]
+ 471 0018 0648     		ldr	r0, .L42+4
+ 472 001a FFF7FEFF 		bl	printk
+ 473              	.LVL53:
+ 197:./app/debug.c ****     printk("PC = 0x%08x\n", hardfault_args[6]);
+ 474              		.loc 1 197 0
+ 475 001e A169     		ldr	r1, [r4, #24]
+ 476 0020 0548     		ldr	r0, .L42+8
+ 477 0022 FFF7FEFF 		bl	printk
+ 478              	.LVL54:
+ 198:./app/debug.c ****     printk("PSR= 0x%08x\n", hardfault_args[7]);
+ 479              		.loc 1 198 0
+ 480 0026 E169     		ldr	r1, [r4, #28]
+ 481 0028 0448     		ldr	r0, .L42+12
+ 482 002a FFF7FEFF 		bl	printk
+ 483              	.LVL55:
+ 484              	.L41:
+ 485 002e FEE7     		b	.L41
+ 486              	.L43:
+ 487              		.align	2
+ 488              	.L42:
+ 489 0030 E3000000 		.word	.LC39
+ 490 0034 F0000000 		.word	.LC41
+ 491 0038 FD000000 		.word	.LC43
+ 492 003c 0A010000 		.word	.LC45
+ 493              		.cfi_endproc
+ 494              	.LFE63:
+ 496              		.global	cmd_os
+ 497              		.global	cmd_debug
+ 498              		.global	debug_en
+ 499              		.section	.rodata
+ 502              	help_os:
+ 503 0000 6F7300   		.ascii	"os\000"
+ 506              	name_os:
+ 507 0003 6F7300   		.ascii	"os\000"
+ 510              	help_debug:
+ 511 0006 64656275 		.ascii	"debug [en|dis|set] numb\000"
+ 511      67205B65 
+ 511      6E7C6469 
+ 511      737C7365 
+ 511      745D206E 
+ 514              	name_debug:
+ 515 001e 64656275 		.ascii	"debug\000"
+ 515      6700
+ 516              		.section	.shell,"aw",%progbits
+ 517              		.align	2
+ 520              	cmd_os:
+ 521 0000 03000000 		.word	name_os
+ 522 0004 00000000 		.word	OS_cmd
+ 523 0008 00000000 		.word	help_os
+ 526              	cmd_debug:
+ 527 000c 1E000000 		.word	name_debug
+ 528 0010 00000000 		.word	debug_cmd
+ 529 0014 06000000 		.word	help_debug
+ 530              		.section	.rodata.str1.1,"aMS",%progbits,1
+ 531              	.LC1:
+ 532 0000 656E00   		.ascii	"en\000"
+ 533              	.LC4:
+ 534 0003 64697300 		.ascii	"dis\000"
+ 535              	.LC6:
+ 536 0007 73657400 		.ascii	"set\000"
+ 537              	.LC8:
+ 538 000b 64656275 		.ascii	"debug [en|dis|set] num 0x%08x\012\000"
+ 538      67205B65 
+ 538      6E7C6469 
+ 538      737C7365 
+ 538      745D206E 
+ 539              	.LC14:
+ 540 002a 20204D69 		.ascii	"  MicroOS  : V%d.%02d\012\000"
+ 540      63726F4F 
+ 540      5320203A 
+ 540      20562564 
+ 540      2E253032 
+ 541              	.LC16:
+ 542 0041 20205469 		.ascii	"  TickRate  : %d\012\000"
+ 542      636B5261 
+ 542      74652020 
+ 542      3A202564 
+ 542      0A00
+ 543              	.LC19:
+ 544 0053 20204350 		.ascii	"  CPU Speed : %d MHz\012\000"
+ 544      55205370 
+ 544      65656420 
+ 544      3A202564 
+ 544      204D487A 
+ 545              	.LC22:
+ 546 0069 20202354 		.ascii	"  #Ticks    : %d\012\000"
+ 546      69636B73 
+ 546      20202020 
+ 546      3A202564 
+ 546      0A00
+ 547              	.LC25:
+ 548 007b 20202343 		.ascii	"  #CtxSw    : %d\012\000"
+ 548      74785377 
+ 548      20202020 
+ 548      3A202564 
+ 548      0A00
+ 549              	.LC27:
+ 550 008d C3FBB3C6 		.ascii	"\303\373\263\306\011ID\272\305\011\266\321\325\273\327"
+ 550      094944BA 
+ 550      C509B6D1 
+ 550      D5BBD7
+ 551 009c DCCAFD09 		.ascii	"\334\312\375\011\266\321\325\273\312\271\323\303\011"
+ 551      B6D1D5BB 
+ 551      CAB9D3C3 
+ 551      09
+ 552 00a9 D4CBD0D0 		.ascii	"\324\313\320\320\264\316\312\375\012\000"
+ 552      B4CECAFD 
+ 552      0A00
+ 553              	.LC31:
+ 554 00b3 252D3573 		.ascii	"%-5s\011%-4d\011\000"
+ 554      09252D34 
+ 554      640900
+ 555              	.LC33:
+ 556 00be 252D3564 		.ascii	"%-5d\011%5d%%\011%-5d\012\000"
+ 556      09253564 
+ 556      25250925 
+ 556      2D35640A 
+ 556      00
+ 557              	.LC37:
+ 558 00cf 43505520 		.ascii	"CPU Usage : %02d%%\012\000"
+ 558      55736167 
+ 558      65203A20 
+ 558      25303264 
+ 558      25250A00 
+ 559              	.LC39:
+ 560 00e3 5231323D 		.ascii	"R12= 0x%08x\012\000"
+ 560      20307825 
+ 560      3038780A 
+ 560      00
+ 561              	.LC41:
+ 562 00f0 4C52203D 		.ascii	"LR = 0x%08x\012\000"
+ 562      20307825 
+ 562      3038780A 
+ 562      00
+ 563              	.LC43:
+ 564 00fd 5043203D 		.ascii	"PC = 0x%08x\012\000"
+ 564      20307825 
+ 564      3038780A 
+ 564      00
+ 565              	.LC45:
+ 566 010a 5053523D 		.ascii	"PSR= 0x%08x\012\000"
+ 566      20307825 
+ 566      3038780A 
+ 566      00
+ 567              		.data
+ 568              		.align	2
+ 569              		.set	.LANCHOR1,. + 0
+ 572              	debug_en:
+ 573 0000 03000000 		.word	3
+ 574              		.bss
+ 575              		.set	.LANCHOR0,. + 0
+ 578              	buff.5953:
+ 579 0000 00000000 		.space	64
+ 579      00000000 
+ 579      00000000 
+ 579      00000000 
+ 579      00000000 
+ 580              		.text
+ 581              	.Letext0:
+ 582              		.file 2 "d:\\wingcc\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 583              		.file 3 "d:\\wingcc\\arm-none-eabi\\include\\sys\\_stdint.h"
+ 584              		.file 4 "./bsp/mytype.h"
+ 585              		.file 5 "../mylib_t/pcommand.h"
+ 586              		.file 6 "d:\\wingcc\\lib\\gcc\\arm-none-eabi\\5.4.1\\include\\stdarg.h"
+ 587              		.file 7 "<built-in>"
+ 588              		.file 8 "../mylib_t/os_cpu.h"
+ 589              		.file 9 "../mylib_t/MicroOS.h"
+ 590              		.file 10 "./bsp/system_NUC131.h"
+ 591              		.file 11 "./drive/nuc_uart0.h"
+ 592              		.file 12 "../mylib_t/OSstdio.h"
+ 593              		.file 13 "../mylib_t/OSstdlib.h"
+ 594              		.file 14 "../mylib_t/OSstring.h"
+ 595              		.file 15 "../mylib_t/printk.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 debug.c
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:20     .text.dbg_print:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:25     .text.dbg_print:00000000 dbg_print
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:107    .text.dbg_print:00000040 $d
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:112    .text.debug_cmd:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:116    .text.debug_cmd:00000000 debug_cmd
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:228    .text.debug_cmd:00000074 $d
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:239    .text.OS_cmd:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:244    .text.OS_cmd:00000000 OS_cmd
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:365    .text.OS_cmd:0000008c $d
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:383    .text.OSTaskStatHook:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:388    .text.OSTaskStatHook:00000000 OSTaskStatHook
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:419    .text.OSTaskStatHook:00000018 $d
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:426    .after_vectors:00000000 $t
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:431    .after_vectors:00000000 HardFault_Handler
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:489    .after_vectors:00000030 $d
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:520    .shell:00000000 cmd_os
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:526    .shell:0000000c cmd_debug
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:572    .data:00000000 debug_en
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:502    .rodata:00000000 help_os
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:506    .rodata:00000003 name_os
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:510    .rodata:00000006 help_debug
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:514    .rodata:0000001e name_debug
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:517    .shell:00000000 $d
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:568    .data:00000000 $d
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:578    .bss:00000000 buff.5953
+C:\Users\beyond\AppData\Local\Temp\cckhARTz.s:579    .bss:00000000 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+OS_vsnprintf
+wdt_reset
+Uart_SendBuff
+OSTimeDly
+OS_atoi
+OSstrcmp
+__aeabi_uidiv
+__aeabi_idiv
+SystemCoreClock
+OSTimeCnt
+OSCtxSwCtr
+OS_TCBTbl
+OSCPUUsage
+printk
